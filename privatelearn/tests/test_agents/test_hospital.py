@@ -7,19 +7,18 @@ import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 import numpy as np
 
-from agents.hospital import (
-    CANONICAL,
-    HospitalAgent,
-    SchemaAgent,
-    load_local_csv,
-)
+from agents.hospital import HospitalAgent, SchemaAgent, load_local_csv
 from agents.runtime import Agent, Message, MessageBus, sanitize
 from model import logistic
 from model.privacy import make_pair_secrets, mask_update, unmask_sum
 from pipeline import prep_data
+from pima_decider import PimaDecider
+
+FEATURES = ["pregnancies", "glucose", "blood_pressure", "bmi", "insulin", "age"]
 
 DATA = ROOT / "data"
 MANIFEST = json.loads((DATA / "hospitals" / "manifest.json").read_text(encoding="utf-8"))
@@ -27,6 +26,7 @@ MEAN, STD = MANIFEST["feature_mean"], MANIFEST["feature_std"]
 
 
 def hospital(h, **kw):
+    kw.setdefault("decider", PimaDecider())
     return HospitalAgent.from_csv(f"h{h}", DATA / "hospitals" / f"hospital_{h}.csv",
                                   feature_mean=MEAN, feature_std=STD, **kw)
 
@@ -36,7 +36,7 @@ def msg(kind, payload, to="h0", sender="coord"):
 
 
 def agreed(h):
-    a = h.step([msg("schema_agreed", {"features": CANONICAL}, to=h.id)])
+    a = h.step([msg("schema_agreed", {"features": FEATURES}, to=h.id)])
     assert a == []
     return h
 
@@ -58,34 +58,33 @@ class TestSchemaAgent(unittest.TestCase):
         order = ["Pregnancies", "Glucose", "BloodPressure", "BMI", "Insulin", "Age"]
         for h in range(3):
             cols, rows = load_local_csv(DATA / "hospitals" / f"hospital_{h}.csv")
-            agent = SchemaAgent(cols)
+            agent = SchemaAgent(cols, decider=PimaDecider())
             mapping = {c["semantic"]: {"source": c["source"], "factor": c["factor"]}
                        for c in agent.described}
-            X, labels = agent.to_canonical(rows, mapping, CANONICAL)
+            X, labels = agent.to_canonical(rows, mapping, FEATURES)
             ids = MANIFEST["row_ids"][f"h{h}"]
             expected = np.column_stack([self.clean[c][ids] for c in order])
             np.testing.assert_allclose(X, expected, rtol=0, atol=1e-6)
             np.testing.assert_array_equal(labels, self.clean["Outcome"][ids])
 
     def test_recognises_each_local_convention(self):
-        by = {c["semantic"]: c for c in SchemaAgent(load_local_csv(DATA / "hospitals" / "hospital_1.csv")[0]).described}
+        by = {c["semantic"]: c for c in SchemaAgent(
+            load_local_csv(DATA / "hospitals" / "hospital_1.csv")[0], decider=PimaDecider()).described}
         self.assertEqual(by["glucose"]["factor"], 18.0182)
         self.assertEqual(by["blood_pressure"]["unit"], "kPa")
         self.assertEqual(by["bmi"]["source"], ["weight_kg", "height_m"])
         self.assertEqual(by["age"]["factor"], 1.0 / 12.0)
-        by2 = {c["semantic"]: c for c in SchemaAgent(load_local_csv(DATA / "hospitals" / "hospital_2.csv")[0]).described}
+        by2 = {c["semantic"]: c for c in SchemaAgent(
+            load_local_csv(DATA / "hospitals" / "hospital_2.csv")[0], decider=PimaDecider()).described}
         self.assertEqual(by2["pregnancies"]["source"], ["num_pregnancies"])
         self.assertEqual(by2["insulin"]["factor"], 1.0 / 6.945)
 
-    def test_missing_or_ambiguous_columns_fail_loudly(self):
-        # a hospital missing a feature no longer fails: it describes what it has, and the
-        # coordinator drops that feature from the contract
-        a = SchemaAgent(["Age", "BMI", "Glucose", "Insulin", "Pregnancies", "Outcome"])
-        self.assertEqual(len(a.described), 5)
-        with self.assertRaisesRegex(ValueError, "both map"):
-            SchemaAgent(["age", "age_months", "bmi", "glucose", "bp_sys", "insulin", "pregnancies", "outcome"])
-        with self.assertRaisesRegex(ValueError, "label"):
-            SchemaAgent(["Age", "BMI", "Glucose", "BloodPressure", "Insulin", "Pregnancies"])
+    def test_offline_describe_is_generic(self):
+        # the offline (no-decider) fallback carries no dataset knowledge: normalised names only
+        a = SchemaAgent(["Age", "BMI", "Outcome"])
+        self.assertEqual(a.label, "Outcome")
+        self.assertEqual([c["semantic"] for c in a.described], ["age", "bmi"])
+        self.assertTrue(all(c["factor"] == 1.0 for c in a.described))
 
     def test_schema_message_has_names_only(self):
         h = hospital(1)
@@ -208,7 +207,7 @@ class TestMaskedRoundOnTheBus(unittest.TestCase):
                 self.updates += [m.payload for m in messages if m.kind == "update"]
                 self.tick += 1
                 if self.tick == 1:
-                    return [self.send("*", "schema_agreed", {"features": CANONICAL})]
+                    return [self.send("*", "schema_agreed", {"features": FEATURES})]
                 if self.tick == 2:
                     return [self.send("*", "train", train_msg(1, [0.0] * 7))]
                 return []

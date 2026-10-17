@@ -36,7 +36,7 @@ import numpy as np
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
-from agents.coordinator import CANONICAL, CoordinatorAgent  # noqa: E402
+from agents.coordinator import CoordinatorAgent  # noqa: E402
 from agents.decider import build_decider  # noqa: E402
 from agents.hospital import HospitalAgent, no_protection  # noqa: E402
 from agents.runtime import MessageBus  # noqa: E402
@@ -101,15 +101,13 @@ def model_hash(w) -> str:
     return hashlib.sha256(json.dumps([round(float(v), 12) for v in w]).encode()).hexdigest()
 
 
-def run(seed: int = SEED, out_path=None, private: bool = True, use_llm: bool = False) -> dict:
+def run(seed: int = SEED, out_path=None, private: bool = True, use_llm: bool = False, decider=None) -> dict:
     """The full run. private=False replays the same scenario with masking and DP off
     (plain training, unprotected updates) to measure what privacy costs.
     use_llm=True lets the Schema / Planner / Coordinator agents make their decisions
     with DeepSeek (needs DEEPSEEK_API_KEY); every decision is recorded in the trace."""
     t0 = time.perf_counter()
     manifest = io.load_json(ROOT / "data" / "hospitals" / "manifest.json")
-    if manifest["canonical_features"] != CANONICAL:
-        raise ValueError("manifest feature order differs from the agreed canonical schema")
     Xt, yt = load_holdout(manifest)
 
     def evaluate(w, features=None):
@@ -143,7 +141,7 @@ def run(seed: int = SEED, out_path=None, private: bool = True, use_llm: bool = F
     def dp_train(w0, X, y, epochs, lr, mu=0.0, w_anchor=None):
         return train_dp(w0, X, y, epochs=epochs, lr=lr, example_clip=EXAMPLE_CLIP, mu=mu, w_anchor=w_anchor)
 
-    decider = build_decider(use_llm)
+    decider = decider or build_decider(use_llm)
 
     hospitals = [
         HospitalAgent.from_csv(h, ROOT / "data" / "hospitals" / f"hospital_{i}.csv",
@@ -203,7 +201,8 @@ def run(seed: int = SEED, out_path=None, private: bool = True, use_llm: bool = F
             "auc_federated": auc_fed,
             "auc_centralized": auc_central,
             # same scenario with masking + DP switched off: the measured cost of privacy
-            "auc_federated_no_privacy": (run(seed, None, private=False, use_llm=False)["meta"]["auc_federated"]
+            "auc_federated_no_privacy": (run(seed, None, private=False, use_llm=False,
+                                            decider=decider)["meta"]["auc_federated"]
                                          if private else auc_fed),
             "eps_per_round": EPS_PER_ROUND, "dp_delta": DP_DELTA,
             "dp_sensitivity": sensitivity, "dp_sigma": sigma, "example_clip": EXAMPLE_CLIP,

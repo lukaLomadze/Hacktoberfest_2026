@@ -9,13 +9,15 @@ sys.path.insert(0, str(ROOT / "src"))
 
 import numpy as np
 
-from agents.coordinator import CANONICAL, CoordinatorAgent
+from agents.coordinator import CoordinatorAgent
 from agents.decider import RuleDecider
 from agents.runtime import Agent, MessageBus
 from model import logistic
 from model.aggregation import FEDPROX_MU
 from model.privacy import make_pair_secrets, mask_update
 from shared import schemas
+
+FEATURES = ["pregnancies", "glucose", "blood_pressure", "bmi", "insulin", "age"]
 
 SECRETS = make_pair_secrets([0, 1, 2], seed="coord-tests")
 
@@ -30,7 +32,7 @@ def make_data(seed, shift=0.0, n=120):
 class FakeHospital(Agent):
     """Speaks the T7 protocol on synthetic local data; faults = {round: kind}."""
 
-    def __init__(self, hid, X, y, masked=False, faults=None, columns=CANONICAL, dp_eps=0.0):
+    def __init__(self, hid, X, y, masked=False, faults=None, columns=FEATURES, dp_eps=0.0):
         super().__init__(hid)
         self.X, self.y, self.masked = X, y, masked
         self.faults = faults or {}
@@ -84,7 +86,7 @@ XT, YT = make_data(9)
 
 def evaluate(w, features=None):
     if features:
-        return logistic.auc(YT, logistic.predict_proba(w, XT[:, [CANONICAL.index(f) for f in features]]))
+        return logistic.auc(YT, logistic.predict_proba(w, XT[:, [FEATURES.index(f) for f in features]]))
     return logistic.auc(YT, logistic.predict_proba(w, XT))
 
 
@@ -94,7 +96,8 @@ def run(masked=False, faults=None, rounds=4, dp_eps=0.0, **kw):
     hs = [bus.register(FakeHospital(f"h{i}", *DATA[i], masked=masked, faults=faults.get(f"h{i}"),
                                     dp_eps=dp_eps)) for i in range(3)]
     coord = bus.register(CoordinatorAgent(["h0", "h1", "h2"], evaluate, [0.0] * 6, [1.0] * 6,
-                                          rounds=rounds, names={"h0": "A", "h1": "B", "h2": "C"}, **kw))
+                                          rounds=rounds, names={"h0": "A", "h1": "B", "h2": "C"},
+                                          feature_names=FEATURES, **kw))
     bus.run(max_ticks=60)
     return coord, hs, bus
 
@@ -199,7 +202,7 @@ class TestSchemaNegotiation(unittest.TestCase):
         coord, _, bus = run(rounds=1)
         agreed = [m.payload for m in bus.log if m.kind == "schema_agreed"]
         self.assertEqual(len(agreed), 3)  # one copy per hospital
-        self.assertEqual(agreed[0]["features"], CANONICAL)
+        self.assertEqual(agreed[0]["features"], FEATURES)
         self.assertEqual(set(coord.schema_report["per_hospital"]), {"h0", "h1", "h2"})
 
     def test_contract_keeps_only_common_features(self):
@@ -207,11 +210,12 @@ class TestSchemaNegotiation(unittest.TestCase):
         # a feature is usable only if every hospital proposed it.
         X5, y = DATA[0][0][:, :5], DATA[0][1]
         bus = MessageBus()
-        bus.register(FakeHospital("h0", X5, y, columns=CANONICAL[:5]))
-        coord = CoordinatorAgent(["h0"], evaluate, [0.0] * 6, [1.0] * 6, rounds=1)
+        bus.register(FakeHospital("h0", X5, y, columns=FEATURES[:5]))
+        coord = CoordinatorAgent(["h0"], evaluate, [0.0] * 6, [1.0] * 6, rounds=1,
+                                 feature_names=FEATURES)
         bus.register(coord)
         bus.run(max_ticks=10)
-        self.assertEqual(coord.features, CANONICAL[:5])
+        self.assertEqual(coord.features, FEATURES[:5])
         self.assertEqual(coord.n_weights, 6)
 
     def test_contract_name_not_aligning_to_stats_falls_back(self):
@@ -224,12 +228,12 @@ class TestSchemaNegotiation(unittest.TestCase):
                         "reasoning": "used bp", "made_by": "llm"}
 
         bus = MessageBus()
-        bus.register(FakeHospital("h0", *DATA[0], columns=CANONICAL))
+        bus.register(FakeHospital("h0", *DATA[0], columns=FEATURES))
         coord = CoordinatorAgent(["h0"], evaluate, [0.0] * 6, [1.0] * 6, rounds=1,
-                                 decider=WeirdDecider())
+                                 decider=WeirdDecider(), feature_names=FEATURES)
         bus.register(coord)
         bus.run(max_ticks=10)
-        self.assertEqual(coord.features, CANONICAL)
+        self.assertEqual(coord.features, FEATURES)
 
 
 if __name__ == "__main__":

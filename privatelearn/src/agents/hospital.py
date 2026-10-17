@@ -43,48 +43,12 @@ import numpy as np
 from agents.runtime import Agent
 from model import logistic
 
-CANONICAL = ["pregnancies", "glucose", "blood_pressure", "bmi", "insulin", "age"]
-CANONICAL_UNITS = {"pregnancies": "count", "glucose": "mg/dL", "blood_pressure": "mmHg",
-                   "bmi": "kg/m^2", "insulin": "uU/mL", "age": "years"}
-# --- OFFLINE FALLBACK ONLY ---------------------------------------------------
-# These name tables exist so the deterministic RuleDecider can run with no model
-# (tests, CI, an offline demo). The LLM path never reads them: it maps columns to
-# the canonical schema from the local profile. Do not add data here that an agent
-# should be deciding — see docs/AGENT-DECISIONS.md.
-LABEL_ALIASES = {"outcome", "label", "diabetic", "diabetes"}
-
-# Unit factors (CONTRACTS.md §4): canonical = local × factor.
-MGDL_PER_MMOLL = 18.0182
-MMHG_PER_KPA = 7.50062
-PMOLL_PER_UUML = 6.945
+# Generic, domain-neutral target-column detection for the offline (no-LLM) fallback.
+GENERIC_LABELS = {"outcome", "label", "target", "y", "class", "default", "response"}
 
 
 def _norm(name: str) -> str:
     return re.sub(r"[^a-z0-9]", "", name.lower())
-
-
-# Recognisers: normalised local column name → (canonical, unit, transform, factor).
-# The Schema agent matches columns against these, so a new hospital with these
-# naming conventions maps without code changes.
-ALIASES = {
-    "pregnancies": ("pregnancies", "count", "rename", 1.0),
-    "numpregnancies": ("pregnancies", "count", "rename", 1.0),
-    "glucose": ("glucose", "mg/dL", "rename", 1.0),
-    "glucosemgdl": ("glucose", "mg/dL", "rename", 1.0),
-    "glucosemmoll": ("glucose", "mmol/L", "x * 18.0182", MGDL_PER_MMOLL),
-    "bloodpressure": ("blood_pressure", "mmHg", "rename", 1.0),
-    "bpsys": ("blood_pressure", "mmHg", "rename", 1.0),
-    "bpmmhg": ("blood_pressure", "mmHg", "rename", 1.0),
-    "bpkpa": ("blood_pressure", "kPa", "x * 7.50062", MMHG_PER_KPA),
-    "bmi": ("bmi", "kg/m^2", "rename", 1.0),
-    "insulin": ("insulin", "uU/mL", "rename", 1.0),
-    "insulinpmoll": ("insulin", "pmol/L", "x / 6.945", 1.0 / PMOLL_PER_UUML),
-    "age": ("age", "years", "rename", 1.0),
-    "ageyears": ("age", "years", "rename", 1.0),
-    "agemonths": ("age", "months", "x / 12", 1.0 / 12.0),
-}
-HEIGHT_ALIASES = {"heightm"}
-WEIGHT_ALIASES = {"weightkg"}
 
 
 def load_local_csv(path):
@@ -141,35 +105,19 @@ class SchemaAgent:
         self.made_by = d.get("made_by", "rule")
 
     def _infer(self):
-        """Offline fallback: the alias table, reshaped to the generic describe shape."""
-        mapping, label = self._infer_alias()
-        return {"label": label,
-                "columns": [{"source": m["source"], "semantic": k, "unit": m["unit"],
-                             "factor": m["factor"]} for k, m in mapping.items()],
-                "reasoning": "matched the known column aliases", "made_by": "rule"}
-
-    def _infer_alias(self):
-        by_norm = {_norm(c): c for c in self.columns}
-        mapping = {}
+        """Offline fallback: no domain knowledge. Each column keeps its normalised name; the
+        LLM path is what actually infers semantics, units and conversions."""
         label = None
-        for n, col in by_norm.items():
-            if n in LABEL_ALIASES:
-                label = col
-            elif n in ALIASES:
-                canonical, unit, transform, factor = ALIASES[n]
-                if canonical in mapping:
-                    raise ValueError(f"columns {mapping[canonical]['source']} and {[col]} both map to {canonical}")
-                mapping[canonical] = {"canonical": canonical, "source": [col], "unit": unit,
-                                      "transform": transform, "factor": factor}
-        if "bmi" not in mapping:
-            h = [by_norm[n] for n in by_norm if n in HEIGHT_ALIASES]
-            w = [by_norm[n] for n in by_norm if n in WEIGHT_ALIASES]
-            if h and w:
-                mapping["bmi"] = {"canonical": "bmi", "source": [w[0], h[0]], "unit": "kg, m",
-                                  "transform": "weight_kg / height_m^2", "factor": None}
+        cols = []
+        for c in self.columns:
+            if _norm(c) in GENERIC_LABELS:
+                label = c
+            else:
+                cols.append({"source": [c], "semantic": _norm(c), "unit": "unknown", "factor": 1.0})
         if label is None:
-            raise ValueError(f"schema: no label column among {self.columns}")
-        return mapping, label
+            label = self.columns[-1]
+        return {"label": label, "columns": cols,
+                "reasoning": "offline: normalised column names, no unit inference", "made_by": "rule"}
 
     def describe(self, hospital: str) -> dict:
         """The schema message: names, units and conversions only — never values."""

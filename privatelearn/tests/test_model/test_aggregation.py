@@ -16,7 +16,11 @@ from model.aggregation import (
     select_strategy,
     trimmed_mean,
 )
-from model.logistic import N_FEATURES, N_WEIGHTS, auc, train
+from model.logistic import auc, train
+
+# a local fixture: the model itself no longer hard-codes a feature count
+N_FEATURES = 6
+N_WEIGHTS = N_FEATURES + 1
 
 
 class TestFedAvg(unittest.TestCase):
