@@ -13,7 +13,7 @@
       <div class="controls">
         <button id="play">Play</button>
         <button id="reset">Reset</button>
-        <input id="scrub" type="range" min="0" max="0" step="1" value="0" />
+        <input id="scrub" type="range" min="0" max="0" step="1" value="0" aria-label="round" />
         <span id="roundLabel">round 0 / 0</span>
       </div>
       <div class="privacy">
@@ -21,20 +21,39 @@
       </div>
     </header>
 
+    <div class="toggles" role="group" aria-label="overlays">
+      <label><input type="checkbox" id="showMask" checked /> secure aggregation (masking)</label>
+      <label><input type="checkbox" id="showDp" checked /> differential privacy (ε)</label>
+      <span id="source" class="muted"></span>
+    </div>
+
     <main>
       <canvas id="graph" width="960" height="360"></canvas>
 
       <section id="side">
         <div class="panel">
-          <h2>accuracy (AUC)</h2>
-          <canvas id="chart" width="440" height="160"></canvas>
+          <h2>accuracy (AUC) <span id="aucNow" class="now"></span></h2>
+          <canvas id="chart" width="316" height="150"></canvas>
+          <div class="legend">
+            <span><i class="sw fed"></i>federated</span>
+            <span><i class="sw solo"></i>best solo</span>
+            <span><i class="sw cen"></i>centralized (illegal)</span>
+          </div>
+        </div>
+        <div class="panel">
+          <h2>training loss <span id="lossNow" class="now"></span></h2>
+          <canvas id="lossChart" width="316" height="110"></canvas>
         </div>
         <div class="panel">
           <h2>decision log</h2>
           <ul id="log"></ul>
         </div>
         <div class="panel">
-          <h2>attack</h2>
+          <h2>gradient-inversion attack</h2>
+          <div class="seg" role="group" aria-label="attack scenario">
+            <button id="atkOff" class="on">unprotected update</button>
+            <button id="atkOn">masking + DP</button>
+          </div>
           <div id="attack"></div>
         </div>
       </section>
