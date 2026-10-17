@@ -63,6 +63,9 @@ class TaskSpecTest(unittest.TestCase):
         s = spec()
         s["input_schema"] = s["input_schema"] + [{"name": "glucose", "type": "number"}]
         self.bad(s, "task_spec.input_schema[6].name")
+        s = spec()
+        s["input_schema"] = s["input_schema"] + [{"name": "glucose\n", "type": "number"}]
+        self.bad(s, "task_spec.input_schema[6].name")  # `$` would let a trailing newline through
         self.bad(spec(input_schema=[]), "task_spec.input_schema")
         self.bad(spec(input_schema=[{"name": "a", "type": "number", "required": False}]), "task_spec.input_schema")
         self.bad(spec(input_schema=[{"name": "a", "type": "number", "shape": [2, 2]}]),
