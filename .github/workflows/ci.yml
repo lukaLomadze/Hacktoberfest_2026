@@ -6,7 +6,28 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: privatelearn
     steps:
       - uses: actions/checkout@v4
-      # TODO: add setup + install + lint + test once the stack is chosen
-      - run: echo "Add lint/test steps here"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install numpy
+      # the test dirs are not packages, so run each one (discover -s tests finds nothing)
+      - name: Model tests
+        run: python -m unittest discover -s tests/test_model -v
+      - name: Agent and pipeline tests
+        run: python -m unittest discover -s tests/test_agents -v
+      - name: Traces match the contracts
+        run: |
+          python -c "import sys; sys.path.insert(0, 'src'); from shared import schemas, io; schemas.validate_trace(io.load_json('data/sample_trace.json')); schemas.validate_trace(io.load_json('trace.json')); print('traces valid')"
+      # trace.json vs a fresh run is compared with a float tolerance in test_run_loop;
+      # the data files are rounded at write time, so they must match byte for byte
+      - name: Committed data is reproducible
+        run: |
+          python src/pipeline/prep_data.py
+          git diff --exit-code -- data
+      - name: Player JavaScript parses
+        run: node --check web/player.js

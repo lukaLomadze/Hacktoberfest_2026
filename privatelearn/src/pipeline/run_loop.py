@@ -82,6 +82,20 @@ def load_holdout(manifest):
     return (X - np.array(manifest["feature_mean"])) / np.array(manifest["feature_std"]), y
 
 
+TRACE_DECIMALS = 10  # floats differ across OS/numpy builds in the ~16th digit; round them away
+
+
+def round_floats(obj, digits: int = TRACE_DECIMALS):
+    """Round every float in a JSON-like structure, so the trace is identical on every platform."""
+    if isinstance(obj, float):
+        return round(obj, digits)
+    if isinstance(obj, dict):
+        return {k: round_floats(v, digits) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [round_floats(v, digits) for v in obj]
+    return obj
+
+
 def model_hash(w) -> str:
     return hashlib.sha256(json.dumps([round(float(v), 12) for v in w]).encode()).hexdigest()
 
@@ -194,6 +208,7 @@ def run(seed: int = SEED, out_path=None, private: bool = True) -> dict:
         "patient_bytes_transferred": 0,
         "timeline_ms": 60000,
     }
+    trace = round_floats(trace)
     schemas.validate_trace(trace)
     if out_path is not None:
         io.save_json(out_path, trace)
