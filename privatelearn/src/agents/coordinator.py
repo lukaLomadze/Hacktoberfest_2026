@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import numpy as np
 
+from agents.decider import RuleDecider
 from agents.runtime import BROADCAST, Agent
 from model.aggregation import FEDPROX_MU, select_strategy
 from model.privacy import unmask_sum
@@ -41,8 +42,9 @@ REPLY_DELAY = 2  # coordinator steps between sending a request and receiving rep
 class CoordinatorAgent(Agent):
     def __init__(self, hospitals, eval_fn, feature_mean, feature_std, rounds: int = 4,
                  names=None, tau: float = 0.1, outlier_sigma: float = 2.0, mu: float = FEDPROX_MU,
-                 w0=None, converge_tol: float = 1e-3, agent_id: str = "coord"):
+                 w0=None, converge_tol: float = 1e-3, agent_id: str = "coord", decider=None):
         super().__init__(agent_id)
+        self.decider = decider or RuleDecider()
         self.hospitals = list(hospitals)
         self.names = dict(names or {h: h for h in self.hospitals})
         self.eval_fn = eval_fn  # w -> global AUC on the evaluation set the coordinator holds
@@ -123,9 +125,13 @@ class CoordinatorAgent(Agent):
             raise RuntimeError(f"round {self.round}: no hospital responded")
 
         losses = [probes[h]["loss"] for h in responders]
-        dec = select_strategy(losses, tau=self.tau, outlier_sigma=self.outlier_sigma,
-                              names=[self.names[h] for h in responders])
-        flagged = [responders[i] for i in dec.flagged]
+        names = [self.names[h] for h in responders]
+
+        def _rule():
+            return select_strategy(losses, tau=self.tau, outlier_sigma=self.outlier_sigma, names=names)
+
+        d = self.decider.strategy(losses, names, _rule, round=self.round)
+        flagged = [responders[i] for i in d["flagged"]]
         participants = [h for h in responders if h not in flagged]
         total_n = sum(probes[h]["n"] for h in participants)
         weights = {h: probes[h]["n"] / total_n for h in participants}
@@ -133,14 +139,15 @@ class CoordinatorAgent(Agent):
         notes = []
         if offline:
             notes.append(f"{self._names(offline)} offline")
-        notes.append(dec.reason)
-        r.update(strategy=dec.strategy, decision="; ".join(notes), flagged=flagged,
-                 participants=participants, flag_reason=dec.reason)
+        notes.append(d["reasoning"])
+        r.update(strategy=d["strategy"], decision="; ".join(notes), flagged=flagged,
+                 participants=participants, flag_reason=d["reasoning"],
+                 reasoning=d["reasoning"], decided_by=d["made_by"])
         self._wait("train")
         return [self.send(BROADCAST, "train", {
             "round": self.round, "w": [float(v) for v in self.w], "participants": participants,
-            "weights": weights, "strategy": dec.strategy,
-            "mu": self.mu if dec.strategy == "fedprox" else 0.0})]
+            "weights": weights, "strategy": d["strategy"],
+            "mu": self.mu if d["strategy"] == "fedprox" else 0.0})]
 
     def _aggregate(self):
         r = self._round
@@ -209,6 +216,7 @@ class CoordinatorAgent(Agent):
                     or (h in r["participants"] and h not in updates)]
         return {"round": r["round"], "strategy": r["strategy"], "eps_total": broadcast["eps_total"],
                 "auc_before": r["auc_before"], "auc_after": broadcast["auc"], "decision": r["decision"],
+                "reasoning": r.get("reasoning", ""), "decided_by": r.get("decided_by", "rule"),
                 "probe_losses": {h: float(p["loss"]) for h, p in r["probes"].items()},
                 "applied": applied, "excluded": excluded, "updates": rows, "broadcast": broadcast}
 

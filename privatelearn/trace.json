@@ -36,6 +36,27 @@
       "h1": "d549c8277f584e10af29c0b2f5ddb4104d51fe5b1dd8614901bab86458169ac7",
       "h2": "d549c8277f584e10af29c0b2f5ddb4104d51fe5b1dd8614901bab86458169ac7"
     },
+    "decision_maker": {
+      "provider": "rule",
+      "model": "deterministic",
+      "llm_calls": 0,
+      "fallbacks": 0,
+      "schema": {
+        "h0": {
+          "made_by": "rule",
+          "reasoning": "matched the known column aliases"
+        },
+        "h1": {
+          "made_by": "rule",
+          "reasoning": "matched the known column aliases"
+        },
+        "h2": {
+          "made_by": "rule",
+          "reasoning": "matched the known column aliases"
+        }
+      },
+      "policy": "the LLM only sees column names and aggregate losses, never a patient row; gradients, aggregation, masking and DP are deterministic code"
+    },
     "honesty": "Real Pima Indians Diabetes records (360 of 768) split into three SIMULATED hospitals; the player replays this recorded run, not live networking. Masking, DP noise, the agents' decisions and every number are real outputs of the code. DP accounting is a stated-ε demonstration (analytic Gaussian, basic composition), not an audited accountant."
   },
   "nodes": [
@@ -217,6 +238,8 @@
       "auc_before": 0.5,
       "auc_after": 0.8313,
       "decision": "loss std 0.000 ≤ τ=0.1, hospitals agree → FedAvg",
+      "reasoning": "loss std 0.000 ≤ τ=0.1, hospitals agree → FedAvg",
+      "decided_by": "rule",
       "probe_losses": {
         "h0": 0.6931,
         "h1": 0.6931,
@@ -280,6 +303,8 @@
       "auc_before": 0.8313,
       "auc_after": 0.8309,
       "decision": "Hospital C offline; loss std 0.017 ≤ τ=0.1, hospitals agree → FedAvg",
+      "reasoning": "loss std 0.017 ≤ τ=0.1, hospitals agree → FedAvg",
+      "decided_by": "rule",
       "probe_losses": {
         "h0": 0.6331,
         "h1": 0.6675
@@ -344,6 +369,8 @@
       "auc_before": 0.8309,
       "auc_after": 0.8322,
       "decision": "Hospital C loss 2.488 is >2σ above median 0.644 → trimmed-mean, excluded",
+      "reasoning": "Hospital C loss 2.488 is >2σ above median 0.644 → trimmed-mean, excluded",
+      "decided_by": "rule",
       "probe_losses": {
         "h0": 0.5697,
         "h1": 0.6441,
@@ -410,6 +437,8 @@
       "auc_before": 0.8322,
       "auc_after": 0.832,
       "decision": "loss std 0.054 ≤ τ=0.1, hospitals agree → FedAvg",
+      "reasoning": "loss std 0.054 ≤ τ=0.1, hospitals agree → FedAvg",
+      "decided_by": "rule",
       "probe_losses": {
         "h0": 0.52,
         "h1": 0.626,

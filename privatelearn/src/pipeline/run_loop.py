@@ -37,6 +37,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
 from agents.coordinator import CANONICAL, CoordinatorAgent  # noqa: E402
+from agents.decider import build_decider  # noqa: E402
 from agents.hospital import HospitalAgent, no_protection  # noqa: E402
 from agents.runtime import MessageBus  # noqa: E402
 from model import logistic  # noqa: E402
@@ -100,9 +101,11 @@ def model_hash(w) -> str:
     return hashlib.sha256(json.dumps([round(float(v), 12) for v in w]).encode()).hexdigest()
 
 
-def run(seed: int = SEED, out_path=None, private: bool = True) -> dict:
+def run(seed: int = SEED, out_path=None, private: bool = True, use_llm: bool = False) -> dict:
     """The full run. private=False replays the same scenario with masking and DP off
-    (plain training, unprotected updates) to measure what privacy costs."""
+    (plain training, unprotected updates) to measure what privacy costs.
+    use_llm=True lets the Schema / Planner / Coordinator agents make their decisions
+    with DeepSeek (needs DEEPSEEK_API_KEY); every decision is recorded in the trace."""
     t0 = time.perf_counter()
     manifest = io.load_json(ROOT / "data" / "hospitals" / "manifest.json")
     if manifest["canonical_features"] != CANONICAL:
@@ -138,15 +141,18 @@ def run(seed: int = SEED, out_path=None, private: bool = True) -> dict:
     def dp_train(w0, X, y, epochs, lr, mu=0.0, w_anchor=None):
         return train_dp(w0, X, y, epochs=epochs, lr=lr, example_clip=EXAMPLE_CLIP, mu=mu, w_anchor=w_anchor)
 
+    decider = build_decider(use_llm)
+
     hospitals = [
         HospitalAgent.from_csv(h, ROOT / "data" / "hospitals" / f"hospital_{i}.csv",
                                protector=protector_for(i) if private else no_protection,
-                               train_fn=dp_train if private else logistic.train, faults=FAULTS.get(h))
+                               train_fn=dp_train if private else logistic.train, faults=FAULTS.get(h),
+                               decider=decider)
         for i, h in enumerate(HOSPITALS)
     ]
     names = {nd["id"]: nd["label"] for nd in NODES}
     coord = CoordinatorAgent(HOSPITALS, evaluate, manifest["feature_mean"], manifest["feature_std"],
-                             rounds=ROUNDS, names=names)
+                             rounds=ROUNDS, names=names, decider=decider)
 
     bus = MessageBus()
     for h in hospitals:
@@ -190,12 +196,19 @@ def run(seed: int = SEED, out_path=None, private: bool = True) -> dict:
             "auc_federated": auc_fed,
             "auc_centralized": auc_central,
             # same scenario with masking + DP switched off: the measured cost of privacy
-            "auc_federated_no_privacy": (run(seed, None, private=False)["meta"]["auc_federated"]
+            "auc_federated_no_privacy": (run(seed, None, private=False, use_llm=False)["meta"]["auc_federated"]
                                          if private else auc_fed),
             "eps_per_round": EPS_PER_ROUND, "dp_delta": DP_DELTA,
             "dp_sensitivity": sensitivity, "dp_sigma": sigma, "example_clip": EXAMPLE_CLIP,
             "local_epochs": EPOCHS, "lr": LR, "seed": seed,
             "model_hashes": hashes,
+            "decision_maker": {
+                **decider.info(),
+                "schema": {h.id: {"made_by": h.schema.made_by, "reasoning": h.schema.reasoning}
+                           for h in hospitals},
+                "policy": "the LLM only sees column names and aggregate losses, never a patient row; "
+                          "gradients, aggregation, masking and DP are deterministic code",
+            },
             "honesty": HONESTY,
         },
         "nodes": NODES,
@@ -222,8 +235,11 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description="Run PrivateLearn end to end and write trace.json")
     ap.add_argument("--out", default=str(ROOT / "trace.json"))
     ap.add_argument("--seed", type=int, default=SEED)
+    ap.add_argument("--llm", action="store_true",
+                    help="let the agents decide with DeepSeek (needs DEEPSEEK_API_KEY); "
+                         "decisions are recorded into the trace")
     args = ap.parse_args(argv)
-    t = run(args.seed, args.out)
+    t = run(args.seed, args.out, use_llm=args.llm)
     m = t["meta"]
     print(f"rounds: {[r['strategy'] for r in t['rounds']]}")
     for r in t["rounds"]:
