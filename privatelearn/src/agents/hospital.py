@@ -220,8 +220,8 @@ class HospitalAgent(Agent):
         """This participant's mask index: its position in the sorted participant list."""
         return self.mask_index(self.id)
 
-    def mask_index(self, participant_id: str) -> int:
-        roster = self.roster
+    def mask_index(self, participant_id: str, roster=None) -> int:
+        roster = roster or self.roster
         if roster is None:
             raise RuntimeError(f"{self.id}: participant list unknown before schema_agreed")
         if participant_id not in roster:
@@ -316,8 +316,8 @@ class HospitalAgent(Agent):
         # a coordinator that never sent the full list: this round's participants are all we
         # know, and they are the same on every participant, so the masks still cancel
         roster = self.roster or sorted(str(h) for h in p["participants"])
-        participants = sorted(roster.index(h) for h in p["participants"])
-        vec, privacy = self.protector(weight * delta, roster.index(self.id), participants, r)
+        participants = sorted(self.mask_index(h, roster) for h in p["participants"])
+        vec, privacy = self.protector(weight * delta, self.mask_index(self.id, roster), participants, r)
         self._log(r, "trainer", f"trained on {self.n} local rows, loss {local_loss:.3f}; "
                                 f"sent {'masked ' if privacy['masked'] else ''}Δw")
         update = {"v": "1.0", "round": r, "hospital": self.id,

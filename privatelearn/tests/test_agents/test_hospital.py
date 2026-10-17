@@ -194,6 +194,14 @@ class TestHospitalRound(unittest.TestCase):
         self.assertEqual(out.payload["hospital"], "node_9f3a")
         sanitize("update", out.payload)  # an opaque id passes the contract validator
 
+    def test_train_with_a_participant_outside_the_roster_names_it(self):
+        h = hospital(0, hid="node_1")
+        h.step([msg("schema_agreed", {"features": FEATURES, "participants": ["node_1", "node_2"]},
+                    to=h.id)])
+        with self.assertRaisesRegex(ValueError, "'node_9' is not a participant"):
+            h.step([msg("train", train_msg(1, np.zeros(7), participants=("node_1", "node_9")),
+                        to=h.id)])
+
     def test_rejects_a_participant_list_without_itself(self):
         h = hospital(0, hid="node_1")
         with self.assertRaises(ValueError):
