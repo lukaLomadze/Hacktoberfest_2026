@@ -37,8 +37,10 @@ export function matchRoute(path) {
     const params = {};
     let ok = true;
     for (let i = 0; i < want.length && ok; i++) {
-      if (want[i].startsWith(":")) params[want[i].slice(1)] = decodeURIComponent(parts[i]);
-      else ok = want[i] === parts[i];
+      if (!want[i].startsWith(":")) ok = want[i] === parts[i];
+      else {
+        try { params[want[i].slice(1)] = decodeURIComponent(parts[i]); } catch { ok = false; } // "%E0": not found
+      }
     }
     if (ok) return { pattern, page, access, task, params };
   }
@@ -94,7 +96,14 @@ export function startRouter({ resolve, mount }) {
       error = err;
     }
     if (gen !== generation) return; // the user navigated again while the page loaded
-    cleanup = await mount({ ...route, path, query, error }, module);
+    const done = await mount({ ...route, path, query, error }, module);
+    if (gen === generation) {
+      cleanup = done;
+    } else if (typeof done === "function") {
+      // the user navigated again while render() was still awaiting: the newer page owns
+      // `cleanup` now, so release this page's streams and timers right away
+      try { done(); } catch (err) { console.error(err); }
+    }
   }
 
   window.addEventListener("hashchange", render);

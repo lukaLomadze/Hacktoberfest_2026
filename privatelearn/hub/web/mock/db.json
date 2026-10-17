@@ -154,7 +154,8 @@
    "contact_email": "it@tbilisi-central.example",
    "status": "approved",
    "wallet_address": null,
-   "created_at": "2026-10-18T10:00:00Z"
+   "created_at": "2026-10-18T10:00:00Z",
+   "status_reason": null
   },
   {
    "id": "co_2",
@@ -163,7 +164,8 @@
    "contact_email": "data@batumi-medical.example",
    "status": "approved",
    "wallet_address": null,
-   "created_at": "2026-10-18T10:00:00Z"
+   "created_at": "2026-10-18T10:00:00Z",
+   "status_reason": null
   },
   {
    "id": "co_3",
@@ -172,7 +174,8 @@
    "contact_email": "it@kutaisi-clinic.example",
    "status": "approved",
    "wallet_address": null,
-   "created_at": "2026-10-18T10:00:00Z"
+   "created_at": "2026-10-18T10:00:00Z",
+   "status_reason": null
   },
   {
    "id": "co_4",
@@ -181,7 +184,8 @@
    "contact_email": "it@rustavi-family.example",
    "status": "approved",
    "wallet_address": null,
-   "created_at": "2026-10-18T10:00:00Z"
+   "created_at": "2026-10-18T10:00:00Z",
+   "status_reason": null
   },
   {
    "id": "co_5",
@@ -190,7 +194,8 @@
    "contact_email": "lab@gori-cardio.example",
    "status": "pending",
    "wallet_address": null,
-   "created_at": "2026-10-18T10:00:00Z"
+   "created_at": "2026-10-18T10:00:00Z",
+   "status_reason": null
   }
  ],
  "groups": [
@@ -282,7 +287,8 @@
     "id": "mv_1",
     "version": 1
    },
-   "created_at": "2026-10-18T10:00:00Z"
+   "created_at": "2026-10-18T10:00:00Z",
+   "updated_at": "2026-10-18T10:00:00Z"
   },
   {
    "id": "grp_2",
@@ -348,7 +354,8 @@
    "pricing": null,
    "member_count": 1,
    "current_version": null,
-   "created_at": "2026-10-18T10:00:00Z"
+   "created_at": "2026-10-18T10:00:00Z",
+   "updated_at": "2026-10-18T10:00:00Z"
   },
   {
    "id": "grp_3",
@@ -435,7 +442,8 @@
    "pricing": null,
    "member_count": 0,
    "current_version": null,
-   "created_at": "2026-10-18T10:00:00Z"
+   "created_at": "2026-10-18T10:00:00Z",
+   "updated_at": "2026-10-18T10:00:00Z"
   }
  ],
  "memberships": [
@@ -457,7 +465,8 @@
     "connector": {
      "kind": "sqlite",
      "display": "patients.db / table visits"
-    }
+    },
+    "node_version": "0.1"
    },
    "data": null,
    "schema": {
@@ -518,7 +527,11 @@
     "rows": 120,
     "rounds": 4
    },
-   "requested_at": "2026-10-18T11:00:00Z"
+   "requested_at": "2026-10-18T11:00:00Z",
+   "status_reason": null,
+   "has_node_token": true,
+   "activated_at": "2026-10-18T14:05:00Z",
+   "updated_at": "2026-10-18T11:00:00Z"
   },
   {
    "id": "mem_2",
@@ -538,7 +551,8 @@
     "connector": {
      "kind": "sqlite",
      "display": "patients.db / table visits"
-    }
+    },
+    "node_version": "0.1"
    },
    "data": null,
    "schema": {
@@ -600,7 +614,11 @@
     "rows": 120,
     "rounds": 4
    },
-   "requested_at": "2026-10-18T11:00:00Z"
+   "requested_at": "2026-10-18T11:00:00Z",
+   "status_reason": null,
+   "has_node_token": true,
+   "activated_at": "2026-10-18T14:05:00Z",
+   "updated_at": "2026-10-18T11:00:00Z"
   },
   {
    "id": "mem_3",
@@ -620,7 +638,8 @@
     "connector": {
      "kind": "sqlite",
      "display": "patients.db / table visits"
-    }
+    },
+    "node_version": "0.1"
    },
    "data": null,
    "schema": {
@@ -681,7 +700,11 @@
     "rows": 120,
     "rounds": 4
    },
-   "requested_at": "2026-10-18T11:00:00Z"
+   "requested_at": "2026-10-18T11:00:00Z",
+   "status_reason": null,
+   "has_node_token": true,
+   "activated_at": "2026-10-18T14:05:00Z",
+   "updated_at": "2026-10-18T11:00:00Z"
   },
   {
    "id": "mem_4",
@@ -701,7 +724,8 @@
     "connector": {
      "kind": "sqlite",
      "display": "patients.db / table visits"
-    }
+    },
+    "node_version": "0.1"
    },
    "data": {
     "row_count": 120,
@@ -745,7 +769,11 @@
     "rows": 0,
     "rounds": 0
    },
-   "requested_at": "2026-10-18T11:00:00Z"
+   "requested_at": "2026-10-18T11:00:00Z",
+   "status_reason": null,
+   "has_node_token": true,
+   "activated_at": null,
+   "updated_at": "2026-10-18T11:00:00Z"
   },
   {
    "id": "mem_5",
@@ -762,7 +790,11 @@
     "rows": 0,
     "rounds": 0
    },
-   "requested_at": "2026-10-18T11:00:00Z"
+   "requested_at": "2026-10-18T11:00:00Z",
+   "status_reason": null,
+   "has_node_token": false,
+   "activated_at": null,
+   "updated_at": "2026-10-18T11:00:00Z"
   }
  ],
  "jobs": [

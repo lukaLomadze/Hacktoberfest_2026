@@ -15,7 +15,8 @@ export function h(tag, attrs = {}, ...children) {
   const [name, ...classes] = tag.split(".");
   const el = document.createElement(name || "div");
   if (classes.length) el.className = classes.join(" ");
-  if (attrs instanceof Node || typeof attrs === "string" || Array.isArray(attrs)) {
+  // anything but a plain attribute object is the first child (h("td", 3) shows "3")
+  if (attrs !== null && (typeof attrs !== "object" || attrs instanceof Node || Array.isArray(attrs))) {
     children.unshift(attrs);
     attrs = {};
   }

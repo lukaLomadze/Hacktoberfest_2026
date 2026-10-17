@@ -50,6 +50,7 @@ class Fail extends Error {
 const notFound = (what) => new Fail(404, "not_found", `${what} not found`);
 const invalid = (message) => new Fail(409, "invalid_transition", message);
 const forbidden = (message = "not allowed for this account") => new Fail(403, "forbidden", message);
+const conflict = (message, field = null) => new Fail(409, "conflict", message, field);
 
 const find = (list, id, what) => {
   const item = list.find((x) => x.id === id);
@@ -73,29 +74,56 @@ function requireOwnMembership(ctx, m) {
   const co = requireCompany(ctx);
   if (m.company_id !== co.id) throw forbidden("not your company");
 }
-function requireMemberOfGroup(ctx, groupId) {
-  const user = requireUser(ctx);
-  if (user.role === "admin") return;
-  if (!db.memberships.some((m) => m.group_id === groupId && m.company_id === user.company_id)) {
-    throw forbidden("not a member of this group");
-  }
+// The real server's rules (hub/server/queries.py): companies see open/training/trained groups
+// and any group they ever had a membership in; a draft is a 404 for them. "Members" (jobs,
+// versions, events) are companies the admin let in: a pending request or a rejection does not count.
+const PUBLIC_GROUP_STATUS = ["open", "training", "trained"];
+const JOINABLE_GROUP_STATUS = PUBLIC_GROUP_STATUS;
+const MEMBER_STATUS = ["approved", "node_connected", "schema_proposed", "schema_confirmed", "ready",
+                       "training", "active"];
+const WIRED = ["approved", "node_connected", "schema_proposed", "schema_confirmed", "ready", "active"];
+
+function isGroupMember(user, groupId) {
+  return user.role === "admin" || db.memberships.some((m) => m.group_id === groupId &&
+    m.company_id === user.company_id && !["rejected", "requested"].includes(m.status));
 }
+function canSeeGroup(user, g) {
+  return user.role === "admin" || PUBLIC_GROUP_STATUS.includes(g.status) ||
+    db.memberships.some((m) => m.group_id === g.id && m.company_id === user.company_id);
+}
+function visibleGroup(ctx, id) {
+  const g = db.groups.find((x) => x.id === id);
+  if (!g || !canSeeGroup(requireUser(ctx), g)) throw notFound(`group ${id}`);
+  return g;
+}
+function requireMemberOfGroup(ctx, groupId) {
+  if (!isGroupMember(requireUser(ctx), groupId)) throw forbidden("only members of this group can see this");
+}
+function requireApprovedCompany(ctx) {
+  const co = requireCompany(ctx);
+  if (co.status !== "approved") throw invalid(`your company is ${co.status}; an admin must approve it first`);
+  return co;
+}
+const memberCount = (groupId) => db.memberships.filter((m) => m.group_id === groupId &&
+                                                         MEMBER_STATUS.includes(m.status)).length;
+const nameKey = (name) => name.split(/\s+/).filter(Boolean).join(" ").toLowerCase();
 function transition(m, from, to) {
   if (!from.includes(m.status)) {
     throw invalid(`membership ${m.id} is '${m.status}'; '${to}' needs one of ${from.join(", ")}`);
   }
   m.status = to;
+  m.status_reason = null;
+  m.updated_at = now();
   return m;
 }
 const ORDER = ["requested", "approved", "node_connected", "schema_proposed", "schema_confirmed",
                "ready", "training", "active"];
-const atLeast = (status, floor) => ORDER.indexOf(status) >= ORDER.indexOf(floor);
 
 function groupView(g, user) {
   const members = db.memberships.filter((m) => m.group_id === g.id &&
     (user.role === "admin" || m.company_id === user.company_id));
-  const versions = db.versions.filter((v) => v.group_id === g.id);
-  return { ...g, members, versions };
+  const versions = isGroupMember(user, g.id) ? db.versions.filter((v) => v.group_id === g.id) : [];
+  return { ...g, member_count: memberCount(g.id), members, versions };
 }
 
 // ---------------------------------------------------------------- routes
@@ -125,11 +153,15 @@ const routes = [
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
       throw new Fail(422, "validation_error", "not an email address", "contact_email");
     }
+    if (db.companies.some((c) => nameKey(c.name) === nameKey(body.name))) {
+      throw conflict(`a company called '${body.name.trim()}' is already registered`, "name");
+    }
     if (db.users.some((u) => u.email === email)) {
-      throw new Fail(422, "validation_error", "an account with this email exists; sign in", "contact_email");
+      throw conflict("this email is already registered; sign in instead", "contact_email");
     }
     const company = { id: newId("co"), name: body.name.trim(), field: body.field.trim(), contact_email: email,
-                      status: "pending", wallet_address: body.wallet_address || null, created_at: now() };
+                      status: "pending", status_reason: null, wallet_address: body.wallet_address || null,
+                      created_at: now() };
     const user = { id: newId("usr"), email, role: "company", company_id: company.id };
     db.companies.push(company);
     db.users.push(user);
@@ -151,21 +183,31 @@ const routes = [
     const c = find(db.companies, p.id, "company");
     if (!["pending", "suspended"].includes(c.status)) throw invalid(`company ${c.id} is '${c.status}'`);
     c.status = "approved";
+    c.status_reason = null;
     return c;
   }],
-  ["POST", "/companies/:id/reject", (ctx, p) => {
+  ["POST", "/companies/:id/reject", (ctx, p, body) => {
     requireAdmin(ctx);
     const c = find(db.companies, p.id, "company");
     if (c.status !== "pending") throw invalid(`company ${c.id} is '${c.status}'`);
     c.status = "rejected";
+    c.status_reason = body.reason || null;
+    return c;
+  }],
+  ["POST", "/companies/:id/suspend", (ctx, p, body) => {
+    requireAdmin(ctx);
+    const c = find(db.companies, p.id, "company");
+    if (c.status !== "approved") throw invalid(`company ${c.id} is '${c.status}'`);
+    c.status = "suspended";
+    c.status_reason = body.reason || null;
     return c;
   }],
 
   ["GET", "/groups", (ctx) => {
     const user = requireUser(ctx);
     const mine = new Set(db.memberships.filter((m) => m.company_id === user.company_id).map((m) => m.group_id));
-    return { items: db.groups.filter((g) => user.role === "admin" || ["open", "trained"].includes(g.status) ||
-                                            mine.has(g.id)) };
+    return { items: db.groups.filter((g) => user.role === "admin" || PUBLIC_GROUP_STATUS.includes(g.status) ||
+                                            mine.has(g.id)).map((g) => ({ ...g, member_count: memberCount(g.id) })) };
   }],
   ["POST", "/groups/draft-spec", (ctx, p, body) => {
     requireAdmin(ctx);
@@ -174,24 +216,25 @@ const routes = [
     return { task_spec: template, made_by: "rule",
              reasoning: "mock: the architect agent is not running, so this is the template TaskSpec" };
   }],
-  ["GET", "/groups/:id", (ctx, p) => {
-    requireUser(ctx);
-    return groupView(find(db.groups, p.id, "group"), ctx.user);
-  }],
+  ["GET", "/groups/:id", (ctx, p) => groupView(visibleGroup(ctx, p.id), ctx.user)],
   ["POST", "/groups", (ctx, p, body) => {
     requireAdmin(ctx);
     if (!String(body.name || "").trim()) throw new Fail(422, "validation_error", "name is required", "name");
     const g = { id: newId("grp"), name: body.name.trim(), description: body.description || "", status: "draft",
-                task_spec: body.task_spec || null, pricing: null, member_count: 0, current_version: null,
-                created_at: now() };
+                task_spec: body.task_spec || null, pricing: body.pricing || null, member_count: 0,
+                current_version: null, created_at: now(), updated_at: now() };
     db.groups.push(g);
     return g;
   }],
   ["PATCH", "/groups/:id", (ctx, p, body) => {
     requireAdmin(ctx);
     const g = find(db.groups, p.id, "group");
-    if (body.task_spec && g.status !== "draft") throw invalid("task_spec is editable only while the group is a draft");
-    for (const k of ["name", "description", "task_spec"]) if (k in body) g[k] = body[k];
+    if (g.status === "archived") throw invalid("an archived group cannot be edited");
+    if ("task_spec" in body && g.status !== "draft") {
+      throw invalid("the task spec can only change while the group is a draft");
+    }
+    for (const k of ["name", "description", "task_spec", "pricing"]) if (k in body) g[k] = body[k];
+    g.updated_at = now();
     return g;
   }],
   ["POST", "/groups/:id/publish", (ctx, p) => {
@@ -199,21 +242,37 @@ const routes = [
     const g = find(db.groups, p.id, "group");
     if (g.status !== "draft") throw invalid(`group ${g.id} is '${g.status}'; only a draft can be published`);
     g.status = "open";
+    g.updated_at = now();
+    return g;
+  }],
+  ["POST", "/groups/:id/archive", (ctx, p) => {
+    requireAdmin(ctx);
+    const g = find(db.groups, p.id, "group");
+    if (g.status === "archived") throw invalid("group is already archived");
+    if (db.jobs.some((j) => j.group_id === g.id && ["queued", "running"].includes(j.status))) {
+      throw invalid("a job is running in this group; cancel it first");
+    }
+    g.status = "archived";
+    g.updated_at = now();
+    for (const m of db.memberships) {
+      if (m.group_id === g.id && m.status === "requested") {
+        Object.assign(m, { status: "rejected", status_reason: "group archived", updated_at: now() });
+      }
+    }
     return g;
   }],
   ["POST", "/groups/:id/join", (ctx, p) => {
-    const co = requireCompany(ctx);
-    const g = find(db.groups, p.id, "group");
-    if (co.status !== "approved") throw invalid(`company ${co.id} is '${co.status}'; wait for approval`);
-    if (!["open", "trained"].includes(g.status)) throw invalid(`group ${g.id} is '${g.status}'`);
-    if (db.memberships.some((m) => m.group_id === g.id && m.company_id === co.id && m.status !== "left")) {
-      throw invalid("this company already has a membership in this group");
-    }
+    const co = requireApprovedCompany(ctx);
+    const g = visibleGroup(ctx, p.id);
+    if (!JOINABLE_GROUP_STATUS.includes(g.status)) throw invalid(`group is '${g.status}'; it is not taking members`);
+    const open = db.memberships.find((m) => m.group_id === g.id && m.company_id === co.id &&
+                                            !["rejected", "left"].includes(m.status));
+    if (open) throw conflict(`you already have membership ${open.id} (${open.status}) in this group`);
     const m = { id: newId("mem"), company_id: co.id, company_name: co.name, group_id: g.id, group_name: g.name,
-                status: "requested", node: null, data: null, schema: null, validation: null,
-                contribution: { rows: 0, rounds: 0 }, requested_at: now() };
+                status: "requested", status_reason: null, node: null, data: null, schema: null, validation: null,
+                contribution: { rows: 0, rounds: 0 }, has_node_token: false, activated_at: null,
+                requested_at: now(), updated_at: now() };
     db.memberships.push(m);
-    g.member_count += 1;
     return m;
   }],
 
@@ -230,16 +289,27 @@ const routes = [
   }],
   ["POST", "/memberships/:id/approve", (ctx, p) => {
     requireAdmin(ctx);
-    return transition(find(db.memberships, p.id, "membership"), ["requested"], "approved");
+    const m = find(db.memberships, p.id, "membership");
+    const co = find(db.companies, m.company_id, "company");
+    if (co.status !== "approved") throw invalid(`the company is '${co.status}'; approve the company first`);
+    if (find(db.groups, m.group_id, "group").status === "archived") throw invalid("the group is archived");
+    return transition(m, ["requested"], "approved");
   }],
-  ["POST", "/memberships/:id/reject", (ctx, p) => {
+  ["POST", "/memberships/:id/reject", (ctx, p, body) => {
     requireAdmin(ctx);
-    return transition(find(db.memberships, p.id, "membership"), ["requested"], "rejected");
+    const m = transition(find(db.memberships, p.id, "membership"), ["requested"], "rejected");
+    m.status_reason = body.reason || null;
+    return m;
   }],
   ["POST", "/memberships/:id/node-token", (ctx, p) => {
+    requireApprovedCompany(ctx);
     const m = find(db.memberships, p.id, "membership");
     requireOwnMembership(ctx, m);
-    if (!atLeast(m.status, "approved")) throw invalid(`membership ${m.id} is '${m.status}'; approve it first`);
+    if (m.status === "training") throw invalid("a job is running with this node; wait for it to finish");
+    if (!WIRED.includes(m.status)) throw invalid(`membership is '${m.status}'; it must be approved first`);
+    if (find(db.groups, m.group_id, "group").status === "archived") throw invalid("the group is archived");
+    m.has_node_token = true;
+    m.updated_at = now();
     const token = `ntk_mock_${Math.random().toString(36).slice(2, 10)}`;
     return { node_token: token,
              command: `python hub/node/node.py --server ${location.origin} --token ${token} --db <your connection>` };
@@ -256,7 +326,10 @@ const routes = [
   ["POST", "/memberships/:id/leave", (ctx, p) => {
     const m = find(db.memberships, p.id, "membership");
     requireOwnMembership(ctx, m);
-    return transition(m, ORDER.filter((s) => s !== "training"), "left");
+    if (m.status === "training") throw invalid("a job is running with your data; wait for it to finish");
+    transition(m, [...ORDER, "payment_pending"].filter((s) => s !== "training"), "left");
+    m.has_node_token = false;
+    return m;
   }],
 
   ["POST", "/groups/:id/jobs", (ctx, p, body) => {
@@ -356,6 +429,10 @@ const routes = [
   ["POST", "/demo/reset", (ctx) => { requireAdmin(ctx); db = null; return null; }],
 ];
 
+// routes the real server answers with 201 Created (everything else that returns a body is 200)
+const CREATED = new Set(["POST /companies/register", "POST /groups", "POST /groups/:id/join",
+                         "POST /groups/:id/jobs"]);
+
 function match(pattern, path) {
   const a = pattern.split("/");
   const b = path.split("/");
@@ -390,9 +467,10 @@ export async function handle(method, fullPath, body, token) {
       pathMatched = true;
       if (m !== method) continue;
       const result = await fn(ctx, params, body || {}, query);
-      return { status: result === null ? 204 : 200, body: structuredClone(result) };
+      const status = result === null ? 204 : CREATED.has(`${m} ${pattern}`) ? 201 : 200;
+      return { status, body: structuredClone(result) };
     }
-    if (pathMatched) throw new Fail(400, "bad_request", `${method} is not supported on ${path}`);
+    if (pathMatched) throw new Fail(405, "method_not_allowed", `${method} is not supported on ${path}`);
     throw notFound(`route ${path}`);
   } catch (err) {
     if (err instanceof Fail) return { status: err.status, body: err.body };
