@@ -24,9 +24,10 @@ class TestRuleDecider(unittest.TestCase):
         self.assertEqual(out["flagged"], list(ref.flagged))
         self.assertEqual(out["made_by"], "rule")
 
-    def test_schema_uses_fallback(self):
-        out = RuleDecider().schema(["a", "b"], lambda: ({"age": {"canonical": "age"}}, "outcome"))
-        self.assertEqual(out["mapping"], {"age": {"canonical": "age"}})
+    def test_describe_uses_fallback(self):
+        fb = {"label": "outcome", "reasoning": "r", "made_by": "rule",
+              "columns": [{"source": ["a"], "semantic": "age", "unit": "u", "factor": 1.0}]}
+        out = RuleDecider().describe(["a", "b"], lambda: fb)
         self.assertEqual(out["label"], "outcome")
         self.assertEqual(out["made_by"], "rule")
 
@@ -53,9 +54,10 @@ class TestLLMFallback(unittest.TestCase):
         self.assertGreaterEqual(d.fallbacks, 1)
         self.assertTrue(any("DEEPSEEK_API_KEY" in e for e in d.errors))
 
-    def test_schema_falls_back_without_key(self):
+    def test_describe_falls_back_without_key(self):
         d = LLMDecider(api_key="")
-        out = d.schema(["age"], lambda: ({"age": {"canonical": "age"}}, "y"))
+        fb = {"label": "y", "columns": [{"source": ["age"], "semantic": "age", "unit": "u", "factor": 1.0}]}
+        out = d.describe(["age"], lambda: fb)
         self.assertEqual(out["made_by"], "rule")
         self.assertEqual(out["label"], "y")
 
@@ -105,13 +107,13 @@ class TestGuards(unittest.TestCase):
         self.assertEqual(out["made_by"], "llm")
         self.assertEqual((out["epochs"], out["lr"]), (5, 0.12))
 
-    def test_schema_uses_llm_mapping(self):
-        mapping = {c: {"source": [c], "factor": 1.0, "unit": "u", "transform": "id"} for c in CANONICAL}
-        d = self._decider({"label": "outcome", "mapping": mapping, "reasoning": "direct names"})
-        out = d.schema(list(CANONICAL) + ["outcome"], lambda: ({}, "fallback"))
+    def test_describe_uses_llm(self):
+        cols = [{"source": [c], "semantic": c, "unit": "u", "factor": 1.0} for c in CANONICAL]
+        d = self._decider({"label": "outcome", "columns": cols, "reasoning": "direct names"})
+        out = d.describe(list(CANONICAL) + ["outcome"], lambda: {"label": "x", "columns": []})
         self.assertEqual(out["made_by"], "llm")
         self.assertEqual(out["label"], "outcome")
-        self.assertEqual(set(out["mapping"]), set(CANONICAL))
+        self.assertEqual([c["semantic"] for c in out["columns"]], CANONICAL)
 
 
 class TestLocalProfile(unittest.TestCase):
@@ -124,6 +126,52 @@ class TestLocalProfile(unittest.TestCase):
 
     def test_profile_empty_rows(self):
         self.assertEqual(column_profile(["a"], []), {})
+
+
+class TestReconcile(unittest.TestCase):
+    """The contract must reconcile different column names and units across hospitals."""
+
+    def _decider(self, reply):
+        d = LLMDecider(api_key="test")
+        d._ask = lambda system, user: reply
+        return d
+
+    def test_describe_arbitrary_columns(self):
+        # a bank-like column, not medical: the model names it from name + stats
+        reply = {"label": "default", "reasoning": "income in USD",
+                 "columns": [{"source": ["annual_income"], "semantic": "income",
+                              "unit": "USD", "factor": 1.0},
+                             {"source": ["credit_score"], "semantic": "credit_score",
+                              "unit": "count", "factor": 1.0}]}
+        d = self._decider(reply)
+        out = d.describe(["annual_income", "credit_score", "default"],
+                         lambda: {"label": "x", "columns": []})
+        self.assertEqual(out["made_by"], "llm")
+        self.assertEqual([c["semantic"] for c in out["columns"]], ["income", "credit_score"])
+
+    def test_contract_reconciles_synonyms_and_units(self):
+        # "bp" (kPa) and "blood_pressure" (mmHg) are the same measurement, differently named/unit-ed
+        proposals = {
+            "h0": {"label": "default", "columns": [
+                {"source": ["BloodPressure"], "semantic": "blood_pressure", "unit": "mmHg", "factor": 1.0},
+                {"source": ["Age"], "semantic": "age", "unit": "years", "factor": 1.0}]},
+            "h1": {"label": "default", "columns": [
+                {"source": ["bp_kpa"], "semantic": "bp", "unit": "kPa", "factor": 7.50062},
+                {"source": ["age_months"], "semantic": "age", "unit": "months", "factor": 1.0 / 12.0}]},
+        }
+        reply = {"features": ["blood_pressure", "age"], "model": "logistic",
+                 "columns": {
+                     "h0": {"blood_pressure": {"source": ["BloodPressure"], "factor": 1.0},
+                            "age": {"source": ["Age"], "factor": 1.0}},
+                     "h1": {"blood_pressure": {"source": ["bp_kpa"], "factor": 7.50062},
+                            "age": {"source": ["age_months"], "factor": 1.0 / 12.0}}},
+                 "reasoning": "bp and blood_pressure are the same measurement"}
+        d = self._decider(reply)
+        out = d.contract(proposals, lambda: {})
+        self.assertEqual(out["made_by"], "llm")
+        self.assertEqual(out["features"], ["blood_pressure", "age"])
+        self.assertEqual(out["columns"]["h1"]["blood_pressure"]["factor"], 7.50062)
+        self.assertEqual(out["columns"]["h1"]["age"]["factor"], 1.0 / 12.0)
 
 
 if __name__ == "__main__":

@@ -58,25 +58,30 @@ class TestSchemaAgent(unittest.TestCase):
         order = ["Pregnancies", "Glucose", "BloodPressure", "BMI", "Insulin", "Age"]
         for h in range(3):
             cols, rows = load_local_csv(DATA / "hospitals" / f"hospital_{h}.csv")
-            X, labels = SchemaAgent(cols).to_canonical(rows)
+            agent = SchemaAgent(cols)
+            mapping = {c["semantic"]: {"source": c["source"], "factor": c["factor"]}
+                       for c in agent.described}
+            X, labels = agent.to_canonical(rows, mapping, CANONICAL)
             ids = MANIFEST["row_ids"][f"h{h}"]
             expected = np.column_stack([self.clean[c][ids] for c in order])
             np.testing.assert_allclose(X, expected, rtol=0, atol=1e-6)
             np.testing.assert_array_equal(labels, self.clean["Outcome"][ids])
 
     def test_recognises_each_local_convention(self):
-        h1 = SchemaAgent(load_local_csv(DATA / "hospitals" / "hospital_1.csv")[0]).mapping
-        self.assertEqual(h1["glucose"]["transform"], "x * 18.0182")
-        self.assertEqual(h1["blood_pressure"]["unit"], "kPa")
-        self.assertEqual(h1["bmi"]["source"], ["weight_kg", "height_m"])
-        self.assertEqual(h1["age"]["transform"], "x / 12")
-        h2 = SchemaAgent(load_local_csv(DATA / "hospitals" / "hospital_2.csv")[0]).mapping
-        self.assertEqual(h2["pregnancies"]["source"], ["num_pregnancies"])
-        self.assertEqual(h2["insulin"]["transform"], "x / 6.945")
+        by = {c["semantic"]: c for c in SchemaAgent(load_local_csv(DATA / "hospitals" / "hospital_1.csv")[0]).described}
+        self.assertEqual(by["glucose"]["factor"], 18.0182)
+        self.assertEqual(by["blood_pressure"]["unit"], "kPa")
+        self.assertEqual(by["bmi"]["source"], ["weight_kg", "height_m"])
+        self.assertEqual(by["age"]["factor"], 1.0 / 12.0)
+        by2 = {c["semantic"]: c for c in SchemaAgent(load_local_csv(DATA / "hospitals" / "hospital_2.csv")[0]).described}
+        self.assertEqual(by2["pregnancies"]["source"], ["num_pregnancies"])
+        self.assertEqual(by2["insulin"]["factor"], 1.0 / 6.945)
 
     def test_missing_or_ambiguous_columns_fail_loudly(self):
-        with self.assertRaisesRegex(ValueError, "cannot map"):
-            SchemaAgent(["Age", "BMI", "Glucose", "Insulin", "Pregnancies", "Outcome"])
+        # a hospital missing a feature no longer fails: it describes what it has, and the
+        # coordinator drops that feature from the contract
+        a = SchemaAgent(["Age", "BMI", "Glucose", "Insulin", "Pregnancies", "Outcome"])
+        self.assertEqual(len(a.described), 5)
         with self.assertRaisesRegex(ValueError, "both map"):
             SchemaAgent(["age", "age_months", "bmi", "glucose", "bp_sys", "insulin", "pregnancies", "outcome"])
         with self.assertRaisesRegex(ValueError, "label"):

@@ -120,21 +120,35 @@ def column_profile(columns, rows):
 
 
 class SchemaAgent:
-    """Maps a hospital's local columns to the canonical schema (names + units)."""
+    """Describes a hospital's local columns so the federation can agree a schema.
+
+    With an LLM, every column gets a *semantic* name, its unit and a factor to a
+    standard unit — decided from the column name and its summary statistics, so it
+    works for any table (medical, financial, …), not just the demo's six columns.
+    Without an LLM it falls back to the offline alias table.
+    """
 
     def __init__(self, columns, decider=None, profile=None):
         self.columns = list(columns)
         self.decider = decider
-        self.profile = profile
-        d = decider.schema(self.columns, self._infer, profile) if decider is not None else None
+        self.profile = profile or {}
+        d = decider.describe(self.columns, self._infer, self.profile) if decider is not None else None
         if d is None:
-            self.mapping, self.label = self._infer()
-            self.reasoning, self.made_by = "matched the known column aliases", "rule"
-        else:
-            self.mapping, self.label = d["mapping"], d["label"]
-            self.reasoning, self.made_by = d["reasoning"], d["made_by"]
+            d = self._infer()
+        self.label = d["label"]
+        self.described = d["columns"]
+        self.reasoning = d.get("reasoning", "")
+        self.made_by = d.get("made_by", "rule")
 
     def _infer(self):
+        """Offline fallback: the alias table, reshaped to the generic describe shape."""
+        mapping, label = self._infer_alias()
+        return {"label": label,
+                "columns": [{"source": m["source"], "semantic": k, "unit": m["unit"],
+                             "factor": m["factor"]} for k, m in mapping.items()],
+                "reasoning": "matched the known column aliases", "made_by": "rule"}
+
+    def _infer_alias(self):
         by_norm = {_norm(c): c for c in self.columns}
         mapping = {}
         label = None
@@ -153,30 +167,22 @@ class SchemaAgent:
             if h and w:
                 mapping["bmi"] = {"canonical": "bmi", "source": [w[0], h[0]], "unit": "kg, m",
                                   "transform": "weight_kg / height_m^2", "factor": None}
-        missing = [c for c in CANONICAL if c not in mapping]
-        if missing:
-            raise ValueError(f"schema: cannot map canonical feature(s) {missing} from columns {self.columns}")
         if label is None:
             raise ValueError(f"schema: no label column among {self.columns}")
         return mapping, label
 
     def describe(self, hospital: str) -> dict:
         """The schema message: names, units and conversions only — never values."""
-        return {
-            "hospital": hospital,
-            "label": self.label,
-            "columns": [{k: self.mapping[c][k] for k in ("canonical", "source", "unit", "transform")}
-                        for c in CANONICAL],
-        }
+        return {"hospital": hospital, "label": self.label, "columns": self.described}
 
-    def to_canonical(self, rows, order=CANONICAL):
-        """Local rows → (X canonical units in `order`, labels)."""
+    def to_canonical(self, rows, mapping, order):
+        """Local rows → (X in the agreed `order`, labels) using the agreed per-hospital mapping."""
         X = np.empty((len(rows), len(order)))
-        for j, c in enumerate(order):
-            m = self.mapping[c]
-            if c == "bmi" and m["factor"] is None:
-                wcol, hcol = m["source"]
-                X[:, j] = [r[wcol] / r[hcol] ** 2 for r in rows]
+        for j, f in enumerate(order):
+            m = mapping[f]
+            if m.get("factor") is None:  # derived feature, e.g. BMI from weight/height
+                w, h = m["source"]
+                X[:, j] = [r[w] / r[h] ** 2 for r in rows]
             else:
                 X[:, j] = [r[m["source"][0]] * m["factor"] for r in rows]
         labels = np.array([r[self.label] for r in rows], dtype=float)
@@ -289,14 +295,20 @@ class HospitalAgent(Agent):
     def _on_schema_agreed(self, msg):
         p = msg.payload
         order = list(p.get("features") or [])
-        if not order or any(c not in self.schema.mapping for c in order):
+        mine = (p.get("columns") or {}).get(self.id)
+        if mine is None:
+            # the coordinator did not send a per-hospital mapping (older messages): use this
+            # hospital's own description keyed by semantic name
+            mine = {c["semantic"]: {"source": c["source"], "factor": c["factor"]}
+                    for c in self.schema.described}
+        if not order or any(f not in mine for f in order):
             raise ValueError(f"{self.id}: agreed features {order} are not provided by this hospital")
         if "feature_mean" in p:
             self._mean = np.asarray(p["feature_mean"], dtype=float)
             self._std = np.asarray(p["feature_std"], dtype=float)
         if self._mean is None or self._std is None:
             raise ValueError(f"{self.id}: no normalisation statistics (feature_mean/feature_std)")
-        X, labels = self.schema.to_canonical(self._rows, order)
+        X, labels = self.schema.to_canonical(self._rows, mine, order)
         self._order = list(order)
         self._X = (X - self._mean) / self._std
         self._labels = labels

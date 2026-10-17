@@ -44,7 +44,7 @@ class FakeHospital(Agent):
             p = m.payload
             if m.kind == "schema_request":
                 out.append(self.send(m.sender, "schema", {"hospital": self.id, "label": "outcome", "columns": [
-                    {"canonical": c, "source": [c], "unit": "x", "transform": "rename"} for c in self.columns]}))
+                    {"semantic": c, "source": [c], "unit": "x", "factor": 1.0} for c in self.columns]}))
             elif m.kind == "probe":
                 if self.faults.get(p["round"]) == "offline":
                     continue
