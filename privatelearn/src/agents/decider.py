@@ -32,16 +32,6 @@ import urllib.request
 
 from model.aggregation import STRATEGIES, select_strategy
 
-CANONICAL_UNITS = {
-    "pregnancies": "count",
-    "glucose": "mg/dL",
-    "blood_pressure": "mmHg",
-    "bmi": "kg/m^2",
-    "insulin": "uU/mL",
-    "age": "years",
-}
-CANONICAL = list(CANONICAL_UNITS)
-
 SYSTEM_STRATEGY = (
     "You are the Coordinator agent of a federated learning run over three hospitals. "
     "You see only each hospital's probe loss on the current global model, never any data. "

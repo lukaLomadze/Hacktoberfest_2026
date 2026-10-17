@@ -10,9 +10,6 @@ from __future__ import annotations
 
 import numpy as np
 
-N_FEATURES = 6
-N_WEIGHTS = 7  # bias + 6 features
-
 
 def sigmoid(z: np.ndarray) -> np.ndarray:
     z = np.clip(z, -500.0, 500.0)

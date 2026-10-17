@@ -10,9 +10,11 @@ import unittest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
-from agents.decider import CANONICAL, LLMDecider, RuleDecider, build_decider
+from agents.decider import LLMDecider, RuleDecider, build_decider
 from agents.hospital import column_profile
 from model.aggregation import select_strategy
+
+FEATURES = ["pregnancies", "glucose", "blood_pressure", "bmi", "insulin", "age"]
 
 
 class TestRuleDecider(unittest.TestCase):
@@ -108,12 +110,12 @@ class TestGuards(unittest.TestCase):
         self.assertEqual((out["epochs"], out["lr"]), (5, 0.12))
 
     def test_describe_uses_llm(self):
-        cols = [{"source": [c], "semantic": c, "unit": "u", "factor": 1.0} for c in CANONICAL]
+        cols = [{"source": [c], "semantic": c, "unit": "u", "factor": 1.0} for c in FEATURES]
         d = self._decider({"label": "outcome", "columns": cols, "reasoning": "direct names"})
-        out = d.describe(list(CANONICAL) + ["outcome"], lambda: {"label": "x", "columns": []})
+        out = d.describe(list(FEATURES) + ["outcome"], lambda: {"label": "x", "columns": []})
         self.assertEqual(out["made_by"], "llm")
         self.assertEqual(out["label"], "outcome")
-        self.assertEqual([c["semantic"] for c in out["columns"]], CANONICAL)
+        self.assertEqual([c["semantic"] for c in out["columns"]], FEATURES)
 
 
 class TestLocalProfile(unittest.TestCase):

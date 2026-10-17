@@ -10,8 +10,6 @@ import math
 
 ALLOWED_STRATEGIES = {"fedavg", "fedprox", "trimmed_mean"}
 ALLOWED_HOSPITALS = {"h0", "h1", "h2"}
-N_WEIGHTS = 7
-N_FEATURES = 6
 VERSION = "1.0"
 
 
@@ -118,8 +116,8 @@ def validate_trace(trace):
         _fail("trace.meta", "must be an object")
     if not isinstance(meta.get("hospitals"), int) or meta["hospitals"] < 1:
         _fail("trace.meta.hospitals", "must be a positive int")
-    if not isinstance(meta.get("features"), list) or len(meta["features"]) != N_FEATURES:
-        _fail("trace.meta.features", f"must be {N_FEATURES} feature names")
+    if not isinstance(meta.get("features"), list) or len(meta["features"]) < 1:
+        _fail("trace.meta.features", "must be a non-empty list of feature names")
     if not isinstance(meta.get("rounds"), int) or meta["rounds"] < 1:
         _fail("trace.meta.rounds", "must be a positive int")
 

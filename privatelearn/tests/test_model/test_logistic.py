@@ -8,9 +8,11 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
 import numpy as np
 
+# a local fixture: the model itself no longer hard-codes a feature count
+N_FEATURES = 6
+N_WEIGHTS = N_FEATURES + 1
+
 from model.logistic import (
-    N_FEATURES,
-    N_WEIGHTS,
     auc,
     gradient,
     loss,

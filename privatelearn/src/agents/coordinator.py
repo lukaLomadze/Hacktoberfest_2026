@@ -35,7 +35,6 @@ from agents.runtime import BROADCAST, Agent
 from model.aggregation import FEDPROX_MU, select_strategy
 from model.privacy import unmask_sum
 
-CANONICAL = ["pregnancies", "glucose", "blood_pressure", "bmi", "insulin", "age"]
 REPLY_DELAY = 2  # coordinator steps between sending a request and receiving replies
 
 
@@ -49,7 +48,7 @@ class CoordinatorAgent(Agent):
         self.hospitals = list(hospitals)
         self.names = dict(names or {h: h for h in self.hospitals})
         self.eval_fn = eval_fn  # w -> global AUC on the evaluation set the coordinator holds
-        self.feature_names = list(feature_names) if feature_names else CANONICAL
+        self.feature_names = list(feature_names) if feature_names else None
         self.feature_mean = [float(v) for v in feature_mean]
         self.feature_std = [float(v) for v in feature_std]
         self.rounds = rounds

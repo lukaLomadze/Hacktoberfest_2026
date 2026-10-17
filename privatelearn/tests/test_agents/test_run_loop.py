@@ -8,7 +8,9 @@ import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
+from pima_decider import PimaDecider
 from pipeline import run_loop
 from shared import schemas
 
@@ -37,7 +39,7 @@ class TestEndToEnd(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         start = time.perf_counter()
-        cls.trace = run_loop.run()
+        cls.trace = run_loop.run(decider=PimaDecider())
         cls.seconds = time.perf_counter() - start
 
     def test_exactly_four_rounds_and_valid_trace(self):
@@ -53,7 +55,7 @@ class TestEndToEnd(unittest.TestCase):
     def test_privacy_cost_is_measured_and_small(self):
         m = self.trace["meta"]
         self.assertLess(abs(m["auc_federated"] - m["auc_federated_no_privacy"]), 0.01)
-        plain = run_loop.run(private=False)
+        plain = run_loop.run(private=False, decider=PimaDecider())
         self.assertFalse(any(u["masked"] for r in plain["rounds"] for u in r["updates"]))
 
     def test_weakest_hospital_gains_from_federation(self):
@@ -104,7 +106,7 @@ class TestEndToEnd(unittest.TestCase):
         self.assertEqual(self.trace["patient_bytes_transferred"], 0)
 
     def test_deterministic(self):
-        self.assertEqual(without_runtime(run_loop.run()), without_runtime(self.trace))
+        self.assertEqual(without_runtime(run_loop.run(decider=PimaDecider())), without_runtime(self.trace))
 
     def test_committed_trace_matches_a_fresh_run(self):
         committed = ROOT / "trace.json"
