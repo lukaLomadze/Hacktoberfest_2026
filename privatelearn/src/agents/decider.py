@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import json
 import os
+import urllib.error
 import urllib.request
 
 from model.aggregation import STRATEGIES, select_strategy
@@ -109,23 +110,31 @@ class LLMDecider:
     def _ask(self, system, user):
         if not self.api_key:
             raise RuntimeError("DEEPSEEK_API_KEY is not set")
-        body = {
-            "model": self.model,
-            "messages": [{"role": "system", "content": system},
-                         {"role": "user", "content": user}],
-            "temperature": 0,
-            "max_tokens": 500,
-            "response_format": {"type": "json_object"},
-        }
-        req = urllib.request.Request(
-            self.endpoint,
-            data=json.dumps(body).encode("utf-8"),
-            headers={"Content-Type": "application/json",
-                     "Authorization": f"Bearer {self.api_key}"},
-            method="POST",
-        )
-        with urllib.request.urlopen(req, timeout=self.timeout) as resp:
-            payload = json.loads(resp.read().decode("utf-8"))
+        messages = [{"role": "system", "content": system},
+                    {"role": "user", "content": user}]
+        payload = None
+        # Try JSON mode first; some providers reject response_format with a 400,
+        # so retry once without it before giving up and falling back to rules.
+        for json_mode in (True, False):
+            body = {"model": self.model, "messages": messages,
+                    "temperature": 0, "max_tokens": 500}
+            if json_mode:
+                body["response_format"] = {"type": "json_object"}
+            req = urllib.request.Request(
+                self.endpoint,
+                data=json.dumps(body).encode("utf-8"),
+                headers={"Content-Type": "application/json",
+                         "Authorization": f"Bearer {self.api_key}"},
+                method="POST",
+            )
+            try:
+                with urllib.request.urlopen(req, timeout=self.timeout) as resp:
+                    payload = json.loads(resp.read().decode("utf-8"))
+                break
+            except urllib.error.HTTPError as exc:
+                if json_mode and exc.code in (400, 404, 422):
+                    continue
+                raise
         text = payload["choices"][0]["message"]["content"].strip()
         if text.startswith("```"):
             text = text.strip("`").lstrip("json").strip()
