@@ -35,8 +35,7 @@
       "h1": "d549c8277f584e10af29c0b2f5ddb4104d51fe5b1dd8614901bab86458169ac7",
       "h2": "d549c8277f584e10af29c0b2f5ddb4104d51fe5b1dd8614901bab86458169ac7"
     },
-    "honesty": "Real Pima Indians Diabetes records (360 of 768) split into three SIMULATED hospitals; the player replays this recorded run, not live networking. Masking, DP noise, the agents' decisions and every number are real outputs of the code. DP accounting is a stated-ε demonstration (analytic Gaussian, basic composition), not an audited accountant.",
-    "runtime_s": 0.16
+    "honesty": "Real Pima Indians Diabetes records (360 of 768) split into three SIMULATED hospitals; the player replays this recorded run, not live networking. Masking, DP noise, the agents' decisions and every number are real outputs of the code. DP accounting is a stated-ε demonstration (analytic Gaussian, basic composition), not an audited accountant."
   },
   "nodes": [
     {

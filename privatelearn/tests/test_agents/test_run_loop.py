@@ -14,9 +14,7 @@ from shared import schemas
 
 
 def without_runtime(t):
-    t = json.loads(json.dumps(t))
-    t["meta"].pop("runtime_s", None)
-    return t
+    return json.loads(json.dumps(t))
 
 
 class TestEndToEnd(unittest.TestCase):

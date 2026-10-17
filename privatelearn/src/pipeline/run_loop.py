@@ -189,9 +189,9 @@ def run(seed: int = SEED, out_path=None) -> dict:
         "timeline_ms": 60000,
     }
     schemas.validate_trace(trace)
-    trace["meta"]["runtime_s"] = round(time.perf_counter() - t0, 2)
     if out_path is not None:
         io.save_json(out_path, trace)
+    run.last_runtime_s = time.perf_counter() - t0  # printed, not stored: the trace stays byte-stable
     return trace
 
 
@@ -210,7 +210,7 @@ def main(argv=None):
     print(f"AUC  solo best {m['auc_solo']:.3f} {m['auc_solo_by_hospital']}  federated {m['auc_federated']:.3f}  "
           f"centralized {m['auc_centralized']:.3f}")
     print(f"attack: {t['attack']}")
-    print(f"model hashes identical: {len(set(m['model_hashes'].values())) == 1}  runtime {m['runtime_s']} s")
+    print(f"model hashes identical: {len(set(m['model_hashes'].values())) == 1}  runtime {run.last_runtime_s:.2f} s")
     print(f"wrote {args.out}")
 
 
