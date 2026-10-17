@@ -146,6 +146,16 @@ class TestHospitalRound(unittest.TestCase):
         bad = agreed(hospital(2, faults={3: "flip_labels"})).step([msg("probe", {"round": 3, "w": list(w)}, to="h2")])[0]
         self.assertGreater(bad.payload["loss"], honest.payload["loss"] + 0.3)
 
+    def test_age_in_months_fault_is_a_clear_outlier(self):
+        h = agreed(hospital(2))
+        w = logistic.train(np.zeros(7), *h._data(1), epochs=50, lr=0.5)
+        honest = h.step([msg("probe", {"round": 3, "w": list(w)}, to="h2")])[0]
+        bad = agreed(hospital(2, faults={3: "age_in_months"})).step([msg("probe", {"round": 3, "w": list(w)}, to="h2")])[0]
+        self.assertGreater(bad.payload["loss"], honest.payload["loss"] + 0.3)
+        # only that round is affected
+        again = agreed(hospital(2, faults={3: "age_in_months"})).step([msg("probe", {"round": 4, "w": list(w)}, to="h2")])[0]
+        self.assertAlmostEqual(again.payload["loss"], honest.payload["loss"], places=12)
+
     def test_broadcast_updates_global_model(self):
         h = agreed(hospital(0))
         b = {"v": "1.0", "round": 1, "w": [0.1] * 7, "strategy": "fedavg", "eps_total": 0.0,

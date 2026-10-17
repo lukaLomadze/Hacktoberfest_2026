@@ -202,11 +202,12 @@ class HospitalAgent(Agent):
         self.trainer = TrainerAgent(train_fn)
         self.challenger = ChallengerAgent()
         self.protector = protector or no_protection
-        self.faults = dict(faults or {})  # {round: "offline" | "flip_labels"} for demo scenarios
+        self.faults = dict(faults or {})  # {round: "offline" | "flip_labels" | "age_in_months"}
         self._mean = None if feature_mean is None else np.asarray(feature_mean, dtype=float)
         self._std = None if feature_std is None else np.asarray(feature_std, dtype=float)
         self._X = None
         self._labels = None
+        self._order = None
         self.w_global = None
         self.activity = []  # [{round, agent, action}] for the trace; no patient values
 
@@ -223,12 +224,20 @@ class HospitalAgent(Agent):
         self.activity.append({"round": round_, "agent": agent, "action": action})
 
     def _data(self, round_):
+        """This round's (X, labels). Simulated faults corrupt them the way real exports do."""
         if self._X is None:
             raise RuntimeError(f"{self.id}: no agreed schema yet")
-        labels = self._labels
-        if self.faults.get(round_) == "flip_labels":
+        X, labels = self._X, self._labels
+        fault = self.faults.get(round_)
+        if fault == "flip_labels":
             labels = 1.0 - labels
-        return self._X, labels
+        elif fault == "age_in_months":
+            # the export silently switches the age column to months, same column name
+            j = self._order.index("age")
+            X = X.copy()
+            X[:, j] = (X[:, j] * self._std[j] + self._mean[j]) * 12.0
+            X[:, j] = (X[:, j] - self._mean[j]) / self._std[j]
+        return X, labels
 
     # ---- message handlers -------------------------------------------------------
 
@@ -247,6 +256,7 @@ class HospitalAgent(Agent):
         if self._mean is None or self._std is None:
             raise ValueError(f"{self.id}: no normalisation statistics (feature_mean/feature_std)")
         X, labels = self.schema.to_canonical(self._rows, order)
+        self._order = list(order)
         self._X = (X - self._mean) / self._std
         self._labels = labels
         self._log(0, "schema", f"mapped to the agreed {len(order)}-feature schema")
