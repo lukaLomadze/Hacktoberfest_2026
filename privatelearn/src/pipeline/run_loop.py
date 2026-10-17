@@ -206,7 +206,8 @@ def run(seed: int = SEED, out_path=None, private: bool = True, use_llm: bool = F
                 **decider.info(),
                 "schema": {h.id: {"made_by": h.schema.made_by, "reasoning": h.schema.reasoning}
                            for h in hospitals},
-                "policy": "the LLM only sees column names and aggregate losses, never a patient row; "
+                "policy": "the LLM only sees column names, local column statistics "
+                          "(min/p05/median/p95/max) and aggregate losses, never a patient row; "
                           "gradients, aggregation, masking and DP are deterministic code",
             },
             "honesty": HONESTY,
