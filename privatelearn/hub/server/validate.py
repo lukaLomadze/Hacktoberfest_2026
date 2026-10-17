@@ -5,6 +5,8 @@ PLATFORM-API §1.1 shape and names the field the way the frontend displays it
 (`task_spec.input_schema[2].unit`). Two traps these helpers close:
   - `bool` is a subclass of `int` in Python, so `true` would pass as the integer 1;
   - Python's json accepts NaN and Infinity, which are not valid JSON for the frontend.
+Patterns use `fullmatch`: with `match`, `$` also matches before a trailing newline, so
+"glucose\\n" would pass as a name distinct from "glucose".
 """
 
 from __future__ import annotations
@@ -14,10 +16,10 @@ import re
 
 from .errors import bad_request, validation
 
-EMAIL_RE = re.compile(r"^[^@\s]{1,64}@[^@\s]+\.[^@\s]{2,}$")
+EMAIL_RE = re.compile(r"[^@\s]{1,64}@[^@\s]+\.[^@\s]{2,}")
 # Solana addresses are base58 public keys: 32-44 characters, no 0, O, I or l.
-SOLANA_RE = re.compile(r"^[1-9A-HJ-NP-Za-km-z]{32,44}$")
-NAME_RE = re.compile(r"^[a-z][a-z0-9_]{0,63}$")
+SOLANA_RE = re.compile(r"[1-9A-HJ-NP-Za-km-z]{32,44}")
+NAME_RE = re.compile(r"[a-z][a-z0-9_]{0,63}")
 
 
 def body_object(payload, *, required=True) -> dict:
@@ -108,7 +110,7 @@ def enum(v, field, allowed) -> str:
 
 def email(v, field) -> str:
     v = string(v, field, max_len=254).lower()
-    if not EMAIL_RE.match(v):
+    if not EMAIL_RE.fullmatch(v):
         raise validation(field, "must be an email address")
     return v
 
@@ -117,14 +119,14 @@ def wallet(v, field):
     if v is None:
         return None
     v = string(v, field, max_len=64)
-    if not SOLANA_RE.match(v):
+    if not SOLANA_RE.fullmatch(v):
         raise validation(field, "must be a Solana address (base58, 32-44 characters)")
     return v
 
 
 def name_key(v, field) -> str:
     """A machine name: lower snake_case, starts with a letter (feature and label names)."""
-    if not isinstance(v, str) or not NAME_RE.match(v):
+    if not isinstance(v, str) or not NAME_RE.fullmatch(v):
         raise validation(field, "must be lower snake_case: a letter, then letters, digits or _ (max 64)")
     return v
 
