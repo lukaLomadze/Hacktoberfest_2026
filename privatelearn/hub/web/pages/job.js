@@ -197,6 +197,8 @@ export async function render({ el, params, query }) {
     liveSlot.hidden = false;
     liveSlot.textContent = "live";
     stopStream = api.stream(job.id, (e) => {
+      if (typeof e.seq === "number" && e.seq <= state.last_seq) return; // resent after a reconnect
+      events.push(e); // so a replay after the job finishes includes what streamed live
       apply(e, true);
       if (!LIVE.has(state.status)) {
         liveSlot.textContent = "finished";
