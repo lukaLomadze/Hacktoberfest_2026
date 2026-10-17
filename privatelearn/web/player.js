@@ -133,8 +133,10 @@ function drawHospital(id, u) {
   if (offline) { sub = 'offline this round'; subColor = COL.danger; }
   else if (rejected) { sub = `excluded: ${u.reason || 'outlier'}`; subColor = COL.danger; }
   text(sub, p.x, p.y + 46, { size: 13, color: subColor });
+  // the hospital's real agent team — visible, not just a count
+  text('Schema · Planner · Trainer · Challenger', p.x, p.y + 64, { size: 10, color: COL.faint });
   if (showDp.checked && u && u.sent && !rejected) {
-    text(`ε ${fmt(u.dp_eps, 1)} this round`, p.x, p.y + 64, { size: 12, color: COL.dim, font: FONT_DATA });
+    text(`ε ${fmt(u.dp_eps, 1)} this round`, p.x, p.y + 80, { size: 12, color: COL.dim, font: FONT_DATA });
   }
 }
 
@@ -330,9 +332,16 @@ function renderLog() {
     const excluded = r.excluded || [];
     const li = el('li', [excluded.length ? 'excluded' : '', i < round - 1 ? 'past' : ''].join(' ').trim());
     const row = el('div', 'row');
-    row.append(el('span', `badge ${r.strategy}`, r.strategy), el('span', 'num', `round ${r.round}`));
+    row.append(el('span', `badge ${r.strategy}`, r.strategy), el('span', 'num', `round ${r.round}`),
+               el('span', 'tag coord', 'coordinator'));
     excluded.forEach((h) => row.appendChild(el('span', 'tag', `excluded ${node(h).label}`)));
     li.append(row, el('div', 'text', r.decision || ''));
+    // the hospital agents that actually acted this round, from trace.agents
+    const acts = HOSPITALS.map((h) => {
+      const names = (trace.agents?.[h] || []).filter((a) => a.round === r.round).map((a) => a.agent);
+      return names.length ? `${node(h).label}: ${names.join(' → ')}` : null;
+    }).filter(Boolean);
+    if (acts.length) li.appendChild(el('div', 'agents', acts.join(' · ')));
     li.appendChild(el('div', 'meta', `AUC ${fmt(r.auc_before)} → ${fmt(r.auc_after)} · ε ${fmt(r.eps_total, 1)}`));
     log.appendChild(li);
   });
