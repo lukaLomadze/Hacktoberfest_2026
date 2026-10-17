@@ -234,9 +234,13 @@ function drawSeries(S, series, upto, { refs = [], color, pad = 30, decimals = 1,
   ctx.clearRect(0, 0, w, h);
   const vals = series.concat(refs.map((r) => r.v)).filter((v) => typeof v === 'number');
   let min, max;
-  if (step) { // DESIGN §7.2: AUC axis up to 1.0 with 0.1 gridlines; floor follows the data
-    min = Math.min(0.6, Math.floor(Math.min(...vals) / step) * step);
-    max = fixedMax ?? Math.ceil(Math.max(...vals) / step) * step;
+  if (step) {
+    // DESIGN §7.2: fit the axis to the data (labels show the true extent), so the
+    // federated climb is visible instead of a flat smear in the top of the panel.
+    const lo = Math.min(...vals), hi = Math.max(...vals);
+    min = Math.floor((lo - 0.01) / step) * step;
+    max = Math.ceil((hi + 0.01) / step) * step;
+    if (max - min < step * 3) max = min + step * 3;
   } else {
     const lo = Math.min(...vals), hi = Math.max(...vals), span = Math.max(hi - lo, 1e-3);
     min = lo - span * 0.15; max = hi + span * 0.15;
@@ -299,7 +303,7 @@ function renderCharts() {
     $('soloNote').textContent = `best single hospital alone: ${fmt(Math.max(...Object.values(byH)))}`;
   }
   drawSeries(A, m.auc_series, round, {
-    color: COL.coord, step: 0.1, fixedMax: 1.0,
+    color: COL.coord, step: 0.05, decimals: 2,
     refs: [{ v: solo, color: COL.danger }, { v: meta.auc_centralized, color: COL.ok }],
   });
   $('aucNow').textContent = fmt(m.auc_series[Math.min(round, m.auc_series.length - 1)]);
