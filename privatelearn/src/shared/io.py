@@ -14,7 +14,8 @@ def load_json(path) -> object:
 def save_json(path, obj, indent: int = 2) -> None:
     path = pathlib.Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "w", encoding="utf-8") as fh:
+    # newline="\n": identical bytes on every OS, so regenerated files never show as modified
+    with open(path, "w", encoding="utf-8", newline="\n") as fh:
         json.dump(obj, fh, indent=indent, ensure_ascii=False)
         fh.write("\n")
 
