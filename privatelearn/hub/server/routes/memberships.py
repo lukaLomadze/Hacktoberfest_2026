@@ -72,7 +72,7 @@ def list_memberships(request: Request, group_id: Optional[str] = None, status: O
         where.append("status = ?")
         args.append(v.enum(status, "status", MEMBERSHIP_STATUS))
     sql = "SELECT * FROM memberships" + (" WHERE " + " AND ".join(where) if where else "")
-    rows = hub.db.all(sql + " ORDER BY requested_at DESC, id", args)
+    rows = hub.db.all(sql + " ORDER BY requested_at DESC, rowid DESC", args)
     return {"items": [membership_out(hub, r) for r in rows]}
 
 
