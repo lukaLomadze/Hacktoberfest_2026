@@ -1,6 +1,7 @@
 """Hospital agents for PrivateLearn (T7).
 
-One `HospitalAgent` is one hospital on the bus (id "h0", "h1", "h2"). Inside it a
+One `HospitalAgent` is one participant on the bus. Its id is any opaque string ("h0",
+"node_9f3a", …) and is never parsed for meaning. Inside it a
 small team of agents works on the hospital's own rows, which never leave the
 object — only schema descriptions, losses/AUCs and (protected) weight deltas do:
 
@@ -15,7 +16,7 @@ Protocol with the coordinator (kinds are free-form except update/broadcast):
 
     coord → hospital  schema_request {}
     hospital → coord  schema         {hospital, label, columns:[{canonical, source, unit, transform}]}
-    coord → hospital  schema_agreed  {features:[...], feature_mean?, feature_std?}
+    coord → hospital  schema_agreed  {features:[...], participants?, feature_mean?, feature_std?}
     coord → hospital  probe          {round, w}
     hospital → coord  probe_result   {round, hospital, loss, auc, n}
     coord → hospital  train          {round, w, participants, weights, strategy, mu}
@@ -27,7 +28,10 @@ masking, so pairwise masks cancel over exactly that set. Each participant sends
 `weights[hospital]·Δw` (weights = n_i/Σn), so the sum of updates is the FedAvg step.
 
 Privacy is injected: `protector(delta, hospital_index, participants, round)` returns
-(vector_to_send, privacy_dict). The default sends the vector unprotected and says
+(vector_to_send, privacy_dict). Mask indices are positions in the sorted list of the
+federation's participants (`schema_agreed.participants`), so they are the same on every
+participant and stable across rounds even when someone is offline; this round's
+`participants` are passed as those positions. The default sends the vector unprotected and says
 so; the end-to-end run (T9) plugs in model.privacy's clip → DP noise → masking.
 Training is injected too (`train_fn`, default model.logistic.train), so DP training
 with per-example clipping can be swapped in.
@@ -190,7 +194,7 @@ class HospitalAgent(Agent):
     def __init__(self, hospital_id: str, columns, rows, feature_mean=None, feature_std=None,
                  protector=None, train_fn=None, faults=None, planner=None, decider=None):
         super().__init__(hospital_id)
-        self.index = int(hospital_id.lstrip("h"))
+        self.roster = None  # every participant id of this federation, sorted (from schema_agreed)
         self._rows = rows  # local patient rows: never put on the bus
         self.schema = SchemaAgent(columns, decider, column_profile(columns, rows))
         self.planner = planner or PlannerAgent(decider=decider)
@@ -210,6 +214,19 @@ class HospitalAgent(Agent):
     def from_csv(cls, hospital_id: str, path, **kwargs):
         columns, rows = load_local_csv(path)
         return cls(hospital_id, columns, rows, **kwargs)
+
+    @property
+    def index(self) -> int:
+        """This participant's mask index: its position in the sorted participant list."""
+        return self.mask_index(self.id)
+
+    def mask_index(self, participant_id: str) -> int:
+        roster = self.roster
+        if roster is None:
+            raise RuntimeError(f"{self.id}: participant list unknown before schema_agreed")
+        if participant_id not in roster:
+            raise ValueError(f"{self.id}: {participant_id!r} is not a participant of this federation")
+        return roster.index(participant_id)
 
     @property
     def n(self) -> int:
@@ -256,6 +273,12 @@ class HospitalAgent(Agent):
             self._std = np.asarray(p["feature_std"], dtype=float)
         if self._mean is None or self._std is None:
             raise ValueError(f"{self.id}: no normalisation statistics (feature_mean/feature_std)")
+        roster = p.get("participants")
+        if roster is not None:
+            roster = sorted(str(h) for h in roster)
+            if self.id not in roster:
+                raise ValueError(f"{self.id}: not in the agreed participant list {roster}")
+            self.roster = roster
         X, labels = self.schema.to_canonical(self._rows, mine, order)
         self._order = list(order)
         self._X = (X - self._mean) / self._std
@@ -290,8 +313,11 @@ class HospitalAgent(Agent):
                                  + f" — {plan['why']}")
         delta, local_loss = self.trainer.train(p["w"], X, labels, plan)
         weight = float(p["weights"][self.id])
-        participants = sorted(int(h.lstrip("h")) for h in p["participants"])
-        vec, privacy = self.protector(weight * delta, self.index, participants, r)
+        # a coordinator that never sent the full list: this round's participants are all we
+        # know, and they are the same on every participant, so the masks still cancel
+        roster = self.roster or sorted(str(h) for h in p["participants"])
+        participants = sorted(roster.index(h) for h in p["participants"])
+        vec, privacy = self.protector(weight * delta, roster.index(self.id), participants, r)
         self._log(r, "trainer", f"trained on {self.n} local rows, loss {local_loss:.3f}; "
                                 f"sent {'masked ' if privacy['masked'] else ''}Δw")
         update = {"v": "1.0", "round": r, "hospital": self.id,
