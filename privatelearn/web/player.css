@@ -179,6 +179,7 @@ input[type="range"] { width: 160px; accent-color: var(--coord); }
   padding: 0 8px;
 }
 .log .tag.coord { color: var(--coord); border-color: var(--coord); }
+.log .tag.llm { color: var(--ok); border-color: var(--ok); }
 .log .agents { font: 11px var(--font-data); color: var(--text-faint); margin-top: 4px; line-height: 1.4; }
 .log .empty { grid-column: 1 / -1; border: 0; background: none; color: var(--text-faint); padding-left: 0; }
 
