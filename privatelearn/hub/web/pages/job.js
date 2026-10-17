@@ -193,7 +193,9 @@ export async function render({ el, params, query }) {
   // ---------------------------------------------------------------- live stream
   let stopStream = null;
   function goLive() {
-    if (!LIVE.has(job.status) && !LIVE.has(state.status)) return;
+    // the event history is the fresher answer when there is one: a job whose history already
+    // ends in a final job.status gets no stream (nothing would ever close it)
+    if (!LIVE.has(events.length ? state.status : job.status)) return;
     liveSlot.hidden = false;
     liveSlot.textContent = "live";
     stopStream = api.stream(job.id, (e) => {
@@ -203,6 +205,10 @@ export async function render({ el, params, query }) {
       if (!LIVE.has(state.status)) {
         liveSlot.textContent = "finished";
         replayBtn.hidden = false;
+        // the server ends the stream after the last event; EventSource would reconnect every
+        // few seconds for as long as the page is open unless it is closed here
+        if (stopStream) stopStream();
+        stopStream = null;
       }
     }, { since: state.last_seq });
   }

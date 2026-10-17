@@ -40,16 +40,34 @@ export function initialState(job) {
   };
 }
 
-function participant(state, nodeId, e) {
-  if (!nodeId || nodeId === "coord") return null;
-  let p = state.participants.get(nodeId);
-  if (!p) {
-    // an event names a participant the Job did not list (a late joiner): add it, don't drop it
-    p = { node_id: nodeId, membership_id: e.membership_id || null,
-          company_name: (e.from && e.from.company_name) || nodeId, color: null, state: "waiting",
-          detail: "", acted: new Map() };
-    state.participants.set(nodeId, p);
+/**
+ * The participant an event is about. Until a company's node has said hello its node_id is
+ * null (the dev seed, the fake federation), so fall back to the membership id, then to the
+ * company name; only an id nobody matches is a late joiner.
+ */
+export function findParticipant(state, nodeId, membershipId = null, companyName = null) {
+  if (nodeId === "coord") return null;
+  if (nodeId && state.participants.has(nodeId)) return state.participants.get(nodeId);
+  for (const p of state.participants.values()) {
+    if ((membershipId && p.membership_id === membershipId) || (nodeId && p.membership_id === nodeId)) return p;
   }
+  if (companyName) {
+    for (const p of state.participants.values()) if (p.company_name === companyName) return p;
+  }
+  return null;
+}
+
+function participant(state, nodeId, e) {
+  const from = e.from && typeof e.from === "object" ? e.from : {};
+  const found = findParticipant(state, nodeId, e.membership_id, from.company_name);
+  if (found) return found;
+  const key = nodeId || e.membership_id;
+  if (!key || key === "coord") return null;
+  // an event names a participant the Job did not list (a late joiner): add it, don't drop it
+  const p = { node_id: nodeId || null, membership_id: e.membership_id || null,
+              company_name: from.company_name || key, color: null, state: "waiting", detail: "",
+              acted: new Map() };
+  state.participants.set(key, p);
   return p;
 }
 
@@ -144,6 +162,7 @@ export function applyEvent(state, e) {
 export function nameOf(state, nodeId) {
   if (nodeId === "coord") return "Coordinator";
   if (nodeId === "*") return "everyone";
-  const p = state.participants.get(nodeId);
+  if (nodeId === null || nodeId === undefined) return "—";
+  const p = findParticipant(state, nodeId);
   return p ? p.company_name : String(nodeId);
 }

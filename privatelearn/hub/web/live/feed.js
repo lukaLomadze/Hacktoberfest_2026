@@ -4,7 +4,7 @@
 // know are shown as a plain line instead of being dropped.
 
 import { h } from "../app.js";
-import { nameOf } from "./state.js";
+import { findParticipant, nameOf } from "./state.js";
 
 const MAX_BUBBLES = 400; // keep the DOM small on long jobs; older messages stay in the state
 
@@ -18,8 +18,10 @@ export function createFeed() {
 
   function bubble(state, e) {
     const from = e.from || {};
-    const who = from.node_id === "coord" || from.agent === "coordinator" ? "Coordinator" : nameOf(state, from.node_id);
-    const p = state.participants.get(from.node_id);
+    const isCoord = from.node_id === "coord" || from.agent === "coordinator";
+    // node_id is null until a company's node says hello: find it by company name instead
+    const p = isCoord ? null : findParticipant(state, from.node_id, null, from.company_name);
+    const who = isCoord ? "Coordinator" : (p && p.company_name) || from.company_name || nameOf(state, from.node_id);
     const dot = h("span.feed-dot", { "aria-hidden": "true" });
     if (p && p.color) dot.style.background = p.color; // the server's per-company color (§4.5)
     else if (who === "Coordinator") dot.classList.add("coord");
