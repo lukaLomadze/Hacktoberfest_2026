@@ -103,6 +103,14 @@ class TestGuards(unittest.TestCase):
         out = d.plan({}, lambda: {"epochs": 4, "lr": 0.1, "mu": 0.0, "why": "default"})
         self.assertEqual(out["made_by"], "rule")
 
+    def test_non_finite_hyperparameters_fall_back(self):
+        # json.loads turns NaN / Infinity into floats; DP noise is calibrated to lr, so a
+        # NaN lr would otherwise reach plan_sigma and remove the noise
+        for bad in ({"lr": float("nan")}, {"lr": float("inf")}, {"mu": float("nan")}):
+            d = self._decider({"epochs": 4, "lr": 0.1, "mu": 0.0, "reasoning": "bad", **bad})
+            out = d.plan({}, lambda: {"epochs": 4, "lr": 0.1, "mu": 0.0, "why": "default"})
+            self.assertEqual(out["made_by"], "rule", bad)
+
     def test_valid_plan_is_used(self):
         d = self._decider({"epochs": 5, "lr": 0.12, "mu": 0.0, "reasoning": "slightly more steps"})
         out = d.plan({}, lambda: {"epochs": 9, "lr": 0.9, "mu": 0.0, "why": "default"})

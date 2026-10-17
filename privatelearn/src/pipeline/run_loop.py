@@ -6,6 +6,10 @@ clipping, adds Gaussian noise calibrated to ε per round at PATIENT-level
 sensitivity, and masks its update with pairwise secrets the coordinator never
 holds. The coordinator sees only the masked sum.
 
+The sensitivity, and so σ, follows the plan each hospital's Planner actually ran
+(epochs · lr), not the defaults: a longer plan lets one patient move Δw further, so
+it needs more noise for the same ε. Every update row in the trace records its σ.
+
 The demo scenario (fixed, so the replay is reproducible):
   round 1  all three hospitals train
   round 2  Hospital C is offline              → aggregated over A and B
@@ -25,8 +29,10 @@ from __future__ import annotations
 
 import argparse
 import csv
+import functools
 import hashlib
 import json
+import math
 import pathlib
 import sys
 import time
@@ -97,6 +103,20 @@ def round_floats(obj, digits: int = TRACE_DECIMALS):
     return obj
 
 
+@functools.lru_cache(maxsize=None)
+def plan_sigma(n: int, epochs: int, lr: float, example_clip: float = EXAMPLE_CLIP,
+               eps: float = EPS_PER_ROUND, dp_delta: float = DP_DELTA) -> float:
+    """Gaussian σ giving (eps, dp_delta)-DP for one hospital update trained with this plan.
+
+    Patient-level sensitivity is 2·epochs·lr·clip/n (privacy.record_sensitivity), so σ
+    scales with epochs·lr. Cached: the planner usually repeats a plan and the ε→σ search
+    is a nested bisection. A non-finite or non-positive epochs/lr is refused: NaN would
+    make the bisection return its floor (σ ≈ 1e-6, no noise) while ε still reads as met."""
+    if not (isinstance(epochs, int) and epochs > 0 and math.isfinite(lr) and lr > 0):
+        raise ValueError(f"cannot calibrate DP noise to epochs={epochs!r}, lr={lr!r}")
+    return sigma_for_epsilon(eps, record_sensitivity(n, lr, epochs, example_clip), dp_delta)
+
+
 def model_hash(w) -> str:
     return hashlib.sha256(json.dumps([round(float(v), 12) for v in w]).encode()).hexdigest()
 
@@ -116,22 +136,28 @@ def run(seed: int = SEED, out_path=None, private: bool = True, use_llm: bool = F
         return float(logistic.auc(yt, logistic.predict_proba(np.asarray(w), X)))
 
     # --- privacy stack: patient-level DP + pairwise masking --------------------------------
+    # meta reports σ for the default plan; each update's σ follows the plan it ran (plan_sigma)
     n = manifest["n_per_hospital"]
     sensitivity = record_sensitivity(n, LR, EPOCHS, EXAMPLE_CLIP)
-    sigma = sigma_for_epsilon(EPS_PER_ROUND, sensitivity, DP_DELTA)
+    sigma = plan_sigma(n, EPOCHS, LR)
     secrets = make_pair_secrets([0, 1, 2], seed=f"handshake-{seed}")  # hospital-to-hospital only
 
     if len(set(manifest["per_hospital_class_balance"][h]["n"] for h in HOSPITALS)) != 1:
         raise ValueError("the protector assumes equal n per hospital (weight = 1/participants)")
 
+    sigmas = {}  # (round, hospital id) -> σ actually added to that update
+
     def protector_for(idx):
         own = {k: v for k, v in secrets.items() if idx in k}  # each hospital holds only its pairs
 
-        def protect(delta, hospital_index, participants, round_):
-            # the hospital sends weight·Δw, whose patient-level sensitivity is weight·Δ, so the
+        def protect(delta, hospital_index, participants, round_, plan=None):
+            # σ for the epochs/lr this hospital's Planner chose for this update.
+            # The hospital sends weight·Δw, whose patient-level sensitivity is weight·Δ, so the
             # noise scales by the same weight (equal n → weight = 1/len(participants)).
             # C is far above any real update norm: the DP bound comes from per-example clipping.
-            s = sigma / len(participants)
+            plan = plan or {}
+            s = plan_sigma(n, int(plan.get("epochs", EPOCHS)), float(plan.get("lr", LR))) / len(participants)
+            sigmas[(round_, HOSPITALS[idx])] = float(s)
             masked, _ = prepare_update(delta, hospital_index, participants, round_, own,
                                        noise_seed=f"dp-{seed}-h{idx}", C=10.0, sigma=s, dp_delta=DP_DELTA)
             return masked, {"masked": True, "mask_seed": f"round-{round_}", "dp_eps": EPS_PER_ROUND,
@@ -187,7 +213,9 @@ def run(seed: int = SEED, out_path=None, private: bool = True, use_llm: bool = F
     # loss_series[0]: the starting model's mean local loss, from the round-1 probes
     first_probe_loss = float(np.mean(list(coord.history[0]["probe_losses"].values())))
     rounds = [dict(r, auc_before=round(r["auc_before"], 4), auc_after=round(r["auc_after"], 4),
-                   probe_losses={h: round(v, 4) for h, v in r["probe_losses"].items()})
+                   probe_losses={h: round(v, 4) for h, v in r["probe_losses"].items()},
+                   updates=[dict(u, dp_sigma=sigmas.get((r["round"], u["hospital"]), 0.0))
+                            for u in r["updates"]])
               for r in coord.history]
 
     trace = {
