@@ -1,0 +1,6 @@
+# Platform server only (hub/server). The engine (src/) and the company node stay numpy-only.
+fastapi>=0.110
+uvicorn>=0.29
+# test client for tests/test_hub_server
+httpx>=0.27
+numpy
