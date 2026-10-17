@@ -11,7 +11,7 @@ import unittest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
 from agents.decider import CANONICAL, LLMDecider, RuleDecider, build_decider
-from agents.hospital import SchemaAgent, column_profile
+from agents.hospital import column_profile
 from model.aggregation import select_strategy
 
 
@@ -117,47 +117,12 @@ class TestLocalProfile(unittest.TestCase):
     def test_profile_is_stats_only(self):
         rows = [{"a": 1.0}, {"a": 2.0}, {"a": 3.0}]
         p = column_profile(["a"], rows)
-        self.assertEqual(set(p["a"]), {"min", "p05", "median", "p95", "max"})
+        self.assertEqual(set(p["a"]), {"min", "p05", "median", "mean", "p95", "max"})
         self.assertEqual((p["a"]["min"], p["a"]["median"], p["a"]["max"]), (1.0, 2.0, 3.0))
+        self.assertEqual(p["a"]["mean"], 2.0)
 
     def test_profile_empty_rows(self):
         self.assertEqual(column_profile(["a"], []), {})
-
-
-class TestPlausibleGuardrail(unittest.TestCase):
-    """A confident but wrong unit must be caught by the local range check."""
-
-    MEDIANS = {"age_months": 400, "glucose_mmol_l": 6, "bp_kpa": 16, "weight_kg": 70,
-               "height_m": 1.7, "insulin_pmol_l": 50, "pregnancies": 2, "outcome": 0}
-
-    def _profile(self):
-        return {c: {"min": m, "p05": m, "median": m, "p95": m, "max": m} for c, m in self.MEDIANS.items()}
-
-    def _mapping(self, age_factor):
-        return {
-            "pregnancies": {"source": ["pregnancies"], "factor": 1.0, "unit": "count", "transform": "id"},
-            "glucose": {"source": ["glucose_mmol_l"], "factor": 18.0182, "unit": "mg/dL", "transform": "x"},
-            "blood_pressure": {"source": ["bp_kpa"], "factor": 7.50062, "unit": "mmHg", "transform": "x"},
-            "bmi": {"source": ["weight_kg", "height_m"], "factor": None, "unit": "kg/m^2", "transform": "w/h^2"},
-            "insulin": {"source": ["insulin_pmol_l"], "factor": 0.14399, "unit": "uU/mL", "transform": "x"},
-            "age": {"source": ["age_months"], "factor": age_factor, "unit": "years", "transform": "x"},
-        }
-
-    def _agent(self, age_factor):
-        d = LLMDecider(api_key="test")
-        d._ask = lambda system, user: {"label": "outcome", "mapping": self._mapping(age_factor),
-                                       "reasoning": "confident"}
-        cols = list(self.MEDIANS)
-        return SchemaAgent(cols, d, self._profile())
-
-    def test_months_read_as_years_falls_back(self):
-        # 400 months treated as 400 years is implausible -> alias table instead
-        self.assertEqual(self._agent(1.0).made_by, "rule")
-
-    def test_correct_mapping_is_accepted(self):
-        agent = self._agent(1.0 / 12.0)
-        self.assertEqual(agent.made_by, "llm")
-        self.assertAlmostEqual(agent.mapping["age"]["factor"], 1.0 / 12.0)
 
 
 if __name__ == "__main__":

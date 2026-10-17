@@ -51,21 +51,20 @@ SYSTEM_STRATEGY = (
 )
 SYSTEM_SCHEMA = (
     "You are the Schema agent of one hospital in a federated learning federation. You see only "
-    "this hospital's local column NAMES and units, never patient values. Map them to the "
-    "federation's canonical schema. Reply with a single JSON object with keys "
+    "this hospital's local column NAMES and SUMMARY STATISTICS, never patient values. Map them "
+    "to the federation's canonical schema. Reply with a single JSON object with keys "
     '"label" (the outcome column name) and "mapping" (for every canonical feature: '
     '{"source": [column names], "factor": number to multiply local values by to reach the '
     'canonical unit, "unit": string, "transform": short description}) and "reasoning" '
-    "(one sentence). Use these EXACT conversions when the local unit differs: "
-    "glucose mmol/L x 18.0182 -> mg/dL; blood pressure kPa x 7.50062 -> mmHg; "
-    "insulin pmol/L / 6.945 -> uU/mL; age months / 12 -> years. "
-    "BMI kg/m^2 may be derived from weight_kg and height_m (factor null, source [weight, height]). "
-    "Anything already in the canonical unit gets factor 1.0. "
-    "You also receive local_column_profile: min/p05/median/p95/max per column, computed on the "
-    "hospital's own rows (statistics only, no patient values). Use those ranges to resolve "
-    "ambiguous units: e.g. height 1.5-1.95 is metres but 58-77 is inches; age 18-90 is years "
-    "but 216-1080 is months; glucose 60-200 is mg/dL but 3.3-11 is mmol/L; blood pressure "
-    "90-180 is mmHg but 12-24 is kPa."
+    "(one sentence). "
+    "You receive local_column_profile: min/p05/median/mean/p95/max per column. Use that "
+    "distribution to decide the unit: compare its magnitude with what the canonical unit "
+    "implies for this measurement, using your own knowledge of plausible physical values. "
+    "When the local values are in a different unit, convert with the standard factor "
+    "(for example mmol/L to mg/dL for glucose, kPa to mmHg for blood pressure, pmol/L to "
+    "uU/mL for insulin, months to years for age). BMI kg/m^2 may be derived from weight_kg "
+    "and height_m (factor null, source [weight, height]). Anything already in the canonical "
+    "unit gets factor 1.0."
 )
 SYSTEM_PLAN = (
     "You are the Planner agent of one hospital in a federated learning run. You see the round, "
