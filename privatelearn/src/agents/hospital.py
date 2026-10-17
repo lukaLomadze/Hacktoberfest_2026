@@ -93,9 +93,16 @@ def load_local_csv(path):
 class SchemaAgent:
     """Maps a hospital's local columns to the canonical schema (names + units)."""
 
-    def __init__(self, columns):
+    def __init__(self, columns, decider=None):
         self.columns = list(columns)
-        self.mapping, self.label = self._infer()
+        self.decider = decider
+        d = decider.schema(self.columns, self._infer) if decider is not None else None
+        if d is None:
+            self.mapping, self.label = self._infer()
+            self.reasoning, self.made_by = "matched the known column aliases", "rule"
+        else:
+            self.mapping, self.label = d["mapping"], d["label"]
+            self.reasoning, self.made_by = d["reasoning"], d["made_by"]
 
     def _infer(self):
         by_norm = {_norm(c): c for c in self.columns}
@@ -149,14 +156,18 @@ class SchemaAgent:
 class PlannerAgent:
     """Schedules local training. Contract defaults: 4 full-batch epochs at lr 0.1."""
 
-    def __init__(self, epochs: int = 4, lr: float = 0.1):
+    def __init__(self, epochs: int = 4, lr: float = 0.1, decider=None):
         self.epochs = epochs
         self.lr = lr
+        self.decider = decider
 
-    def plan(self, strategy: str, mu: float) -> dict:
+    def plan(self, strategy: str, mu: float, context=None) -> dict:
         mu = float(mu) if strategy == "fedprox" else 0.0
         why = f"{self.epochs} epochs @ lr {self.lr}" + (f", FedProx μ={mu:g}" if mu else "")
-        return {"epochs": self.epochs, "lr": self.lr, "mu": mu, "why": why}
+        base = {"epochs": self.epochs, "lr": self.lr, "mu": mu, "why": why}
+        if self.decider is None:
+            return {**base, "made_by": "rule"}
+        return self.decider.plan({"strategy": strategy, **(context or {})}, lambda: base)
 
 
 class TrainerAgent:
@@ -193,12 +204,12 @@ class HospitalAgent(Agent):
     """A hospital on the bus. Raw rows are private attributes and never sent."""
 
     def __init__(self, hospital_id: str, columns, rows, feature_mean=None, feature_std=None,
-                 protector=None, train_fn=None, faults=None, planner=None):
+                 protector=None, train_fn=None, faults=None, planner=None, decider=None):
         super().__init__(hospital_id)
         self.index = int(hospital_id.lstrip("h"))
         self._rows = rows  # local patient rows: never put on the bus
-        self.schema = SchemaAgent(columns)
-        self.planner = planner or PlannerAgent()
+        self.schema = SchemaAgent(columns, decider)
+        self.planner = planner or PlannerAgent(decider=decider)
         self.trainer = TrainerAgent(train_fn)
         self.challenger = ChallengerAgent()
         self.protector = protector or no_protection
@@ -280,7 +291,7 @@ class HospitalAgent(Agent):
             self._log(r, "planner", "not a participant this round")
             return []
         X, labels = self._data(r)
-        plan = self.planner.plan(p.get("strategy", "fedavg"), p.get("mu", 0.0))
+        plan = self.planner.plan(p.get("strategy", "fedavg"), p.get("mu", 0.0), context={"round": r})
         self._log(r, "planner", plan["why"])
         delta, local_loss = self.trainer.train(p["w"], X, labels, plan)
         weight = float(p["weights"][self.id])
