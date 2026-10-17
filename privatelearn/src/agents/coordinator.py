@@ -147,7 +147,8 @@ class CoordinatorAgent(Agent):
         return [self.send(BROADCAST, "train", {
             "round": self.round, "w": [float(v) for v in self.w], "participants": participants,
             "weights": weights, "strategy": d["strategy"],
-            "mu": self.mu if d["strategy"] == "fedprox" else 0.0})]
+            "mu": self.mu if d["strategy"] == "fedprox" else 0.0,
+            "last_loss": self.loss_series[-1] if self.loss_series else None})]
 
     def _aggregate(self):
         r = self._round

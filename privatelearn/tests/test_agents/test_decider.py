@@ -10,7 +10,7 @@ import unittest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
-from agents.decider import LLMDecider, RuleDecider, build_decider
+from agents.decider import CANONICAL, LLMDecider, RuleDecider, build_decider
 from model.aggregation import select_strategy
 
 
@@ -74,6 +74,42 @@ class TestBuild(unittest.TestCase):
 
     def test_llm_flag_builds_llm(self):
         self.assertIsInstance(build_decider(True), LLMDecider)
+
+
+class TestGuards(unittest.TestCase):
+    """A mocked model reply: no network, and the guardrails must reject bad plans."""
+
+    @staticmethod
+    def _decider(reply):
+        d = LLMDecider(api_key="test")
+        d._ask = lambda system, user: reply  # type: ignore[method-assign]
+        return d
+
+    def test_too_small_lr_falls_back(self):
+        # observed in a real run: "conservative" lr 0.01 left the model near-random
+        d = self._decider({"epochs": 3, "lr": 0.01, "mu": 0.0, "reasoning": "conservative"})
+        out = d.plan({}, lambda: {"epochs": 4, "lr": 0.1, "mu": 0.0, "why": "default"})
+        self.assertEqual(out["made_by"], "rule")
+        self.assertEqual((out["epochs"], out["lr"]), (4, 0.1))
+
+    def test_too_few_epochs_falls_back(self):
+        d = self._decider({"epochs": 1, "lr": 0.1, "mu": 0.0, "reasoning": "fast"})
+        out = d.plan({}, lambda: {"epochs": 4, "lr": 0.1, "mu": 0.0, "why": "default"})
+        self.assertEqual(out["made_by"], "rule")
+
+    def test_valid_plan_is_used(self):
+        d = self._decider({"epochs": 5, "lr": 0.12, "mu": 0.0, "reasoning": "slightly more steps"})
+        out = d.plan({}, lambda: {"epochs": 9, "lr": 0.9, "mu": 0.0, "why": "default"})
+        self.assertEqual(out["made_by"], "llm")
+        self.assertEqual((out["epochs"], out["lr"]), (5, 0.12))
+
+    def test_schema_uses_llm_mapping(self):
+        mapping = {c: {"source": [c], "factor": 1.0, "unit": "u", "transform": "id"} for c in CANONICAL}
+        d = self._decider({"label": "outcome", "mapping": mapping, "reasoning": "direct names"})
+        out = d.schema(list(CANONICAL) + ["outcome"], lambda: ({}, "fallback"))
+        self.assertEqual(out["made_by"], "llm")
+        self.assertEqual(out["label"], "outcome")
+        self.assertEqual(set(out["mapping"]), set(CANONICAL))
 
 
 if __name__ == "__main__":

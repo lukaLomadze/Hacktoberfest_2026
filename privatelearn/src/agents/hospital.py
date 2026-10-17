@@ -293,8 +293,11 @@ class HospitalAgent(Agent):
             self._log(r, "planner", "not a participant this round")
             return []
         X, labels = self._data(r)
-        plan = self.planner.plan(p.get("strategy", "fedavg"), p.get("mu", 0.0), context={"round": r})
-        self._log(r, "planner", plan["why"])
+        plan = self.planner.plan(p.get("strategy", "fedavg"), p.get("mu", 0.0),
+                                 context={"round": r, "last_loss": p.get("last_loss")})
+        self._log(r, "planner", f"{plan['epochs']} ep @ lr {plan['lr']:g}"
+                                 + (f", mu={plan['mu']:g}" if plan["mu"] else "")
+                                 + f" — {plan['why']}")
         delta, local_loss = self.trainer.train(p["w"], X, labels, plan)
         weight = float(p["weights"][self.id])
         participants = sorted(int(h.lstrip("h")) for h in p["participants"])

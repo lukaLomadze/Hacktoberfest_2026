@@ -56,13 +56,19 @@ SYSTEM_SCHEMA = (
     '"label" (the outcome column name) and "mapping" (for every canonical feature: '
     '{"source": [column names], "factor": number to multiply local values by to reach the '
     'canonical unit, "unit": string, "transform": short description}) and "reasoning" '
-    "(one sentence). BMI may be derived from weight_kg and height_m with factor null."
+    "(one sentence). Use these EXACT conversions when the local unit differs: "
+    "glucose mmol/L x 18.0182 -> mg/dL; blood pressure kPa x 7.50062 -> mmHg; "
+    "insulin pmol/L / 6.945 -> uU/mL; age months / 12 -> years. "
+    "BMI kg/m^2 may be derived from weight_kg and height_m (factor null, source [weight, height]). "
+    "Anything already in the canonical unit gets factor 1.0."
 )
 SYSTEM_PLAN = (
-    "You are the Planner agent of one hospital in a federated learning run. You see the round "
-    'number, the aggregation strategy and the last loss. Reply with a single JSON object with '
-    'keys "epochs" (integer 1-20), "lr" (float 0.001-1.0), "mu" (float >= 0, only for fedprox) '
-    'and "reasoning" (one sentence).'
+    "You are the Planner agent of one hospital in a federated learning run. You see the round, "
+    "the aggregation strategy and the previous mean loss. Local training must actually move the "
+    "model: use epochs 3-10 and lr 0.05-0.5. The validated default is 4 epochs at lr 0.1; only "
+    "deviate with a reason. Reply with a single JSON object with keys "
+    '"epochs" (integer), "lr" (float), "mu" (float >= 0, used only for fedprox) and "reasoning" '
+    "(one sentence)."
 )
 
 
@@ -208,10 +214,13 @@ class LLMDecider:
             epochs = int(out["epochs"])
             lr = float(out["lr"])
             mu = float(out.get("mu", 0.0) or 0.0)
-            if not 1 <= epochs <= 20:
-                raise ValueError(f"epochs {epochs} out of range")
-            if not 0.001 <= lr <= 1.0:
-                raise ValueError(f"lr {lr} out of range")
+            # Guardrails: a "conservative" lr below 0.05 leaves the model near-random after
+            # four rounds (observed: probe loss stuck at 0.69, federated AUC 0.68). Reject it
+            # and fall back to the validated default rather than ship a broken run.
+            if not 3 <= epochs <= 10:
+                raise ValueError(f"epochs {epochs} outside the converging range 3-10")
+            if not 0.05 <= lr <= 0.5:
+                raise ValueError(f"lr {lr} outside the converging range 0.05-0.5")
             if mu < 0:
                 raise ValueError(f"mu {mu} negative")
             self.calls += 1
