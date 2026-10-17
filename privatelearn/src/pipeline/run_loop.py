@@ -113,7 +113,8 @@ def run(seed: int = SEED, out_path=None, private: bool = True, use_llm: bool = F
     Xt, yt = load_holdout(manifest)
 
     def evaluate(w, features=None):
-        X = Xt if not features else Xt[:, [CANONICAL.index(f) for f in features]]
+        names = manifest["canonical_features"]
+        X = Xt if not features else Xt[:, [names.index(f) for f in features]]
         return float(logistic.auc(yt, logistic.predict_proba(np.asarray(w), X)))
 
     # --- privacy stack: patient-level DP + pairwise masking --------------------------------
@@ -153,7 +154,8 @@ def run(seed: int = SEED, out_path=None, private: bool = True, use_llm: bool = F
     ]
     names = {nd["id"]: nd["label"] for nd in NODES}
     coord = CoordinatorAgent(HOSPITALS, evaluate, manifest["feature_mean"], manifest["feature_std"],
-                             rounds=ROUNDS, names=names, decider=decider)
+                             rounds=ROUNDS, names=names, decider=decider,
+                             feature_names=manifest["canonical_features"])
 
     bus = MessageBus()
     for h in hospitals:

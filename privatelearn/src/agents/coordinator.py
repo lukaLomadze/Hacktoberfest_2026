@@ -42,12 +42,14 @@ REPLY_DELAY = 2  # coordinator steps between sending a request and receiving rep
 class CoordinatorAgent(Agent):
     def __init__(self, hospitals, eval_fn, feature_mean, feature_std, rounds: int = 4,
                  names=None, tau: float = 0.1, outlier_sigma: float = 2.0, mu: float = FEDPROX_MU,
-                 w0=None, converge_tol: float = 1e-3, agent_id: str = "coord", decider=None):
+                 w0=None, converge_tol: float = 1e-3, agent_id: str = "coord", decider=None,
+                 feature_names=None):
         super().__init__(agent_id)
         self.decider = decider or RuleDecider()
         self.hospitals = list(hospitals)
         self.names = dict(names or {h: h for h in self.hospitals})
         self.eval_fn = eval_fn  # w -> global AUC on the evaluation set the coordinator holds
+        self.feature_names = list(feature_names) if feature_names else CANONICAL
         self.feature_mean = [float(v) for v in feature_mean]
         self.feature_std = [float(v) for v in feature_std]
         self.rounds = rounds
@@ -107,8 +109,8 @@ class CoordinatorAgent(Agent):
                 for c in proposals[h]["columns"]:
                     by_sem.setdefault(c["semantic"], {})[h] = {"source": c["source"], "factor": c["factor"]}
             common = [s for s, owners in by_sem.items() if set(owners) == set(self.hospitals)]
-            # order canonically first (stable numbers), then any novel features for arbitrary data
-            feats = [c for c in CANONICAL if c in common] + [s for s in common if s not in CANONICAL]
+            # order by the dataset's own feature names first (stable numbers), then any novel feature
+            feats = [c for c in self.feature_names if c in common] + [s for s in common if s not in self.feature_names]
             columns = {h: {f: by_sem[f][h] for f in feats} for h in self.hospitals}
             return {"features": feats, "model": "logistic", "columns": columns,
                     "reasoning": f"every hospital provides {feats}"}
@@ -117,12 +119,23 @@ class CoordinatorAgent(Agent):
         self.features = [str(f) for f in d["features"]]
         self.model = str(d["model"])
         self.contract_reasoning = d.get("reasoning", "")
+        self.columns = d["columns"]
+
+        def _key(s):
+            return "".join(ch for ch in str(s).lower() if ch.isalnum())
+
+        stat_index = {_key(name): i for i, name in enumerate(self.feature_names)}
+        if not all(_key(f) in stat_index for f in self.features):
+            # the negotiated names do not align to this dataset's statistics; use the rule
+            d = _rule()
+            self.features = [str(f) for f in d["features"]]
+            self.model = str(d["model"])
+            self.contract_reasoning = d.get("reasoning", "")
+            self.columns = d["columns"]
+
         self.n_weights = len(self.features) + 1
-        self.columns = d["columns"]  # {hospital: {feature: {source, factor}}}
         # normalisation statistics must follow the negotiated feature NAMES, whatever order
-        # the contract was agreed in
-        stat_index = {name: i for i, name in enumerate(CANONICAL)}
-        idx = [stat_index[f] for f in self.features]
+        idx = [stat_index[_key(f)] for f in self.features]
         self.feature_mean = [self.feature_mean[i] for i in idx]
         self.feature_std = [self.feature_std[i] for i in idx]
         self.w = (np.zeros(self.n_weights) if self._w0 is None
