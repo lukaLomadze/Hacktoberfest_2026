@@ -9,79 +9,136 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 import numpy as np
 
 from model.aggregation import (
+    FEDPROX_MU,
     aggregate,
     fedavg,
     fedprox,
     select_strategy,
     trimmed_mean,
 )
+from model.logistic import N_FEATURES, N_WEIGHTS, auc, train
 
 
 class TestFedAvg(unittest.TestCase):
     def test_equal_weights_is_plain_mean(self):
         d = np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]])
-        out = fedavg(d, [100, 100, 100])
-        np.testing.assert_allclose(out, [3.0, 4.0])
+        np.testing.assert_allclose(fedavg(d, [100, 100, 100]), [3.0, 4.0])
 
     def test_weighted_by_n(self):
         d = np.array([[1.0, 0.0], [0.0, 1.0]])
-        # client 0 has 3x the data
-        out = fedavg(d, [300, 100])
-        np.testing.assert_allclose(out, [0.75, 0.25])
+        np.testing.assert_allclose(fedavg(d, [300, 100]), [0.75, 0.25])
 
-    def test_single_client_equals_its_delta(self):
-        d = np.array([[0.4, -0.2, 0.1, 0.0, 0.0, 0.0, 0.0]])
-        out = fedavg(d, [120])
-        np.testing.assert_allclose(out, d[0])
-        # 1-client FedAvg must equal local SGD's update (the plan's acceptance)
-        np.testing.assert_allclose(aggregate(d, [120], "fedavg"), d[0])
+    def test_single_client_equals_local_sgd(self):
+        rng = np.random.default_rng(0)
+        X = rng.normal(size=(40, N_FEATURES))
+        y = (X[:, 0] > 0).astype(float)
+        w0 = np.zeros(N_WEIGHTS)
+        delta = train(w0, X, y) - w0
+        np.testing.assert_allclose(w0 + aggregate([delta], [40], "fedavg"), train(w0, X, y))
+
+    def test_rejects_bad_shapes(self):
+        with self.assertRaises(ValueError):
+            fedavg(np.ones(3), [1, 1, 1])
+        with self.assertRaises(ValueError):
+            fedavg(np.ones((2, 3)), [1])
 
 
 class TestTrimmedMean(unittest.TestCase):
-    def test_drops_largest_norm(self):
-        d = np.array([[1.0, 0.0], [0.0, 1.0], [100.0, 100.0]])  # third is garbage
-        out = trimmed_mean(d, [120, 120, 120], k=1)
-        np.testing.assert_allclose(out, [0.5, 0.5])
+    def test_drops_flagged_client(self):
+        d = np.array([[1.0, 0.0], [0.0, 1.0], [100.0, 100.0]])
+        np.testing.assert_allclose(trimmed_mean(d, [120, 120, 120], drop=[2]), [0.5, 0.5])
 
-    def test_rejects_too_few_clients(self):
+    def test_drop_wins_over_norm(self):
+        # client 0 is flagged even though client 2 has the largest norm
+        d = np.array([[1.0, 0.0], [0.0, 1.0], [5.0, 5.0]])
+        np.testing.assert_allclose(trimmed_mean(d, [1, 1, 1], drop=[0]), [2.5, 3.0])
+
+    def test_norm_fallback_for_unmasked_updates(self):
+        d = np.array([[1.0, 0.0], [0.0, 1.0], [100.0, 100.0]])
+        np.testing.assert_allclose(trimmed_mean(d, [120, 120, 120]), [0.5, 0.5])
+
+    def test_rejects_dropping_everyone_or_bad_index(self):
         with self.assertRaises(ValueError):
-            trimmed_mean(np.array([[1.0]]), [120], k=1)
+            trimmed_mean(np.ones((2, 2)), [1, 1], drop=[0, 1])
+        with self.assertRaises(ValueError):
+            trimmed_mean(np.ones((2, 2)), [1, 1], drop=[5])
+        with self.assertRaises(ValueError):
+            trimmed_mean(np.array([[1.0]]), [120])
 
 
 class TestFedProx(unittest.TestCase):
-    def test_caps_norm(self):
-        d = np.array([[0.0, 3.0], [0.0, 4.0]])  # norm 3 and 4, cap at 2
-        out = fedprox(d, [120, 120], mu=2.0)
-        self.assertLessEqual(float(np.linalg.norm(out)), 2.0)
+    def setUp(self):
+        rng = np.random.default_rng(3)
+        self.X = rng.normal(size=(60, N_FEATURES))
+        self.y = (self.X[:, 1] - self.X[:, 2] > 0).astype(float)
+        self.w_global = np.full(N_WEIGHTS, 0.2)
 
-    def test_small_updates_unchanged(self):
-        d = np.array([[0.5, 0.0], [0.0, 0.5]])
-        out = fedprox(d, [120, 120], mu=10.0)
-        np.testing.assert_allclose(out, [0.25, 0.25])
+    def test_server_side_is_weighted_average(self):
+        d = np.array([[1.0, 0.0], [0.0, 1.0]])
+        np.testing.assert_allclose(fedprox(d, [300, 100]), fedavg(d, [300, 100]))
+
+    def test_proximal_term_keeps_local_model_near_global(self):
+        free = train(self.w_global, self.X, self.y, epochs=20, lr=0.3)
+        prox = train(self.w_global, self.X, self.y, epochs=20, lr=0.3, mu=1.0, w_anchor=self.w_global)
+        self.assertLess(np.linalg.norm(prox - self.w_global), np.linalg.norm(free - self.w_global))
+
+    def test_mu_zero_is_plain_training(self):
+        np.testing.assert_allclose(
+            train(self.w_global, self.X, self.y, mu=0.0, w_anchor=self.w_global),
+            train(self.w_global, self.X, self.y))
+
+    def test_mu_requires_anchor(self):
+        with self.assertRaises(ValueError):
+            train(self.w_global, self.X, self.y, mu=FEDPROX_MU)
 
 
 class TestSelector(unittest.TestCase):
-    def _d(self):
-        return np.array([[1.0, 0.0], [0.0, 1.0], [0.0, 0.0]])
-
-    def test_outlier_loss_selects_trimmed(self):
-        s, _ = select_strategy([0.4, 0.41, 5.0], self._d())
+    def test_outlier_loss_selects_trimmed_and_flags_that_client(self):
+        s, reason, flagged = select_strategy([0.4, 5.0, 0.41], names=["Hospital A", "Hospital B", "Hospital C"])
         self.assertEqual(s, "trimmed_mean")
+        self.assertEqual(flagged, (1,))
+        self.assertIn("Hospital B", reason)
+
+    def test_outlier_detected_even_when_other_losses_tie(self):
+        s, _, flagged = select_strategy([0.4, 0.4, 5.0])
+        self.assertEqual((s, flagged), ("trimmed_mean", (2,)))
 
     def test_tight_losses_select_fedavg(self):
-        agreeing = np.array([[1.0, 0.1], [0.9, 0.0], [1.0, -0.1]])  # all ~norm 1
-        s, reason = select_strategy([0.40, 0.41, 0.39], agreeing)
-        self.assertEqual(s, "fedavg")
+        s, reason, flagged = select_strategy([0.40, 0.41, 0.39])
+        self.assertEqual((s, flagged), ("fedavg", ()))
         self.assertIn("FedAvg", reason)
 
     def test_spread_losses_select_fedprox(self):
-        s, _ = select_strategy([0.30, 0.45, 0.60], self._d(), tau=0.05)
-        self.assertEqual(s, "fedprox")
+        s, _, flagged = select_strategy([0.30, 0.45, 0.60], tau=0.05)
+        self.assertEqual((s, flagged), ("fedprox", ()))
 
-    def test_reason_is_a_string(self):
-        _, reason = select_strategy([0.4, 0.41, 0.39], self._d())
-        self.assertIsInstance(reason, str)
-        self.assertTrue(len(reason) > 0)
+    def test_works_without_deltas_for_masked_rounds(self):
+        self.assertEqual(select_strategy([0.40, 0.41, 0.39], deltas=None).strategy, "fedavg")
+
+    def test_norm_spread_only_with_unmasked_deltas(self):
+        d = np.array([[0.01, 0.0], [0.0, 0.01], [3.0, 3.0]])
+        self.assertEqual(select_strategy([0.40, 0.41, 0.39], deltas=d).strategy, "fedprox")
+
+    def test_aggregate_uses_flagged(self):
+        d = np.array([[1.0, 0.0], [0.0, 1.0], [9.0, 9.0]])
+        dec = select_strategy([0.4, 0.41, 3.0])
+        np.testing.assert_allclose(aggregate(d, [1, 1, 1], dec.strategy, drop=dec.flagged), [0.5, 0.5])
+
+    def test_unknown_strategy(self):
+        with self.assertRaises(ValueError):
+            aggregate(np.ones((2, 2)), [1, 1], "magic")
+
+
+class TestAucTies(unittest.TestCase):
+    def test_all_tied_scores_give_half(self):
+        self.assertAlmostEqual(auc(np.array([0, 1, 0, 1]), np.zeros(4)), 0.5)
+
+    def test_partial_ties_match_pairwise_definition(self):
+        y = np.array([0, 0, 1, 1, 1, 0])
+        s = np.array([0.1, 0.5, 0.5, 0.9, 0.2, 0.2])
+        pos, neg = s[y == 1], s[y == 0]
+        pairwise = np.mean([(p > n) + 0.5 * (p == n) for p in pos for n in neg])
+        self.assertAlmostEqual(auc(y, s), float(pairwise), places=12)
 
 
 if __name__ == "__main__":
