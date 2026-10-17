@@ -281,19 +281,25 @@ function drawSeries(S, series, upto, { refs = [], color, pad = 30, decimals = 1,
   }
   const n = series.length;
   const top = 6, bottom = step ? 18 : 6;
+  const ticks = [];
+  if (step) for (let v = min; v <= max + 1e-9; v += step) ticks.push(v);
+
+  ctx.font = `12px ${FONT_DATA}`;
+  // the y labels are right-aligned at pad - 4: make room for the widest one (#31)
+  const widest = Math.max(0, ...ticks.map((v) => ctx.measureText(v.toFixed(decimals)).width));
+  pad = Math.max(pad, Math.ceil(widest) + 8);
   const X = (i) => pad + (n > 1 ? i / (n - 1) : 0) * (w - pad - 8);
   const Y = (v) => h - bottom - ((v - min) / (max - min)) * (h - top - bottom);
 
-  ctx.font = `12px ${FONT_DATA}`;
   if (step) {
     ctx.strokeStyle = COL.border;
     ctx.lineWidth = 1;
     ctx.fillStyle = COL.faint;
     ctx.textAlign = 'right';
-    for (let v = min; v <= max + 1e-9; v += step) {
+    ticks.forEach((v) => {
       ctx.beginPath(); ctx.moveTo(pad, Y(v)); ctx.lineTo(w - 8, Y(v)); ctx.stroke();
       ctx.fillText(v.toFixed(decimals), pad - 4, Y(v) + 4);
-    }
+    });
     ctx.textAlign = 'center';
     for (let i = 0; i < n; i++) ctx.fillText(`r${i}`, X(i), h - 4);
     ctx.textAlign = 'left';
