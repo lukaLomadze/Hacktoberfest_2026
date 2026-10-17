@@ -13,6 +13,19 @@ constant, the demo scenario, or an agent decision.
 | which column is the label | Schema | offline label seed |
 | local epochs / lr / mu | Planner | contract defaults 4 epochs @ lr 0.1 |
 | aggregation strategy + exclusions | Coordinator | `select_strategy` rules |
+| the contract: agreed feature set + model type | Coordinator | intersection of every hospital's proposal |
+
+## The negotiated contract
+
+Which features everyone will use, and the model type, is produced at runtime by the
+Coordinator agent from each hospital's proposal — a feature is usable only if every
+hospital proposed it. `CoordinatorAgent.features`, `.model` and `.n_weights` come from
+that decision, and the trace records it under `schema`.
+
+Nothing in the runtime assumes six features or seven weights: the weight count is
+`len(features) + 1`, the message validators accept any width, and the evaluation set is
+sliced to the agreed features. Changing the model means adding a trainer and a name to
+`SUPPORTED_MODELS`; the contract carries the choice.
 
 **Not configured anywhere — observed:**
 
@@ -25,7 +38,8 @@ fault list.
 
 ## Contract constants (the federation's agreement, not data knowledge)
 
-- the six canonical features and their units — `CONTRACTS.md` §4
+- the six canonical feature names and units — `CONTRACTS.md` §4; this is the
+  **vocabulary the Schema agents propose in**, not a list the Coordinator enforces
 - allowed message kinds and their schemas — `runtime.py`, `schemas.py`
 - the three aggregation strategy names — `aggregation.py`
 - DP policy: ε per round, δ, per-example clip — a stated policy, not a data fact
