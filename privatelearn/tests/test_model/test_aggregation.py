@@ -103,6 +103,11 @@ class TestSelector(unittest.TestCase):
         s, _, flagged = select_strategy([0.4, 0.4, 5.0])
         self.assertEqual((s, flagged), ("trimmed_mean", (2,)))
 
+    def test_honest_non_iid_gaps_are_not_outliers(self):
+        # measured probe losses on the real split (round 4) and the all-equal round 1
+        for losses in ([0.5333, 0.6292, 0.6224], [0.6931, 0.6931, 0.6932], [0.60, 0.62, 0.70]):
+            self.assertEqual(select_strategy(losses).flagged, (), losses)
+
     def test_tight_losses_select_fedavg(self):
         s, reason, flagged = select_strategy([0.40, 0.41, 0.39])
         self.assertEqual((s, flagged), ("fedavg", ()))
