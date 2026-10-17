@@ -81,7 +81,9 @@ DATA = [make_data(1, 0.0), make_data(2, 0.3), make_data(3, -0.3)]
 XT, YT = make_data(9)
 
 
-def evaluate(w):
+def evaluate(w, features=None):
+    if features:
+        return logistic.auc(YT, logistic.predict_proba(w, XT[:, [CANONICAL.index(f) for f in features]]))
     return logistic.auc(YT, logistic.predict_proba(w, XT))
 
 
@@ -199,12 +201,17 @@ class TestSchemaNegotiation(unittest.TestCase):
         self.assertEqual(agreed[0]["features"], CANONICAL)
         self.assertEqual(set(coord.schema_report["per_hospital"]), {"h0", "h1", "h2"})
 
-    def test_incomplete_schema_rejected(self):
+    def test_contract_keeps_only_common_features(self):
+        # negotiation agrees a contract instead of rejecting an incomplete hospital:
+        # a feature is usable only if every hospital proposed it.
+        X5, y = DATA[0][0][:, :5], DATA[0][1]
         bus = MessageBus()
-        bus.register(FakeHospital("h0", *DATA[0], columns=CANONICAL[:5]))
-        bus.register(CoordinatorAgent(["h0"], evaluate, [0.0] * 6, [1.0] * 6, rounds=1))
-        with self.assertRaisesRegex(ValueError, "canonical six"):
-            bus.run(max_ticks=10)
+        bus.register(FakeHospital("h0", X5, y, columns=CANONICAL[:5]))
+        coord = CoordinatorAgent(["h0"], evaluate, [0.0] * 6, [1.0] * 6, rounds=1)
+        bus.register(coord)
+        bus.run(max_ticks=10)
+        self.assertEqual(coord.features, CANONICAL[:5])
+        self.assertEqual(coord.n_weights, 6)
 
 
 if __name__ == "__main__":
