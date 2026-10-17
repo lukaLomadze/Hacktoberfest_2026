@@ -32,27 +32,28 @@
     "lr": 0.1,
     "seed": 42,
     "model_hashes": {
-      "h0": "d549c8277f584e10af29c0b2f5ddb4104d51fe5b1dd8614901bab86458169ac7",
-      "h1": "d549c8277f584e10af29c0b2f5ddb4104d51fe5b1dd8614901bab86458169ac7",
-      "h2": "d549c8277f584e10af29c0b2f5ddb4104d51fe5b1dd8614901bab86458169ac7"
+      "h0": "1a2dffce68bd2c1fc2e28fdaefde2de94369cbd098b95215ab0275bfdafacf4d",
+      "h1": "1a2dffce68bd2c1fc2e28fdaefde2de94369cbd098b95215ab0275bfdafacf4d",
+      "h2": "1a2dffce68bd2c1fc2e28fdaefde2de94369cbd098b95215ab0275bfdafacf4d"
     },
     "decision_maker": {
-      "provider": "rule",
-      "model": "deterministic",
-      "llm_calls": 0,
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "llm_calls": 17,
       "fallbacks": 0,
+      "recent_errors": [],
       "schema": {
         "h0": {
-          "made_by": "rule",
-          "reasoning": "matched the known column aliases"
+          "made_by": "llm",
+          "reasoning": "All local columns already use the canonical units (glucose mg/dL, blood pressure mmHg, BMI kg/m^2, insulin uU/mL, age years), so only name mapping is needed with factor 1.0 and Outcome is the label."
         },
         "h1": {
-          "made_by": "rule",
-          "reasoning": "matched the known column aliases"
+          "made_by": "llm",
+          "reasoning": "Local columns use non-canonical units (mmol/L glucose, kPa blood pressure, pmol/L insulin, months age) and lack BMI, so each is converted with the specified factors and BMI is derived from weight and height."
         },
         "h2": {
-          "made_by": "rule",
-          "reasoning": "matched the known column aliases"
+          "made_by": "llm",
+          "reasoning": "Local columns are already in canonical units except insulin (pmol/L), which is converted to uU/mL by dividing by 6.945, and BMI is provided directly in kg/m^2."
         }
       },
       "policy": "the LLM only sees column names and aggregate losses, never a patient row; gradients, aggregation, masking and DP are deterministic code"
@@ -101,42 +102,42 @@
             "Pregnancies"
           ],
           "unit": "count",
-          "transform": "rename"
+          "transform": "identity"
         },
         "glucose": {
           "source": [
             "Glucose"
           ],
           "unit": "mg/dL",
-          "transform": "rename"
+          "transform": "identity (already mg/dL)"
         },
         "blood_pressure": {
           "source": [
             "BloodPressure"
           ],
           "unit": "mmHg",
-          "transform": "rename"
+          "transform": "identity (already mmHg)"
         },
         "bmi": {
           "source": [
             "BMI"
           ],
           "unit": "kg/m^2",
-          "transform": "rename"
+          "transform": "identity (already kg/m^2)"
         },
         "insulin": {
           "source": [
             "Insulin"
           ],
           "unit": "uU/mL",
-          "transform": "rename"
+          "transform": "identity (already uU/mL)"
         },
         "age": {
           "source": [
             "Age"
           ],
           "unit": "years",
-          "transform": "rename"
+          "transform": "identity (already years)"
         }
       },
       "h1": {
@@ -145,43 +146,43 @@
             "pregnancies"
           ],
           "unit": "count",
-          "transform": "rename"
+          "transform": "identity"
         },
         "glucose": {
           "source": [
             "glucose_mmol_l"
           ],
-          "unit": "mmol/L",
-          "transform": "x * 18.0182"
+          "unit": "mg/dL",
+          "transform": "mmol/L to mg/dL"
         },
         "blood_pressure": {
           "source": [
             "bp_kpa"
           ],
-          "unit": "kPa",
-          "transform": "x * 7.50062"
+          "unit": "mmHg",
+          "transform": "kPa to mmHg"
         },
         "bmi": {
           "source": [
             "weight_kg",
             "height_m"
           ],
-          "unit": "kg, m",
+          "unit": "kg/m^2",
           "transform": "weight_kg / height_m^2"
         },
         "insulin": {
           "source": [
             "insulin_pmol_l"
           ],
-          "unit": "pmol/L",
-          "transform": "x / 6.945"
+          "unit": "uU/mL",
+          "transform": "pmol/L divided by 6.945"
         },
         "age": {
           "source": [
             "age_months"
           ],
-          "unit": "months",
-          "transform": "x / 12"
+          "unit": "years",
+          "transform": "months divided by 12"
         }
       },
       "h2": {
@@ -197,7 +198,7 @@
             "glucose"
           ],
           "unit": "mg/dL",
-          "transform": "rename"
+          "transform": "already canonical"
         },
         "blood_pressure": {
           "source": [
@@ -211,21 +212,21 @@
             "bmi"
           ],
           "unit": "kg/m^2",
-          "transform": "rename"
+          "transform": "already canonical"
         },
         "insulin": {
           "source": [
             "insulin_pmol_l"
           ],
-          "unit": "pmol/L",
-          "transform": "x / 6.945"
+          "unit": "uU/mL",
+          "transform": "divide by 6.945"
         },
         "age": {
           "source": [
             "age"
           ],
           "unit": "years",
-          "transform": "rename"
+          "transform": "already canonical"
         }
       }
     }
@@ -237,9 +238,9 @@
       "eps_total": 1.5,
       "auc_before": 0.5,
       "auc_after": 0.8313,
-      "decision": "loss std 0.000 ≤ τ=0.1, hospitals agree → FedAvg",
-      "reasoning": "loss std 0.000 ≤ τ=0.1, hospitals agree → FedAvg",
-      "decided_by": "rule",
+      "decision": "All three hospitals report identical probe loss (0.693), indicating full agreement, so standard FedAvg is appropriate.",
+      "reasoning": "All three hospitals report identical probe loss (0.693), indicating full agreement, so standard FedAvg is appropriate.",
+      "decided_by": "llm",
       "probe_losses": {
         "h0": 0.6931,
         "h1": 0.6931,
@@ -258,7 +259,7 @@
         },
         {
           "hospital": "h1",
-          "loss": 0.6740184344,
+          "loss": 0.6740184141,
           "n": 120,
           "sent": true,
           "masked": true,
@@ -266,7 +267,7 @@
         },
         {
           "hospital": "h2",
-          "loss": 0.6658206126,
+          "loss": 0.6658206245,
           "n": 120,
           "sent": true,
           "masked": true,
@@ -277,21 +278,21 @@
         "v": "1.0",
         "round": 1,
         "w": [
-          -0.0426361163,
-          0.0159456197,
-          0.0896005336,
-          0.0180343921,
-          0.0441524306,
-          0.0246266717,
-          0.0261811678
+          -0.0426361087,
+          0.0159456244,
+          0.089600535,
+          0.0180343895,
+          0.044152428,
+          0.024626725,
+          0.0261811879
         ],
         "strategy": "fedavg",
         "eps_total": 1.5,
         "auc": 0.8312682216,
         "losses": [
           0.5827025386,
-          0.6740184344,
-          0.6658206126
+          0.6740184141,
+          0.6658206245
         ],
         "converged": false
       }
@@ -302,9 +303,9 @@
       "eps_total": 3.0,
       "auc_before": 0.8313,
       "auc_after": 0.8309,
-      "decision": "Hospital C offline; loss std 0.017 ≤ τ=0.1, hospitals agree → FedAvg",
-      "reasoning": "loss std 0.017 ≤ τ=0.1, hospitals agree → FedAvg",
-      "decided_by": "rule",
+      "decision": "Hospital C offline; The probe losses for Hospital A (0.633) and Hospital B (0.667) are close and in agreement, so standard FedAvg is appropriate.",
+      "reasoning": "The probe losses for Hospital A (0.633) and Hospital B (0.667) are close and in agreement, so standard FedAvg is appropriate.",
+      "decided_by": "llm",
       "probe_losses": {
         "h0": 0.6331,
         "h1": 0.6675
@@ -316,7 +317,7 @@
       "updates": [
         {
           "hospital": "h0",
-          "loss": 0.5404430424,
+          "loss": 0.5404430382,
           "n": 120,
           "sent": true,
           "masked": true,
@@ -324,7 +325,7 @@
         },
         {
           "hospital": "h1",
-          "loss": 0.6516301623,
+          "loss": 0.6516301317,
           "n": 120,
           "sent": true,
           "masked": true,
@@ -344,20 +345,20 @@
         "v": "1.0",
         "round": 2,
         "w": [
-          -0.1017656694,
-          0.0373820926,
-          0.1491627552,
-          0.0260923584,
-          0.0938846098,
-          0.0588059328,
-          0.104915057
+          -0.1017656556,
+          0.0373820955,
+          0.1491627527,
+          0.0260923511,
+          0.0938846026,
+          0.0588060603,
+          0.104915094
         ],
         "strategy": "fedavg",
         "eps_total": 3.0,
         "auc": 0.8309037901,
         "losses": [
-          0.5404430424,
-          0.6516301623
+          0.5404430382,
+          0.6516301317
         ],
         "converged": false
       }
@@ -368,9 +369,9 @@
       "eps_total": 4.5,
       "auc_before": 0.8309,
       "auc_after": 0.8322,
-      "decision": "Hospital C loss 2.488 is >2σ above median 0.644 → trimmed-mean, excluded",
-      "reasoning": "Hospital C loss 2.488 is >2σ above median 0.644 → trimmed-mean, excluded",
-      "decided_by": "rule",
+      "decision": "Hospitals A and B agree closely (0.57, 0.644) while Hospital C is a clear outlier at 2.488, so trimmed_mean excluding C is the appropriate choice.",
+      "reasoning": "Hospitals A and B agree closely (0.57, 0.644) while Hospital C is a clear outlier at 2.488, so trimmed_mean excluding C is the appropriate choice.",
+      "decided_by": "llm",
       "probe_losses": {
         "h0": 0.5697,
         "h1": 0.6441,
@@ -383,7 +384,7 @@
       "updates": [
         {
           "hospital": "h0",
-          "loss": 0.4999280737,
+          "loss": 0.4999280699,
           "n": 120,
           "sent": true,
           "masked": true,
@@ -391,7 +392,7 @@
         },
         {
           "hospital": "h1",
-          "loss": 0.6317968981,
+          "loss": 0.6317968558,
           "n": 120,
           "sent": true,
           "masked": true,
@@ -399,7 +400,7 @@
         },
         {
           "hospital": "h2",
-          "loss": 2.4876124992,
+          "loss": 2.4876132307,
           "n": 120,
           "sent": true,
           "rejected": true,
@@ -412,33 +413,33 @@
         "v": "1.0",
         "round": 3,
         "w": [
-          -0.191472706,
-          0.0665358606,
-          0.2075160201,
-          0.0275870568,
-          0.1179377369,
-          0.0546538291,
-          0.1578853315
+          -0.1914726793,
+          0.0665358596,
+          0.2075160127,
+          0.0275870439,
+          0.1179377244,
+          0.0546540152,
+          0.1578853795
         ],
         "strategy": "trimmed_mean",
         "eps_total": 4.5,
         "auc": 0.8321793003,
         "losses": [
-          0.4999280737,
-          0.6317968981
+          0.4999280699,
+          0.6317968558
         ],
         "converged": false
       }
     },
     {
       "round": 4,
-      "strategy": "fedavg",
+      "strategy": "fedprox",
       "eps_total": 6.0,
       "auc_before": 0.8322,
       "auc_after": 0.832,
-      "decision": "loss std 0.054 ≤ τ=0.1, hospitals agree → FedAvg",
-      "reasoning": "loss std 0.054 ≤ τ=0.1, hospitals agree → FedAvg",
-      "decided_by": "rule",
+      "decision": "The probe losses disagree broadly (0.52 vs 0.626 and 0.643) with no single clear outlier, so fedprox is the appropriate choice to stabilize training across heterogeneous hospitals.",
+      "reasoning": "The probe losses disagree broadly (0.52 vs 0.626 and 0.643) with no single clear outlier, so fedprox is the appropriate choice to stabilize training across heterogeneous hospitals.",
+      "decided_by": "llm",
       "probe_losses": {
         "h0": 0.52,
         "h1": 0.626,
@@ -449,7 +450,7 @@
       "updates": [
         {
           "hospital": "h0",
-          "loss": 0.468501888,
+          "loss": 0.4685700289,
           "n": 120,
           "sent": true,
           "masked": true,
@@ -457,7 +458,7 @@
         },
         {
           "hospital": "h1",
-          "loss": 0.6165026314,
+          "loss": 0.6165161122,
           "n": 120,
           "sent": true,
           "masked": true,
@@ -465,7 +466,7 @@
         },
         {
           "hospital": "h2",
-          "loss": 0.6224673184,
+          "loss": 0.622497004,
           "n": 120,
           "sent": true,
           "masked": true,
@@ -476,21 +477,21 @@
         "v": "1.0",
         "round": 4,
         "w": [
-          -0.2527239699,
-          0.0692040483,
-          0.2501888888,
-          0.0427784749,
-          0.1544919077,
-          0.06908381,
-          0.1789230883
+          -0.2526690446,
+          0.0691812916,
+          0.2501054252,
+          0.0427593438,
+          0.1544328244,
+          0.0690509564,
+          0.1788903732
         ],
-        "strategy": "fedavg",
+        "strategy": "fedprox",
         "eps_total": 6.0,
         "auc": 0.8319970845,
         "losses": [
-          0.468501888,
-          0.6165026314,
-          0.6224673184
+          0.4685700289,
+          0.6165161122,
+          0.622497004
         ],
         "converged": true
       }
@@ -543,7 +544,7 @@
       {
         "round": 1,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — Round 1 with no prior loss and FedAvg, so the validated default of 4 epochs at lr 0.1 is the safest choice; mu is unused under FedAvg."
       },
       {
         "round": 1,
@@ -563,7 +564,7 @@
       {
         "round": 2,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — FedAvg round 2 with moderate loss 0.64 shows no instability, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 2,
@@ -583,7 +584,7 @@
       {
         "round": 3,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — Trimmed-mean aggregation is robust to outliers and loss is decreasing steadily, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 3,
@@ -603,7 +604,7 @@
       {
         "round": 4,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1, mu=0.01 — Loss is decreasing steadily at round 4, so the validated default of 4 epochs at lr 0.1 is retained with a small proximal term (mu=0.01) to stabilize fedprox aggregation without over-constraining local progress."
       },
       {
         "round": 4,
@@ -635,7 +636,7 @@
       {
         "round": 1,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — Round 1 with no prior loss and FedAvg, so the validated default of 4 epochs at lr 0.1 is the safest choice; mu is irrelevant for FedAvg."
       },
       {
         "round": 1,
@@ -655,7 +656,7 @@
       {
         "round": 2,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — FedAvg round 2 with moderate loss 0.64 shows no instability, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 2,
@@ -675,7 +676,7 @@
       {
         "round": 3,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — Trimmed-mean aggregation is robust to outliers and loss is decreasing steadily, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 3,
@@ -695,7 +696,7 @@
       {
         "round": 4,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1, mu=0.01 — Loss is decreasing steadily at round 4, so the validated default of 4 epochs at lr 0.1 is retained with a small proximal term (mu=0.01) to stabilize fedprox aggregation without over-constraining local progress."
       },
       {
         "round": 4,
@@ -727,7 +728,7 @@
       {
         "round": 1,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — Round 1 with no prior loss and FedAvg, so the validated default of 4 epochs at lr 0.1 is the safest choice; mu is unused under FedAvg."
       },
       {
         "round": 1,
@@ -767,7 +768,7 @@
       {
         "round": 4,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1, mu=0.01 — Loss is decreasing steadily at round 4, so the validated default of 4 epochs at lr 0.1 is retained with a small proximal term (mu=0.01) to stabilize fedprox aggregation without over-constraining local progress."
       },
       {
         "round": 4,
