@@ -1,0 +1,1858 @@
+{
+ "items": [
+  {
+   "seq": 1,
+   "ts": "2026-10-18T14:00:01Z",
+   "job_id": "job_1",
+   "round": 0,
+   "type": "job.status",
+   "status": "running",
+   "error": null
+  },
+  {
+   "seq": 2,
+   "ts": "2026-10-18T14:00:02Z",
+   "job_id": "job_1",
+   "round": 0,
+   "type": "job.step",
+   "step": "waiting_for_nodes"
+  },
+  {
+   "seq": 3,
+   "ts": "2026-10-18T14:00:03Z",
+   "job_id": "job_1",
+   "round": 0,
+   "type": "participant.state",
+   "membership_id": "mem_1",
+   "node_id": "node_1",
+   "state": "online",
+   "detail": "node polling"
+  },
+  {
+   "seq": 4,
+   "ts": "2026-10-18T14:00:04Z",
+   "job_id": "job_1",
+   "round": 0,
+   "type": "participant.state",
+   "membership_id": "mem_2",
+   "node_id": "node_2",
+   "state": "online",
+   "detail": "node polling"
+  },
+  {
+   "seq": 5,
+   "ts": "2026-10-18T14:00:05Z",
+   "job_id": "job_1",
+   "round": 0,
+   "type": "participant.state",
+   "membership_id": "mem_3",
+   "node_id": "node_3",
+   "state": "online",
+   "detail": "node polling"
+  },
+  {
+   "seq": 6,
+   "ts": "2026-10-18T14:00:06Z",
+   "job_id": "job_1",
+   "round": 0,
+   "type": "job.step",
+   "step": "key_exchange"
+  },
+  {
+   "seq": 7,
+   "ts": "2026-10-18T14:00:07Z",
+   "job_id": "job_1",
+   "round": 0,
+   "type": "packet",
+   "from": "node_1",
+   "to": "coord",
+   "kind": "key",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 8,
+   "ts": "2026-10-18T14:00:08Z",
+   "job_id": "job_1",
+   "round": 0,
+   "type": "packet",
+   "from": "node_2",
+   "to": "coord",
+   "kind": "key",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 9,
+   "ts": "2026-10-18T14:00:09Z",
+   "job_id": "job_1",
+   "round": 0,
+   "type": "packet",
+   "from": "node_3",
+   "to": "coord",
+   "kind": "key",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 10,
+   "ts": "2026-10-18T14:00:10Z",
+   "job_id": "job_1",
+   "round": 0,
+   "type": "job.step",
+   "step": "schema_negotiation"
+  },
+  {
+   "seq": 11,
+   "ts": "2026-10-18T14:00:11Z",
+   "job_id": "job_1",
+   "round": 0,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_1",
+    "agent": "schema",
+    "company_name": "Tbilisi Central Hospital"
+   },
+   "to": "coord",
+   "text": "described 7 local columns",
+   "made_by": "llm",
+   "data": null
+  },
+  {
+   "seq": 12,
+   "ts": "2026-10-18T14:00:12Z",
+   "job_id": "job_1",
+   "round": 0,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_1",
+    "agent": "schema",
+    "company_name": "Tbilisi Central Hospital"
+   },
+   "to": "coord",
+   "text": "mapped to the agreed 6-feature schema",
+   "made_by": "llm",
+   "data": null
+  },
+  {
+   "seq": 13,
+   "ts": "2026-10-18T14:00:13Z",
+   "job_id": "job_1",
+   "round": 0,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_2",
+    "agent": "schema",
+    "company_name": "Batumi Medical Center"
+   },
+   "to": "coord",
+   "text": "described 8 local columns",
+   "made_by": "llm",
+   "data": null
+  },
+  {
+   "seq": 14,
+   "ts": "2026-10-18T14:00:14Z",
+   "job_id": "job_1",
+   "round": 0,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_2",
+    "agent": "schema",
+    "company_name": "Batumi Medical Center"
+   },
+   "to": "coord",
+   "text": "mapped to the agreed 6-feature schema",
+   "made_by": "llm",
+   "data": null
+  },
+  {
+   "seq": 15,
+   "ts": "2026-10-18T14:00:15Z",
+   "job_id": "job_1",
+   "round": 0,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_3",
+    "agent": "schema",
+    "company_name": "Kutaisi Regional Clinic"
+   },
+   "to": "coord",
+   "text": "described 7 local columns",
+   "made_by": "llm",
+   "data": null
+  },
+  {
+   "seq": 16,
+   "ts": "2026-10-18T14:00:16Z",
+   "job_id": "job_1",
+   "round": 0,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_3",
+    "agent": "schema",
+    "company_name": "Kutaisi Regional Clinic"
+   },
+   "to": "coord",
+   "text": "mapped to the agreed 6-feature schema",
+   "made_by": "llm",
+   "data": null
+  },
+  {
+   "seq": 17,
+   "ts": "2026-10-18T14:00:17Z",
+   "job_id": "job_1",
+   "round": 0,
+   "type": "agent.message",
+   "from": {
+    "node_id": "coord",
+    "agent": "coordinator",
+    "company_name": "Coordinator"
+   },
+   "to": "*",
+   "text": "agreed 6 features: pregnancies, glucose, blood_pressure, bmi, insulin, age",
+   "made_by": "llm",
+   "data": {
+    "features": [
+     "pregnancies",
+     "glucose",
+     "blood_pressure",
+     "bmi",
+     "insulin",
+     "age"
+    ]
+   }
+  },
+  {
+   "seq": 18,
+   "ts": "2026-10-18T14:00:18Z",
+   "job_id": "job_1",
+   "round": 0,
+   "type": "job.step",
+   "step": "normalization"
+  },
+  {
+   "seq": 19,
+   "ts": "2026-10-18T14:00:19Z",
+   "job_id": "job_1",
+   "round": 0,
+   "type": "job.step",
+   "step": "training"
+  },
+  {
+   "seq": 20,
+   "ts": "2026-10-18T14:00:20Z",
+   "job_id": "job_1",
+   "round": 1,
+   "type": "participant.state",
+   "membership_id": "mem_1",
+   "node_id": "node_1",
+   "state": "probing",
+   "detail": "scoring the global model"
+  },
+  {
+   "seq": 21,
+   "ts": "2026-10-18T14:00:21Z",
+   "job_id": "job_1",
+   "round": 1,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_1",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 22,
+   "ts": "2026-10-18T14:00:22Z",
+   "job_id": "job_1",
+   "round": 1,
+   "type": "participant.state",
+   "membership_id": "mem_2",
+   "node_id": "node_2",
+   "state": "probing",
+   "detail": "scoring the global model"
+  },
+  {
+   "seq": 23,
+   "ts": "2026-10-18T14:00:23Z",
+   "job_id": "job_1",
+   "round": 1,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_2",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 24,
+   "ts": "2026-10-18T14:00:24Z",
+   "job_id": "job_1",
+   "round": 1,
+   "type": "participant.state",
+   "membership_id": "mem_3",
+   "node_id": "node_3",
+   "state": "probing",
+   "detail": "scoring the global model"
+  },
+  {
+   "seq": 25,
+   "ts": "2026-10-18T14:00:25Z",
+   "job_id": "job_1",
+   "round": 1,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_3",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 26,
+   "ts": "2026-10-18T14:00:26Z",
+   "job_id": "job_1",
+   "round": 1,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_1",
+    "agent": "challenger",
+    "company_name": "Tbilisi Central Hospital"
+   },
+   "to": "coord",
+   "text": "global model on local data: loss 0.693, AUC 0.500",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 27,
+   "ts": "2026-10-18T14:00:27Z",
+   "job_id": "job_1",
+   "round": 1,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_2",
+    "agent": "challenger",
+    "company_name": "Batumi Medical Center"
+   },
+   "to": "coord",
+   "text": "global model on local data: loss 0.693, AUC 0.500",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 28,
+   "ts": "2026-10-18T14:00:28Z",
+   "job_id": "job_1",
+   "round": 1,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_3",
+    "agent": "challenger",
+    "company_name": "Kutaisi Regional Clinic"
+   },
+   "to": "coord",
+   "text": "global model on local data: loss 0.693, AUC 0.500",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 29,
+   "ts": "2026-10-18T14:00:29Z",
+   "job_id": "job_1",
+   "round": 1,
+   "type": "round.decision",
+   "strategy": "fedavg",
+   "participants": [
+    "node_1",
+    "node_2",
+    "node_3"
+   ],
+   "excluded": [],
+   "reasoning": "All three hospitals report identical probe loss (0.693), indicating full agreement, so standard FedAvg is appropriate.",
+   "decided_by": "llm"
+  },
+  {
+   "seq": 30,
+   "ts": "2026-10-18T14:00:30Z",
+   "job_id": "job_1",
+   "round": 1,
+   "type": "agent.message",
+   "from": {
+    "node_id": "coord",
+    "agent": "coordinator",
+    "company_name": "Coordinator"
+   },
+   "to": "*",
+   "text": "All three hospitals report identical probe loss (0.693), indicating full agreement, so standard FedAvg is appropriate.",
+   "made_by": "llm",
+   "data": {
+    "strategy": "fedavg"
+   }
+  },
+  {
+   "seq": 31,
+   "ts": "2026-10-18T14:00:31Z",
+   "job_id": "job_1",
+   "round": 1,
+   "type": "participant.state",
+   "membership_id": "mem_1",
+   "node_id": "node_1",
+   "state": "planning",
+   "detail": ""
+  },
+  {
+   "seq": 32,
+   "ts": "2026-10-18T14:00:32Z",
+   "job_id": "job_1",
+   "round": 1,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_1",
+    "agent": "planner",
+    "company_name": "Tbilisi Central Hospital"
+   },
+   "to": "coord",
+   "text": "4 ep @ lr 0.1 — Round 1 with no prior loss and FedAvg, so the validated default of 4 epochs at lr 0.1 is the safest choice; mu is unused under FedAvg.",
+   "made_by": "llm",
+   "data": null
+  },
+  {
+   "seq": 33,
+   "ts": "2026-10-18T14:00:33Z",
+   "job_id": "job_1",
+   "round": 1,
+   "type": "participant.state",
+   "membership_id": "mem_1",
+   "node_id": "node_1",
+   "state": "training",
+   "detail": ""
+  },
+  {
+   "seq": 34,
+   "ts": "2026-10-18T14:00:34Z",
+   "job_id": "job_1",
+   "round": 1,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_1",
+    "agent": "trainer",
+    "company_name": "Tbilisi Central Hospital"
+   },
+   "to": "coord",
+   "text": "trained on 120 local rows, loss 0.583; sent masked Δw",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 35,
+   "ts": "2026-10-18T14:00:35Z",
+   "job_id": "job_1",
+   "round": 1,
+   "type": "participant.state",
+   "membership_id": "mem_1",
+   "node_id": "node_1",
+   "state": "sent",
+   "detail": "masked Δw sent"
+  },
+  {
+   "seq": 36,
+   "ts": "2026-10-18T14:00:36Z",
+   "job_id": "job_1",
+   "round": 1,
+   "type": "packet",
+   "from": "node_1",
+   "to": "coord",
+   "kind": "update",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 37,
+   "ts": "2026-10-18T14:00:37Z",
+   "job_id": "job_1",
+   "round": 1,
+   "type": "participant.state",
+   "membership_id": "mem_2",
+   "node_id": "node_2",
+   "state": "planning",
+   "detail": ""
+  },
+  {
+   "seq": 38,
+   "ts": "2026-10-18T14:00:38Z",
+   "job_id": "job_1",
+   "round": 1,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_2",
+    "agent": "planner",
+    "company_name": "Batumi Medical Center"
+   },
+   "to": "coord",
+   "text": "4 ep @ lr 0.1 — Round 1 with no prior loss and FedAvg, so the validated default of 4 epochs at lr 0.1 is the safest choice; mu is irrelevant for FedAvg.",
+   "made_by": "llm",
+   "data": null
+  },
+  {
+   "seq": 39,
+   "ts": "2026-10-18T14:00:39Z",
+   "job_id": "job_1",
+   "round": 1,
+   "type": "participant.state",
+   "membership_id": "mem_2",
+   "node_id": "node_2",
+   "state": "training",
+   "detail": ""
+  },
+  {
+   "seq": 40,
+   "ts": "2026-10-18T14:00:40Z",
+   "job_id": "job_1",
+   "round": 1,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_2",
+    "agent": "trainer",
+    "company_name": "Batumi Medical Center"
+   },
+   "to": "coord",
+   "text": "trained on 120 local rows, loss 0.674; sent masked Δw",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 41,
+   "ts": "2026-10-18T14:00:41Z",
+   "job_id": "job_1",
+   "round": 1,
+   "type": "participant.state",
+   "membership_id": "mem_2",
+   "node_id": "node_2",
+   "state": "sent",
+   "detail": "masked Δw sent"
+  },
+  {
+   "seq": 42,
+   "ts": "2026-10-18T14:00:42Z",
+   "job_id": "job_1",
+   "round": 1,
+   "type": "packet",
+   "from": "node_2",
+   "to": "coord",
+   "kind": "update",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 43,
+   "ts": "2026-10-18T14:00:43Z",
+   "job_id": "job_1",
+   "round": 1,
+   "type": "participant.state",
+   "membership_id": "mem_3",
+   "node_id": "node_3",
+   "state": "planning",
+   "detail": ""
+  },
+  {
+   "seq": 44,
+   "ts": "2026-10-18T14:00:44Z",
+   "job_id": "job_1",
+   "round": 1,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_3",
+    "agent": "planner",
+    "company_name": "Kutaisi Regional Clinic"
+   },
+   "to": "coord",
+   "text": "4 ep @ lr 0.1 — Round 1 with no prior loss and FedAvg, so the validated default of 4 epochs at lr 0.1 is the safest choice; mu is unused under FedAvg.",
+   "made_by": "llm",
+   "data": null
+  },
+  {
+   "seq": 45,
+   "ts": "2026-10-18T14:00:45Z",
+   "job_id": "job_1",
+   "round": 1,
+   "type": "participant.state",
+   "membership_id": "mem_3",
+   "node_id": "node_3",
+   "state": "training",
+   "detail": ""
+  },
+  {
+   "seq": 46,
+   "ts": "2026-10-18T14:00:46Z",
+   "job_id": "job_1",
+   "round": 1,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_3",
+    "agent": "trainer",
+    "company_name": "Kutaisi Regional Clinic"
+   },
+   "to": "coord",
+   "text": "trained on 120 local rows, loss 0.666; sent masked Δw",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 47,
+   "ts": "2026-10-18T14:00:47Z",
+   "job_id": "job_1",
+   "round": 1,
+   "type": "participant.state",
+   "membership_id": "mem_3",
+   "node_id": "node_3",
+   "state": "sent",
+   "detail": "masked Δw sent"
+  },
+  {
+   "seq": 48,
+   "ts": "2026-10-18T14:00:48Z",
+   "job_id": "job_1",
+   "round": 1,
+   "type": "packet",
+   "from": "node_3",
+   "to": "coord",
+   "kind": "update",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 49,
+   "ts": "2026-10-18T14:00:49Z",
+   "job_id": "job_1",
+   "round": 1,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_1",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 50,
+   "ts": "2026-10-18T14:00:50Z",
+   "job_id": "job_1",
+   "round": 1,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_2",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 51,
+   "ts": "2026-10-18T14:00:51Z",
+   "job_id": "job_1",
+   "round": 1,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_3",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 52,
+   "ts": "2026-10-18T14:00:52Z",
+   "job_id": "job_1",
+   "round": 1,
+   "type": "round.completed",
+   "auc_before": 0.5,
+   "auc_after": 0.8313,
+   "loss": 0.6408,
+   "eps_total": 1.5,
+   "applied": true
+  },
+  {
+   "seq": 53,
+   "ts": "2026-10-18T14:00:53Z",
+   "job_id": "job_1",
+   "round": 2,
+   "type": "participant.state",
+   "membership_id": "mem_1",
+   "node_id": "node_1",
+   "state": "probing",
+   "detail": "scoring the global model"
+  },
+  {
+   "seq": 54,
+   "ts": "2026-10-18T14:00:54Z",
+   "job_id": "job_1",
+   "round": 2,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_1",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 55,
+   "ts": "2026-10-18T14:00:55Z",
+   "job_id": "job_1",
+   "round": 2,
+   "type": "participant.state",
+   "membership_id": "mem_2",
+   "node_id": "node_2",
+   "state": "probing",
+   "detail": "scoring the global model"
+  },
+  {
+   "seq": 56,
+   "ts": "2026-10-18T14:00:56Z",
+   "job_id": "job_1",
+   "round": 2,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_2",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 57,
+   "ts": "2026-10-18T14:00:57Z",
+   "job_id": "job_1",
+   "round": 2,
+   "type": "participant.state",
+   "membership_id": "mem_3",
+   "node_id": "node_3",
+   "state": "offline",
+   "detail": "no reply to the probe"
+  },
+  {
+   "seq": 58,
+   "ts": "2026-10-18T14:00:58Z",
+   "job_id": "job_1",
+   "round": 2,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_1",
+    "agent": "challenger",
+    "company_name": "Tbilisi Central Hospital"
+   },
+   "to": "coord",
+   "text": "global model on local data: loss 0.633, AUC 0.866",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 59,
+   "ts": "2026-10-18T14:00:59Z",
+   "job_id": "job_1",
+   "round": 2,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_2",
+    "agent": "challenger",
+    "company_name": "Batumi Medical Center"
+   },
+   "to": "coord",
+   "text": "global model on local data: loss 0.667, AUC 0.730",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 60,
+   "ts": "2026-10-18T14:01:00Z",
+   "job_id": "job_1",
+   "round": 2,
+   "type": "round.decision",
+   "strategy": "fedavg",
+   "participants": [
+    "node_1",
+    "node_2"
+   ],
+   "excluded": [
+    "node_3"
+   ],
+   "reasoning": "The probe losses for Hospital A (0.633) and Hospital B (0.667) are close and in agreement, so standard FedAvg is appropriate.",
+   "decided_by": "llm"
+  },
+  {
+   "seq": 61,
+   "ts": "2026-10-18T14:01:01Z",
+   "job_id": "job_1",
+   "round": 2,
+   "type": "agent.message",
+   "from": {
+    "node_id": "coord",
+    "agent": "coordinator",
+    "company_name": "Coordinator"
+   },
+   "to": "*",
+   "text": "Hospital C offline; The probe losses for Hospital A (0.633) and Hospital B (0.667) are close and in agreement, so standard FedAvg is appropriate.",
+   "made_by": "llm",
+   "data": {
+    "strategy": "fedavg"
+   }
+  },
+  {
+   "seq": 62,
+   "ts": "2026-10-18T14:01:02Z",
+   "job_id": "job_1",
+   "round": 2,
+   "type": "participant.state",
+   "membership_id": "mem_1",
+   "node_id": "node_1",
+   "state": "planning",
+   "detail": ""
+  },
+  {
+   "seq": 63,
+   "ts": "2026-10-18T14:01:03Z",
+   "job_id": "job_1",
+   "round": 2,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_1",
+    "agent": "planner",
+    "company_name": "Tbilisi Central Hospital"
+   },
+   "to": "coord",
+   "text": "4 ep @ lr 0.1 — FedAvg round 2 with moderate loss 0.64 shows no instability, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation.",
+   "made_by": "llm",
+   "data": null
+  },
+  {
+   "seq": 64,
+   "ts": "2026-10-18T14:01:04Z",
+   "job_id": "job_1",
+   "round": 2,
+   "type": "participant.state",
+   "membership_id": "mem_1",
+   "node_id": "node_1",
+   "state": "training",
+   "detail": ""
+  },
+  {
+   "seq": 65,
+   "ts": "2026-10-18T14:01:05Z",
+   "job_id": "job_1",
+   "round": 2,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_1",
+    "agent": "trainer",
+    "company_name": "Tbilisi Central Hospital"
+   },
+   "to": "coord",
+   "text": "trained on 120 local rows, loss 0.540; sent masked Δw",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 66,
+   "ts": "2026-10-18T14:01:06Z",
+   "job_id": "job_1",
+   "round": 2,
+   "type": "participant.state",
+   "membership_id": "mem_1",
+   "node_id": "node_1",
+   "state": "sent",
+   "detail": "masked Δw sent"
+  },
+  {
+   "seq": 67,
+   "ts": "2026-10-18T14:01:07Z",
+   "job_id": "job_1",
+   "round": 2,
+   "type": "packet",
+   "from": "node_1",
+   "to": "coord",
+   "kind": "update",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 68,
+   "ts": "2026-10-18T14:01:08Z",
+   "job_id": "job_1",
+   "round": 2,
+   "type": "participant.state",
+   "membership_id": "mem_2",
+   "node_id": "node_2",
+   "state": "planning",
+   "detail": ""
+  },
+  {
+   "seq": 69,
+   "ts": "2026-10-18T14:01:09Z",
+   "job_id": "job_1",
+   "round": 2,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_2",
+    "agent": "planner",
+    "company_name": "Batumi Medical Center"
+   },
+   "to": "coord",
+   "text": "4 ep @ lr 0.1 — FedAvg round 2 with moderate loss 0.64 shows no instability, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation.",
+   "made_by": "llm",
+   "data": null
+  },
+  {
+   "seq": 70,
+   "ts": "2026-10-18T14:01:10Z",
+   "job_id": "job_1",
+   "round": 2,
+   "type": "participant.state",
+   "membership_id": "mem_2",
+   "node_id": "node_2",
+   "state": "training",
+   "detail": ""
+  },
+  {
+   "seq": 71,
+   "ts": "2026-10-18T14:01:11Z",
+   "job_id": "job_1",
+   "round": 2,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_2",
+    "agent": "trainer",
+    "company_name": "Batumi Medical Center"
+   },
+   "to": "coord",
+   "text": "trained on 120 local rows, loss 0.652; sent masked Δw",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 72,
+   "ts": "2026-10-18T14:01:12Z",
+   "job_id": "job_1",
+   "round": 2,
+   "type": "participant.state",
+   "membership_id": "mem_2",
+   "node_id": "node_2",
+   "state": "sent",
+   "detail": "masked Δw sent"
+  },
+  {
+   "seq": 73,
+   "ts": "2026-10-18T14:01:13Z",
+   "job_id": "job_1",
+   "round": 2,
+   "type": "packet",
+   "from": "node_2",
+   "to": "coord",
+   "kind": "update",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 74,
+   "ts": "2026-10-18T14:01:14Z",
+   "job_id": "job_1",
+   "round": 2,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_1",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 75,
+   "ts": "2026-10-18T14:01:15Z",
+   "job_id": "job_1",
+   "round": 2,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_2",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 76,
+   "ts": "2026-10-18T14:01:16Z",
+   "job_id": "job_1",
+   "round": 2,
+   "type": "round.completed",
+   "auc_before": 0.8313,
+   "auc_after": 0.8309,
+   "loss": 0.596,
+   "eps_total": 3.0,
+   "applied": true
+  },
+  {
+   "seq": 77,
+   "ts": "2026-10-18T14:01:17Z",
+   "job_id": "job_1",
+   "round": 3,
+   "type": "participant.state",
+   "membership_id": "mem_1",
+   "node_id": "node_1",
+   "state": "probing",
+   "detail": "scoring the global model"
+  },
+  {
+   "seq": 78,
+   "ts": "2026-10-18T14:01:18Z",
+   "job_id": "job_1",
+   "round": 3,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_1",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 79,
+   "ts": "2026-10-18T14:01:19Z",
+   "job_id": "job_1",
+   "round": 3,
+   "type": "participant.state",
+   "membership_id": "mem_2",
+   "node_id": "node_2",
+   "state": "probing",
+   "detail": "scoring the global model"
+  },
+  {
+   "seq": 80,
+   "ts": "2026-10-18T14:01:20Z",
+   "job_id": "job_1",
+   "round": 3,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_2",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 81,
+   "ts": "2026-10-18T14:01:21Z",
+   "job_id": "job_1",
+   "round": 3,
+   "type": "participant.state",
+   "membership_id": "mem_3",
+   "node_id": "node_3",
+   "state": "probing",
+   "detail": "scoring the global model"
+  },
+  {
+   "seq": 82,
+   "ts": "2026-10-18T14:01:22Z",
+   "job_id": "job_1",
+   "round": 3,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_3",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 83,
+   "ts": "2026-10-18T14:01:23Z",
+   "job_id": "job_1",
+   "round": 3,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_1",
+    "agent": "challenger",
+    "company_name": "Tbilisi Central Hospital"
+   },
+   "to": "coord",
+   "text": "global model on local data: loss 0.570, AUC 0.865",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 84,
+   "ts": "2026-10-18T14:01:24Z",
+   "job_id": "job_1",
+   "round": 3,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_2",
+    "agent": "challenger",
+    "company_name": "Batumi Medical Center"
+   },
+   "to": "coord",
+   "text": "global model on local data: loss 0.644, AUC 0.735",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 85,
+   "ts": "2026-10-18T14:01:25Z",
+   "job_id": "job_1",
+   "round": 3,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_3",
+    "agent": "challenger",
+    "company_name": "Kutaisi Regional Clinic"
+   },
+   "to": "coord",
+   "text": "global model on local data: loss 2.488, AUC 0.524",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 86,
+   "ts": "2026-10-18T14:01:26Z",
+   "job_id": "job_1",
+   "round": 3,
+   "type": "round.decision",
+   "strategy": "trimmed_mean",
+   "participants": [
+    "node_1",
+    "node_2"
+   ],
+   "excluded": [
+    "node_3"
+   ],
+   "reasoning": "Hospitals A and B agree closely (0.57, 0.644) while Hospital C is a clear outlier at 2.488, so trimmed_mean excluding C is the appropriate choice.",
+   "decided_by": "llm"
+  },
+  {
+   "seq": 87,
+   "ts": "2026-10-18T14:01:27Z",
+   "job_id": "job_1",
+   "round": 3,
+   "type": "agent.message",
+   "from": {
+    "node_id": "coord",
+    "agent": "coordinator",
+    "company_name": "Coordinator"
+   },
+   "to": "*",
+   "text": "Hospitals A and B agree closely (0.57, 0.644) while Hospital C is a clear outlier at 2.488, so trimmed_mean excluding C is the appropriate choice.",
+   "made_by": "llm",
+   "data": {
+    "strategy": "trimmed_mean"
+   }
+  },
+  {
+   "seq": 88,
+   "ts": "2026-10-18T14:01:28Z",
+   "job_id": "job_1",
+   "round": 3,
+   "type": "participant.state",
+   "membership_id": "mem_3",
+   "node_id": "node_3",
+   "state": "excluded",
+   "detail": "probe loss is an outlier"
+  },
+  {
+   "seq": 89,
+   "ts": "2026-10-18T14:01:29Z",
+   "job_id": "job_1",
+   "round": 3,
+   "type": "participant.state",
+   "membership_id": "mem_1",
+   "node_id": "node_1",
+   "state": "planning",
+   "detail": ""
+  },
+  {
+   "seq": 90,
+   "ts": "2026-10-18T14:01:30Z",
+   "job_id": "job_1",
+   "round": 3,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_1",
+    "agent": "planner",
+    "company_name": "Tbilisi Central Hospital"
+   },
+   "to": "coord",
+   "text": "4 ep @ lr 0.1 — Trimmed-mean aggregation is robust to outliers and loss is decreasing steadily, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation.",
+   "made_by": "llm",
+   "data": null
+  },
+  {
+   "seq": 91,
+   "ts": "2026-10-18T14:01:31Z",
+   "job_id": "job_1",
+   "round": 3,
+   "type": "participant.state",
+   "membership_id": "mem_1",
+   "node_id": "node_1",
+   "state": "training",
+   "detail": ""
+  },
+  {
+   "seq": 92,
+   "ts": "2026-10-18T14:01:32Z",
+   "job_id": "job_1",
+   "round": 3,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_1",
+    "agent": "trainer",
+    "company_name": "Tbilisi Central Hospital"
+   },
+   "to": "coord",
+   "text": "trained on 120 local rows, loss 0.500; sent masked Δw",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 93,
+   "ts": "2026-10-18T14:01:33Z",
+   "job_id": "job_1",
+   "round": 3,
+   "type": "participant.state",
+   "membership_id": "mem_1",
+   "node_id": "node_1",
+   "state": "sent",
+   "detail": "masked Δw sent"
+  },
+  {
+   "seq": 94,
+   "ts": "2026-10-18T14:01:34Z",
+   "job_id": "job_1",
+   "round": 3,
+   "type": "packet",
+   "from": "node_1",
+   "to": "coord",
+   "kind": "update",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 95,
+   "ts": "2026-10-18T14:01:35Z",
+   "job_id": "job_1",
+   "round": 3,
+   "type": "participant.state",
+   "membership_id": "mem_2",
+   "node_id": "node_2",
+   "state": "planning",
+   "detail": ""
+  },
+  {
+   "seq": 96,
+   "ts": "2026-10-18T14:01:36Z",
+   "job_id": "job_1",
+   "round": 3,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_2",
+    "agent": "planner",
+    "company_name": "Batumi Medical Center"
+   },
+   "to": "coord",
+   "text": "4 ep @ lr 0.1 — Trimmed-mean aggregation is robust to outliers and loss is decreasing steadily, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation.",
+   "made_by": "llm",
+   "data": null
+  },
+  {
+   "seq": 97,
+   "ts": "2026-10-18T14:01:37Z",
+   "job_id": "job_1",
+   "round": 3,
+   "type": "participant.state",
+   "membership_id": "mem_2",
+   "node_id": "node_2",
+   "state": "training",
+   "detail": ""
+  },
+  {
+   "seq": 98,
+   "ts": "2026-10-18T14:01:38Z",
+   "job_id": "job_1",
+   "round": 3,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_2",
+    "agent": "trainer",
+    "company_name": "Batumi Medical Center"
+   },
+   "to": "coord",
+   "text": "trained on 120 local rows, loss 0.632; sent masked Δw",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 99,
+   "ts": "2026-10-18T14:01:39Z",
+   "job_id": "job_1",
+   "round": 3,
+   "type": "participant.state",
+   "membership_id": "mem_2",
+   "node_id": "node_2",
+   "state": "sent",
+   "detail": "masked Δw sent"
+  },
+  {
+   "seq": 100,
+   "ts": "2026-10-18T14:01:40Z",
+   "job_id": "job_1",
+   "round": 3,
+   "type": "packet",
+   "from": "node_2",
+   "to": "coord",
+   "kind": "update",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 101,
+   "ts": "2026-10-18T14:01:41Z",
+   "job_id": "job_1",
+   "round": 3,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_1",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 102,
+   "ts": "2026-10-18T14:01:42Z",
+   "job_id": "job_1",
+   "round": 3,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_2",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 103,
+   "ts": "2026-10-18T14:01:43Z",
+   "job_id": "job_1",
+   "round": 3,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_3",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 104,
+   "ts": "2026-10-18T14:01:44Z",
+   "job_id": "job_1",
+   "round": 3,
+   "type": "round.completed",
+   "auc_before": 0.8309,
+   "auc_after": 0.8322,
+   "loss": 0.5659,
+   "eps_total": 4.5,
+   "applied": true
+  },
+  {
+   "seq": 105,
+   "ts": "2026-10-18T14:01:45Z",
+   "job_id": "job_1",
+   "round": 4,
+   "type": "participant.state",
+   "membership_id": "mem_1",
+   "node_id": "node_1",
+   "state": "probing",
+   "detail": "scoring the global model"
+  },
+  {
+   "seq": 106,
+   "ts": "2026-10-18T14:01:46Z",
+   "job_id": "job_1",
+   "round": 4,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_1",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 107,
+   "ts": "2026-10-18T14:01:47Z",
+   "job_id": "job_1",
+   "round": 4,
+   "type": "participant.state",
+   "membership_id": "mem_2",
+   "node_id": "node_2",
+   "state": "probing",
+   "detail": "scoring the global model"
+  },
+  {
+   "seq": 108,
+   "ts": "2026-10-18T14:01:48Z",
+   "job_id": "job_1",
+   "round": 4,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_2",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 109,
+   "ts": "2026-10-18T14:01:49Z",
+   "job_id": "job_1",
+   "round": 4,
+   "type": "participant.state",
+   "membership_id": "mem_3",
+   "node_id": "node_3",
+   "state": "probing",
+   "detail": "scoring the global model"
+  },
+  {
+   "seq": 110,
+   "ts": "2026-10-18T14:01:50Z",
+   "job_id": "job_1",
+   "round": 4,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_3",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 111,
+   "ts": "2026-10-18T14:01:51Z",
+   "job_id": "job_1",
+   "round": 4,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_1",
+    "agent": "challenger",
+    "company_name": "Tbilisi Central Hospital"
+   },
+   "to": "coord",
+   "text": "global model on local data: loss 0.520, AUC 0.869",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 112,
+   "ts": "2026-10-18T14:01:52Z",
+   "job_id": "job_1",
+   "round": 4,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_2",
+    "agent": "challenger",
+    "company_name": "Batumi Medical Center"
+   },
+   "to": "coord",
+   "text": "global model on local data: loss 0.626, AUC 0.738",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 113,
+   "ts": "2026-10-18T14:01:53Z",
+   "job_id": "job_1",
+   "round": 4,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_3",
+    "agent": "challenger",
+    "company_name": "Kutaisi Regional Clinic"
+   },
+   "to": "coord",
+   "text": "global model on local data: loss 0.643, AUC 0.737",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 114,
+   "ts": "2026-10-18T14:01:54Z",
+   "job_id": "job_1",
+   "round": 4,
+   "type": "round.decision",
+   "strategy": "fedprox",
+   "participants": [
+    "node_1",
+    "node_2",
+    "node_3"
+   ],
+   "excluded": [],
+   "reasoning": "The probe losses disagree broadly (0.52 vs 0.626 and 0.643) with no single clear outlier, so fedprox is the appropriate choice to stabilize training across heterogeneous hospitals.",
+   "decided_by": "llm"
+  },
+  {
+   "seq": 115,
+   "ts": "2026-10-18T14:01:55Z",
+   "job_id": "job_1",
+   "round": 4,
+   "type": "agent.message",
+   "from": {
+    "node_id": "coord",
+    "agent": "coordinator",
+    "company_name": "Coordinator"
+   },
+   "to": "*",
+   "text": "The probe losses disagree broadly (0.52 vs 0.626 and 0.643) with no single clear outlier, so fedprox is the appropriate choice to stabilize training across heterogeneous hospitals.",
+   "made_by": "llm",
+   "data": {
+    "strategy": "fedprox"
+   }
+  },
+  {
+   "seq": 116,
+   "ts": "2026-10-18T14:01:56Z",
+   "job_id": "job_1",
+   "round": 4,
+   "type": "participant.state",
+   "membership_id": "mem_1",
+   "node_id": "node_1",
+   "state": "planning",
+   "detail": ""
+  },
+  {
+   "seq": 117,
+   "ts": "2026-10-18T14:01:57Z",
+   "job_id": "job_1",
+   "round": 4,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_1",
+    "agent": "planner",
+    "company_name": "Tbilisi Central Hospital"
+   },
+   "to": "coord",
+   "text": "4 ep @ lr 0.1, mu=0.01 — Loss is decreasing steadily at round 4, so the validated default of 4 epochs at lr 0.1 is retained with a small proximal term (mu=0.01) to stabilize fedprox aggregation without over-constraining local progress.",
+   "made_by": "llm",
+   "data": null
+  },
+  {
+   "seq": 118,
+   "ts": "2026-10-18T14:01:58Z",
+   "job_id": "job_1",
+   "round": 4,
+   "type": "participant.state",
+   "membership_id": "mem_1",
+   "node_id": "node_1",
+   "state": "training",
+   "detail": ""
+  },
+  {
+   "seq": 119,
+   "ts": "2026-10-18T14:01:59Z",
+   "job_id": "job_1",
+   "round": 4,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_1",
+    "agent": "trainer",
+    "company_name": "Tbilisi Central Hospital"
+   },
+   "to": "coord",
+   "text": "trained on 120 local rows, loss 0.469; sent masked Δw",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 120,
+   "ts": "2026-10-18T14:02:00Z",
+   "job_id": "job_1",
+   "round": 4,
+   "type": "participant.state",
+   "membership_id": "mem_1",
+   "node_id": "node_1",
+   "state": "sent",
+   "detail": "masked Δw sent"
+  },
+  {
+   "seq": 121,
+   "ts": "2026-10-18T14:02:01Z",
+   "job_id": "job_1",
+   "round": 4,
+   "type": "packet",
+   "from": "node_1",
+   "to": "coord",
+   "kind": "update",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 122,
+   "ts": "2026-10-18T14:02:02Z",
+   "job_id": "job_1",
+   "round": 4,
+   "type": "participant.state",
+   "membership_id": "mem_2",
+   "node_id": "node_2",
+   "state": "planning",
+   "detail": ""
+  },
+  {
+   "seq": 123,
+   "ts": "2026-10-18T14:02:03Z",
+   "job_id": "job_1",
+   "round": 4,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_2",
+    "agent": "planner",
+    "company_name": "Batumi Medical Center"
+   },
+   "to": "coord",
+   "text": "4 ep @ lr 0.1, mu=0.01 — Loss is decreasing steadily at round 4, so the validated default of 4 epochs at lr 0.1 is retained with a small proximal term (mu=0.01) to stabilize fedprox aggregation without over-constraining local progress.",
+   "made_by": "llm",
+   "data": null
+  },
+  {
+   "seq": 124,
+   "ts": "2026-10-18T14:02:04Z",
+   "job_id": "job_1",
+   "round": 4,
+   "type": "participant.state",
+   "membership_id": "mem_2",
+   "node_id": "node_2",
+   "state": "training",
+   "detail": ""
+  },
+  {
+   "seq": 125,
+   "ts": "2026-10-18T14:02:05Z",
+   "job_id": "job_1",
+   "round": 4,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_2",
+    "agent": "trainer",
+    "company_name": "Batumi Medical Center"
+   },
+   "to": "coord",
+   "text": "trained on 120 local rows, loss 0.617; sent masked Δw",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 126,
+   "ts": "2026-10-18T14:02:06Z",
+   "job_id": "job_1",
+   "round": 4,
+   "type": "participant.state",
+   "membership_id": "mem_2",
+   "node_id": "node_2",
+   "state": "sent",
+   "detail": "masked Δw sent"
+  },
+  {
+   "seq": 127,
+   "ts": "2026-10-18T14:02:07Z",
+   "job_id": "job_1",
+   "round": 4,
+   "type": "packet",
+   "from": "node_2",
+   "to": "coord",
+   "kind": "update",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 128,
+   "ts": "2026-10-18T14:02:08Z",
+   "job_id": "job_1",
+   "round": 4,
+   "type": "participant.state",
+   "membership_id": "mem_3",
+   "node_id": "node_3",
+   "state": "planning",
+   "detail": ""
+  },
+  {
+   "seq": 129,
+   "ts": "2026-10-18T14:02:09Z",
+   "job_id": "job_1",
+   "round": 4,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_3",
+    "agent": "planner",
+    "company_name": "Kutaisi Regional Clinic"
+   },
+   "to": "coord",
+   "text": "4 ep @ lr 0.1, mu=0.01 — Loss is decreasing steadily at round 4, so the validated default of 4 epochs at lr 0.1 is retained with a small proximal term (mu=0.01) to stabilize fedprox aggregation without over-constraining local progress.",
+   "made_by": "llm",
+   "data": null
+  },
+  {
+   "seq": 130,
+   "ts": "2026-10-18T14:02:10Z",
+   "job_id": "job_1",
+   "round": 4,
+   "type": "participant.state",
+   "membership_id": "mem_3",
+   "node_id": "node_3",
+   "state": "training",
+   "detail": ""
+  },
+  {
+   "seq": 131,
+   "ts": "2026-10-18T14:02:11Z",
+   "job_id": "job_1",
+   "round": 4,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_3",
+    "agent": "trainer",
+    "company_name": "Kutaisi Regional Clinic"
+   },
+   "to": "coord",
+   "text": "trained on 120 local rows, loss 0.622; sent masked Δw",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 132,
+   "ts": "2026-10-18T14:02:12Z",
+   "job_id": "job_1",
+   "round": 4,
+   "type": "participant.state",
+   "membership_id": "mem_3",
+   "node_id": "node_3",
+   "state": "sent",
+   "detail": "masked Δw sent"
+  },
+  {
+   "seq": 133,
+   "ts": "2026-10-18T14:02:13Z",
+   "job_id": "job_1",
+   "round": 4,
+   "type": "packet",
+   "from": "node_3",
+   "to": "coord",
+   "kind": "update",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 134,
+   "ts": "2026-10-18T14:02:14Z",
+   "job_id": "job_1",
+   "round": 4,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_1",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 135,
+   "ts": "2026-10-18T14:02:15Z",
+   "job_id": "job_1",
+   "round": 4,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_2",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 136,
+   "ts": "2026-10-18T14:02:16Z",
+   "job_id": "job_1",
+   "round": 4,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_3",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 137,
+   "ts": "2026-10-18T14:02:17Z",
+   "job_id": "job_1",
+   "round": 4,
+   "type": "round.completed",
+   "auc_before": 0.8322,
+   "auc_after": 0.832,
+   "loss": 0.5692,
+   "eps_total": 6.0,
+   "applied": true
+  },
+  {
+   "seq": 138,
+   "ts": "2026-10-18T14:02:18Z",
+   "job_id": "job_1",
+   "round": 4,
+   "type": "job.step",
+   "step": "evaluating"
+  },
+  {
+   "seq": 139,
+   "ts": "2026-10-18T14:02:19Z",
+   "job_id": "job_1",
+   "round": 4,
+   "type": "job.step",
+   "step": "published"
+  },
+  {
+   "seq": 140,
+   "ts": "2026-10-18T14:02:20Z",
+   "job_id": "job_1",
+   "round": 4,
+   "type": "model.published",
+   "version_id": "mv_1",
+   "version": 1,
+   "metrics": {
+    "auc": 0.832,
+    "auc_solo_by_company": {
+     "co_1": 0.8404,
+     "co_2": 0.8384,
+     "co_3": 0.7629
+    },
+    "auc_centralized": 0.8358
+   }
+  },
+  {
+   "seq": 141,
+   "ts": "2026-10-18T14:02:21Z",
+   "job_id": "job_1",
+   "round": 4,
+   "type": "participant.state",
+   "membership_id": "mem_1",
+   "node_id": "node_1",
+   "state": "done",
+   "detail": ""
+  },
+  {
+   "seq": 142,
+   "ts": "2026-10-18T14:02:22Z",
+   "job_id": "job_1",
+   "round": 4,
+   "type": "participant.state",
+   "membership_id": "mem_2",
+   "node_id": "node_2",
+   "state": "done",
+   "detail": ""
+  },
+  {
+   "seq": 143,
+   "ts": "2026-10-18T14:02:23Z",
+   "job_id": "job_1",
+   "round": 4,
+   "type": "participant.state",
+   "membership_id": "mem_3",
+   "node_id": "node_3",
+   "state": "done",
+   "detail": ""
+  },
+  {
+   "seq": 144,
+   "ts": "2026-10-18T14:02:24Z",
+   "job_id": "job_1",
+   "round": 4,
+   "type": "job.status",
+   "status": "succeeded",
+   "error": null
+  }
+ ]
+}

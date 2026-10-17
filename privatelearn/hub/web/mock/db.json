@@ -1,0 +1,1163 @@
+{
+ "_source": "PLATFORM-API.md v0.1 example shapes; every number comes from privatelearn/trace.json",
+ "meta": {
+  "version": "0.1",
+  "available_model_types": [
+   "logistic"
+  ],
+  "enums": {
+   "role": [
+    "admin",
+    "company"
+   ],
+   "company_status": [
+    "pending",
+    "approved",
+    "rejected",
+    "suspended"
+   ],
+   "group_status": [
+    "draft",
+    "open",
+    "training",
+    "trained",
+    "archived"
+   ],
+   "membership_status": [
+    "requested",
+    "approved",
+    "rejected",
+    "node_connected",
+    "schema_proposed",
+    "schema_confirmed",
+    "ready",
+    "training",
+    "active",
+    "left",
+    "payment_pending"
+   ],
+   "node_status": [
+    "offline",
+    "online",
+    "busy"
+   ],
+   "job_kind": [
+    "train",
+    "finetune"
+   ],
+   "job_status": [
+    "queued",
+    "running",
+    "succeeded",
+    "failed",
+    "cancelled"
+   ],
+   "job_step": [
+    "waiting_for_nodes",
+    "key_exchange",
+    "schema_negotiation",
+    "normalization",
+    "training",
+    "evaluating",
+    "published"
+   ],
+   "participant_state": [
+    "waiting",
+    "online",
+    "probing",
+    "planning",
+    "training",
+    "masking",
+    "sent",
+    "excluded",
+    "offline",
+    "done"
+   ],
+   "task_type": [
+    "binary_classification",
+    "multiclass_classification",
+    "regression",
+    "image_classification",
+    "text_generation"
+   ],
+   "model_type": [
+    "logistic",
+    "mlp",
+    "cnn",
+    "vit",
+    "llm_lora"
+   ],
+   "agent": [
+    "schema",
+    "planner",
+    "trainer",
+    "challenger",
+    "validator",
+    "coordinator",
+    "architect"
+   ],
+   "made_by": [
+    "llm",
+    "rule"
+   ],
+   "usage_kind": [
+    "enrollment",
+    "training_round",
+    "prediction",
+    "contribution"
+   ]
+  }
+ },
+ "users": [
+  {
+   "id": "usr_1",
+   "email": "admin@privatelearn.example",
+   "role": "admin",
+   "company_id": null
+  },
+  {
+   "id": "usr_2",
+   "email": "it@tbilisi-central.example",
+   "role": "company",
+   "company_id": "co_1"
+  },
+  {
+   "id": "usr_3",
+   "email": "data@batumi-medical.example",
+   "role": "company",
+   "company_id": "co_2"
+  },
+  {
+   "id": "usr_4",
+   "email": "it@kutaisi-clinic.example",
+   "role": "company",
+   "company_id": "co_3"
+  },
+  {
+   "id": "usr_5",
+   "email": "it@rustavi-family.example",
+   "role": "company",
+   "company_id": "co_4"
+  },
+  {
+   "id": "usr_6",
+   "email": "lab@gori-cardio.example",
+   "role": "company",
+   "company_id": "co_5"
+  }
+ ],
+ "companies": [
+  {
+   "id": "co_1",
+   "name": "Tbilisi Central Hospital",
+   "field": "healthcare",
+   "contact_email": "it@tbilisi-central.example",
+   "status": "approved",
+   "wallet_address": null,
+   "created_at": "2026-10-18T10:00:00Z"
+  },
+  {
+   "id": "co_2",
+   "name": "Batumi Medical Center",
+   "field": "healthcare",
+   "contact_email": "data@batumi-medical.example",
+   "status": "approved",
+   "wallet_address": null,
+   "created_at": "2026-10-18T10:00:00Z"
+  },
+  {
+   "id": "co_3",
+   "name": "Kutaisi Regional Clinic",
+   "field": "healthcare",
+   "contact_email": "it@kutaisi-clinic.example",
+   "status": "approved",
+   "wallet_address": null,
+   "created_at": "2026-10-18T10:00:00Z"
+  },
+  {
+   "id": "co_4",
+   "name": "Rustavi Family Clinic",
+   "field": "healthcare",
+   "contact_email": "it@rustavi-family.example",
+   "status": "approved",
+   "wallet_address": null,
+   "created_at": "2026-10-18T10:00:00Z"
+  },
+  {
+   "id": "co_5",
+   "name": "Gori Cardio Lab",
+   "field": "healthcare",
+   "contact_email": "lab@gori-cardio.example",
+   "status": "pending",
+   "wallet_address": null,
+   "created_at": "2026-10-18T10:00:00Z"
+  }
+ ],
+ "groups": [
+  {
+   "id": "grp_1",
+   "name": "Diabetes risk",
+   "status": "trained",
+   "description": "Three-hospital diabetes screening model",
+   "task_spec": {
+    "question": "Does this patient have diabetes?",
+    "task_type": "binary_classification",
+    "label": {
+     "name": "has_diabetes",
+     "classes": [
+      "no",
+      "yes"
+     ],
+     "positive": "yes"
+    },
+    "input_schema": [
+     {
+      "name": "pregnancies",
+      "type": "integer",
+      "unit": "count",
+      "description": "number of pregnancies",
+      "required": true
+     },
+     {
+      "name": "glucose",
+      "type": "number",
+      "unit": "mg/dL",
+      "description": "plasma glucose",
+      "required": true
+     },
+     {
+      "name": "blood_pressure",
+      "type": "number",
+      "unit": "mmHg",
+      "description": "diastolic blood pressure",
+      "required": true
+     },
+     {
+      "name": "bmi",
+      "type": "number",
+      "unit": "kg/m^2",
+      "description": "body-mass index",
+      "required": true
+     },
+     {
+      "name": "insulin",
+      "type": "number",
+      "unit": "uU/mL",
+      "description": "2-hour serum insulin",
+      "required": true
+     },
+     {
+      "name": "age",
+      "type": "number",
+      "unit": "years",
+      "description": "age",
+      "required": true
+     }
+    ],
+    "model": {
+     "type": "logistic",
+     "hyperparams": {
+      "epochs": 4,
+      "lr": 0.1
+     }
+    },
+    "training": {
+     "rounds": 4,
+     "min_participants": 2,
+     "aggregation": "adaptive"
+    },
+    "privacy": {
+     "secure_aggregation": true,
+     "dp": {
+      "enabled": true,
+      "epsilon_per_round": 1.5,
+      "delta": 1e-05
+     }
+    },
+    "metric": "auc"
+   },
+   "pricing": null,
+   "member_count": 4,
+   "current_version": {
+    "id": "mv_1",
+    "version": 1
+   },
+   "created_at": "2026-10-18T10:00:00Z"
+  },
+  {
+   "id": "grp_2",
+   "name": "Breast cancer screening",
+   "status": "open",
+   "description": "Tumour malignancy from cell-nucleus measurements",
+   "task_spec": {
+    "question": "Is this tumour malignant?",
+    "task_type": "binary_classification",
+    "label": {
+     "name": "malignant",
+     "classes": [
+      "benign",
+      "malignant"
+     ],
+     "positive": "malignant"
+    },
+    "input_schema": [
+     {
+      "name": "radius_mean",
+      "type": "number",
+      "unit": "mm",
+      "description": "mean cell-nucleus radius",
+      "required": true
+     },
+     {
+      "name": "texture_mean",
+      "type": "number",
+      "unit": "",
+      "description": "grey-level standard deviation",
+      "required": true
+     },
+     {
+      "name": "area_mean",
+      "type": "number",
+      "unit": "mm^2",
+      "description": "mean nucleus area",
+      "required": true
+     }
+    ],
+    "model": {
+     "type": "logistic",
+     "hyperparams": {
+      "epochs": 4,
+      "lr": 0.1
+     }
+    },
+    "training": {
+     "rounds": 4,
+     "min_participants": 2,
+     "aggregation": "adaptive"
+    },
+    "privacy": {
+     "secure_aggregation": true,
+     "dp": {
+      "enabled": true,
+      "epsilon_per_round": 1.5,
+      "delta": 1e-05
+     }
+    },
+    "metric": "auc"
+   },
+   "pricing": null,
+   "member_count": 1,
+   "current_version": null,
+   "created_at": "2026-10-18T10:00:00Z"
+  },
+  {
+   "id": "grp_3",
+   "name": "Readmission risk",
+   "status": "draft",
+   "description": "Draft: 30-day readmission",
+   "task_spec": {
+    "question": "Will this patient be readmitted within 30 days?",
+    "task_type": "binary_classification",
+    "label": {
+     "name": "has_diabetes",
+     "classes": [
+      "no",
+      "yes"
+     ],
+     "positive": "yes"
+    },
+    "input_schema": [
+     {
+      "name": "pregnancies",
+      "type": "integer",
+      "unit": "count",
+      "description": "number of pregnancies",
+      "required": true
+     },
+     {
+      "name": "glucose",
+      "type": "number",
+      "unit": "mg/dL",
+      "description": "plasma glucose",
+      "required": true
+     },
+     {
+      "name": "blood_pressure",
+      "type": "number",
+      "unit": "mmHg",
+      "description": "diastolic blood pressure",
+      "required": true
+     },
+     {
+      "name": "bmi",
+      "type": "number",
+      "unit": "kg/m^2",
+      "description": "body-mass index",
+      "required": true
+     },
+     {
+      "name": "insulin",
+      "type": "number",
+      "unit": "uU/mL",
+      "description": "2-hour serum insulin",
+      "required": true
+     },
+     {
+      "name": "age",
+      "type": "number",
+      "unit": "years",
+      "description": "age",
+      "required": true
+     }
+    ],
+    "model": {
+     "type": "logistic",
+     "hyperparams": {
+      "epochs": 4,
+      "lr": 0.1
+     }
+    },
+    "training": {
+     "rounds": 4,
+     "min_participants": 2,
+     "aggregation": "adaptive"
+    },
+    "privacy": {
+     "secure_aggregation": true,
+     "dp": {
+      "enabled": true,
+      "epsilon_per_round": 1.5,
+      "delta": 1e-05
+     }
+    },
+    "metric": "auc"
+   },
+   "pricing": null,
+   "member_count": 0,
+   "current_version": null,
+   "created_at": "2026-10-18T10:00:00Z"
+  }
+ ],
+ "memberships": [
+  {
+   "id": "mem_1",
+   "company_id": "co_1",
+   "company_name": "Tbilisi Central Hospital",
+   "group_id": "grp_1",
+   "group_name": "Diabetes risk",
+   "status": "active",
+   "node": {
+    "id": "node_1",
+    "status": "online",
+    "last_seen": "2026-10-18T14:03:20Z",
+    "agent": {
+     "provider": "deepseek",
+     "model": "deepseek-chat"
+    },
+    "connector": {
+     "kind": "sqlite",
+     "display": "patients.db / table visits"
+    }
+   },
+   "data": null,
+   "schema": {
+    "label": "outcome",
+    "made_by": "llm",
+    "reasoning": "All local columns already use the canonical units (glucose mg/dL, blood pressure mmHg, BMI kg/m^2, insulin uU/mL, age years), so only name mapping is needed with factor 1.0 and Outcome is the label.",
+    "mapping": [
+     {
+      "feature": "pregnancies",
+      "source": [
+       "Pregnancies"
+      ]
+     },
+     {
+      "feature": "glucose",
+      "source": [
+       "Glucose"
+      ]
+     },
+     {
+      "feature": "blood_pressure",
+      "source": [
+       "BloodPressure"
+      ]
+     },
+     {
+      "feature": "bmi",
+      "source": [
+       "BMI"
+      ]
+     },
+     {
+      "feature": "insulin",
+      "source": [
+       "Insulin"
+      ]
+     },
+     {
+      "feature": "age",
+      "source": [
+       "Age"
+      ]
+     }
+    ],
+    "confirmed": true
+   },
+   "validation": {
+    "ok": true,
+    "checks": [
+     {
+      "name": "row_count",
+      "ok": true,
+      "detail": "120 rows"
+     }
+    ]
+   },
+   "contribution": {
+    "rows": 120,
+    "rounds": 4
+   },
+   "requested_at": "2026-10-18T11:00:00Z"
+  },
+  {
+   "id": "mem_2",
+   "company_id": "co_2",
+   "company_name": "Batumi Medical Center",
+   "group_id": "grp_1",
+   "group_name": "Diabetes risk",
+   "status": "active",
+   "node": {
+    "id": "node_2",
+    "status": "online",
+    "last_seen": "2026-10-18T14:03:20Z",
+    "agent": {
+     "provider": "deepseek",
+     "model": "deepseek-chat"
+    },
+    "connector": {
+     "kind": "sqlite",
+     "display": "patients.db / table visits"
+    }
+   },
+   "data": null,
+   "schema": {
+    "label": "outcome",
+    "made_by": "llm",
+    "reasoning": "Local columns use non-canonical units (mmol/L glucose, kPa blood pressure, pmol/L insulin, months age) and lack BMI, so each is converted with the specified factors and BMI is derived from weight and height.",
+    "mapping": [
+     {
+      "feature": "pregnancies",
+      "source": [
+       "pregnancies"
+      ]
+     },
+     {
+      "feature": "glucose",
+      "source": [
+       "glucose_mmol_l"
+      ]
+     },
+     {
+      "feature": "blood_pressure",
+      "source": [
+       "bp_kpa"
+      ]
+     },
+     {
+      "feature": "bmi",
+      "source": [
+       "weight_kg",
+       "height_m"
+      ]
+     },
+     {
+      "feature": "insulin",
+      "source": [
+       "insulin_pmol_l"
+      ]
+     },
+     {
+      "feature": "age",
+      "source": [
+       "age_months"
+      ]
+     }
+    ],
+    "confirmed": true
+   },
+   "validation": {
+    "ok": true,
+    "checks": [
+     {
+      "name": "row_count",
+      "ok": true,
+      "detail": "120 rows"
+     }
+    ]
+   },
+   "contribution": {
+    "rows": 120,
+    "rounds": 4
+   },
+   "requested_at": "2026-10-18T11:00:00Z"
+  },
+  {
+   "id": "mem_3",
+   "company_id": "co_3",
+   "company_name": "Kutaisi Regional Clinic",
+   "group_id": "grp_1",
+   "group_name": "Diabetes risk",
+   "status": "active",
+   "node": {
+    "id": "node_3",
+    "status": "online",
+    "last_seen": "2026-10-18T14:03:20Z",
+    "agent": {
+     "provider": "deepseek",
+     "model": "deepseek-chat"
+    },
+    "connector": {
+     "kind": "sqlite",
+     "display": "patients.db / table visits"
+    }
+   },
+   "data": null,
+   "schema": {
+    "label": "outcome",
+    "made_by": "llm",
+    "reasoning": "Local columns are already in canonical units except insulin (pmol/L), which is converted to uU/mL by dividing by 6.945, and BMI is provided directly in kg/m^2.",
+    "mapping": [
+     {
+      "feature": "pregnancies",
+      "source": [
+       "num_pregnancies"
+      ]
+     },
+     {
+      "feature": "glucose",
+      "source": [
+       "glucose"
+      ]
+     },
+     {
+      "feature": "blood_pressure",
+      "source": [
+       "bp_sys"
+      ]
+     },
+     {
+      "feature": "bmi",
+      "source": [
+       "bmi"
+      ]
+     },
+     {
+      "feature": "insulin",
+      "source": [
+       "insulin_pmol_l"
+      ]
+     },
+     {
+      "feature": "age",
+      "source": [
+       "age"
+      ]
+     }
+    ],
+    "confirmed": true
+   },
+   "validation": {
+    "ok": true,
+    "checks": [
+     {
+      "name": "row_count",
+      "ok": true,
+      "detail": "120 rows"
+     }
+    ]
+   },
+   "contribution": {
+    "rows": 120,
+    "rounds": 4
+   },
+   "requested_at": "2026-10-18T11:00:00Z"
+  },
+  {
+   "id": "mem_4",
+   "company_id": "co_4",
+   "company_name": "Rustavi Family Clinic",
+   "group_id": "grp_1",
+   "group_name": "Diabetes risk",
+   "status": "schema_proposed",
+   "node": {
+    "id": "node_4",
+    "status": "online",
+    "last_seen": "2026-10-18T14:03:20Z",
+    "agent": {
+     "provider": "deepseek",
+     "model": "deepseek-chat"
+    },
+    "connector": {
+     "kind": "sqlite",
+     "display": "patients.db / table visits"
+    }
+   },
+   "data": {
+    "row_count": 120,
+    "columns": [
+     "glu_mmol",
+     "bmi",
+     "age_y",
+     "outcome"
+    ],
+    "profile": {
+     "glu_mmol": {
+      "min": 3.1,
+      "p05": 4.0,
+      "median": 6.2,
+      "mean": 6.6,
+      "p95": 10.9,
+      "max": 13.4,
+      "missing": 0
+     }
+    }
+   },
+   "schema": {
+    "label": "outcome",
+    "made_by": "llm",
+    "reasoning": "glu_mmol has a median of 6.2, which is mmol/L; converted to mg/dL",
+    "mapping": [
+     {
+      "feature": "glucose",
+      "source": [
+       "glu_mmol"
+      ],
+      "unit": "mmol/L",
+      "factor": 18.0182,
+      "transform": "x * 18.0182"
+     }
+    ],
+    "confirmed": false
+   },
+   "validation": null,
+   "contribution": {
+    "rows": 0,
+    "rounds": 0
+   },
+   "requested_at": "2026-10-18T11:00:00Z"
+  },
+  {
+   "id": "mem_5",
+   "company_id": "co_1",
+   "company_name": "Tbilisi Central Hospital",
+   "group_id": "grp_2",
+   "group_name": "Breast cancer screening",
+   "status": "requested",
+   "node": null,
+   "data": null,
+   "schema": null,
+   "validation": null,
+   "contribution": {
+    "rows": 0,
+    "rounds": 0
+   },
+   "requested_at": "2026-10-18T11:00:00Z"
+  }
+ ],
+ "jobs": [
+  {
+   "id": "job_1",
+   "group_id": "grp_1",
+   "kind": "train",
+   "status": "succeeded",
+   "step": "published",
+   "round": 4,
+   "rounds": 4,
+   "parent_version_id": null,
+   "participants": [
+    {
+     "membership_id": "mem_1",
+     "node_id": "node_1",
+     "company_name": "Tbilisi Central Hospital",
+     "state": "done",
+     "color": "#4d8bff"
+    },
+    {
+     "membership_id": "mem_2",
+     "node_id": "node_2",
+     "company_name": "Batumi Medical Center",
+     "state": "done",
+     "color": "#3fcf8e"
+    },
+    {
+     "membership_id": "mem_3",
+     "node_id": "node_3",
+     "company_name": "Kutaisi Regional Clinic",
+     "state": "done",
+     "color": "#ff6b6b"
+    }
+   ],
+   "metrics": {
+    "auc_series": [
+     0.5,
+     0.8313,
+     0.8309,
+     0.8322,
+     0.832
+    ],
+    "loss_series": [
+     0.6931,
+     0.6408,
+     0.596,
+     0.5659,
+     0.5692
+    ],
+    "eps_total": 6.0
+   },
+   "started_at": "2026-10-18T14:00:00Z",
+   "finished_at": "2026-10-18T14:05:00Z",
+   "error": null
+  }
+ ],
+ "versions": [
+  {
+   "id": "mv_1",
+   "group_id": "grp_1",
+   "version": 1,
+   "parent_version_id": null,
+   "job_id": "job_1",
+   "model_type": "logistic",
+   "features": [
+    "pregnancies",
+    "glucose",
+    "blood_pressure",
+    "bmi",
+    "insulin",
+    "age"
+   ],
+   "metrics": {
+    "auc": 0.832,
+    "auc_solo_by_company": {
+     "co_1": 0.8404,
+     "co_2": 0.8384,
+     "co_3": 0.7629
+    },
+    "auc_centralized": 0.8358
+   },
+   "contributors": [
+    {
+     "company_id": "co_1",
+     "rows": 120,
+     "rounds": 4
+    },
+    {
+     "company_id": "co_2",
+     "rows": 120,
+     "rounds": 4
+    },
+    {
+     "company_id": "co_3",
+     "rows": 120,
+     "rounds": 4
+    }
+   ],
+   "sha256": "1a2dffce68bd2c1fc2e28fdaefde2de94369cbd098b95215ab0275bfdafacf4d",
+   "created_at": "2026-10-18T14:05:00Z"
+  }
+ ],
+ "models": {
+  "mv_1": {
+   "weights": [
+    -0.2526690446,
+    0.0691812916,
+    0.2501054252,
+    0.0427593438,
+    0.1544328244,
+    0.0690509564,
+    0.1788903732
+   ],
+   "features": [
+    "pregnancies",
+    "glucose",
+    "blood_pressure",
+    "bmi",
+    "insulin",
+    "age"
+   ],
+   "norm": {
+    "mean": [
+     3.8450520833333335,
+     121.65625,
+     72.38671875,
+     32.4552083333333,
+     140.671875,
+     33.240885416666664
+    ],
+    "std": [
+     3.3673836124089886,
+     30.418462775166116,
+     12.088763750899638,
+     6.870699333517457,
+     86.32680240314153,
+     11.752572645994178
+    ]
+   }
+  }
+ },
+ "usage": [
+  {
+   "id": "use_1",
+   "company_id": "co_1",
+   "group_id": "grp_1",
+   "kind": "enrollment",
+   "units": 1,
+   "amount": null,
+   "currency": null,
+   "payment_ref": null,
+   "created_at": "2026-10-18T11:30:00Z"
+  },
+  {
+   "id": "use_2",
+   "company_id": "co_1",
+   "group_id": "grp_1",
+   "kind": "training_round",
+   "units": 1,
+   "amount": null,
+   "currency": null,
+   "payment_ref": null,
+   "created_at": "2026-10-18T14:01Z"
+  },
+  {
+   "id": "use_3",
+   "company_id": "co_1",
+   "group_id": "grp_1",
+   "kind": "contribution",
+   "units": 120,
+   "amount": null,
+   "currency": null,
+   "payment_ref": null,
+   "created_at": "2026-10-18T14:01Z"
+  },
+  {
+   "id": "use_4",
+   "company_id": "co_1",
+   "group_id": "grp_1",
+   "kind": "training_round",
+   "units": 1,
+   "amount": null,
+   "currency": null,
+   "payment_ref": null,
+   "created_at": "2026-10-18T14:02Z"
+  },
+  {
+   "id": "use_5",
+   "company_id": "co_1",
+   "group_id": "grp_1",
+   "kind": "contribution",
+   "units": 120,
+   "amount": null,
+   "currency": null,
+   "payment_ref": null,
+   "created_at": "2026-10-18T14:02Z"
+  },
+  {
+   "id": "use_6",
+   "company_id": "co_1",
+   "group_id": "grp_1",
+   "kind": "training_round",
+   "units": 1,
+   "amount": null,
+   "currency": null,
+   "payment_ref": null,
+   "created_at": "2026-10-18T14:03Z"
+  },
+  {
+   "id": "use_7",
+   "company_id": "co_1",
+   "group_id": "grp_1",
+   "kind": "contribution",
+   "units": 120,
+   "amount": null,
+   "currency": null,
+   "payment_ref": null,
+   "created_at": "2026-10-18T14:03Z"
+  },
+  {
+   "id": "use_8",
+   "company_id": "co_1",
+   "group_id": "grp_1",
+   "kind": "training_round",
+   "units": 1,
+   "amount": null,
+   "currency": null,
+   "payment_ref": null,
+   "created_at": "2026-10-18T14:04Z"
+  },
+  {
+   "id": "use_9",
+   "company_id": "co_1",
+   "group_id": "grp_1",
+   "kind": "contribution",
+   "units": 120,
+   "amount": null,
+   "currency": null,
+   "payment_ref": null,
+   "created_at": "2026-10-18T14:04Z"
+  },
+  {
+   "id": "use_10",
+   "company_id": "co_2",
+   "group_id": "grp_1",
+   "kind": "enrollment",
+   "units": 1,
+   "amount": null,
+   "currency": null,
+   "payment_ref": null,
+   "created_at": "2026-10-18T11:30:00Z"
+  },
+  {
+   "id": "use_11",
+   "company_id": "co_2",
+   "group_id": "grp_1",
+   "kind": "training_round",
+   "units": 1,
+   "amount": null,
+   "currency": null,
+   "payment_ref": null,
+   "created_at": "2026-10-18T14:01Z"
+  },
+  {
+   "id": "use_12",
+   "company_id": "co_2",
+   "group_id": "grp_1",
+   "kind": "contribution",
+   "units": 120,
+   "amount": null,
+   "currency": null,
+   "payment_ref": null,
+   "created_at": "2026-10-18T14:01Z"
+  },
+  {
+   "id": "use_13",
+   "company_id": "co_2",
+   "group_id": "grp_1",
+   "kind": "training_round",
+   "units": 1,
+   "amount": null,
+   "currency": null,
+   "payment_ref": null,
+   "created_at": "2026-10-18T14:02Z"
+  },
+  {
+   "id": "use_14",
+   "company_id": "co_2",
+   "group_id": "grp_1",
+   "kind": "contribution",
+   "units": 120,
+   "amount": null,
+   "currency": null,
+   "payment_ref": null,
+   "created_at": "2026-10-18T14:02Z"
+  },
+  {
+   "id": "use_15",
+   "company_id": "co_2",
+   "group_id": "grp_1",
+   "kind": "training_round",
+   "units": 1,
+   "amount": null,
+   "currency": null,
+   "payment_ref": null,
+   "created_at": "2026-10-18T14:03Z"
+  },
+  {
+   "id": "use_16",
+   "company_id": "co_2",
+   "group_id": "grp_1",
+   "kind": "contribution",
+   "units": 120,
+   "amount": null,
+   "currency": null,
+   "payment_ref": null,
+   "created_at": "2026-10-18T14:03Z"
+  },
+  {
+   "id": "use_17",
+   "company_id": "co_2",
+   "group_id": "grp_1",
+   "kind": "training_round",
+   "units": 1,
+   "amount": null,
+   "currency": null,
+   "payment_ref": null,
+   "created_at": "2026-10-18T14:04Z"
+  },
+  {
+   "id": "use_18",
+   "company_id": "co_2",
+   "group_id": "grp_1",
+   "kind": "contribution",
+   "units": 120,
+   "amount": null,
+   "currency": null,
+   "payment_ref": null,
+   "created_at": "2026-10-18T14:04Z"
+  },
+  {
+   "id": "use_19",
+   "company_id": "co_3",
+   "group_id": "grp_1",
+   "kind": "enrollment",
+   "units": 1,
+   "amount": null,
+   "currency": null,
+   "payment_ref": null,
+   "created_at": "2026-10-18T11:30:00Z"
+  },
+  {
+   "id": "use_20",
+   "company_id": "co_3",
+   "group_id": "grp_1",
+   "kind": "training_round",
+   "units": 1,
+   "amount": null,
+   "currency": null,
+   "payment_ref": null,
+   "created_at": "2026-10-18T14:01Z"
+  },
+  {
+   "id": "use_21",
+   "company_id": "co_3",
+   "group_id": "grp_1",
+   "kind": "contribution",
+   "units": 120,
+   "amount": null,
+   "currency": null,
+   "payment_ref": null,
+   "created_at": "2026-10-18T14:01Z"
+  },
+  {
+   "id": "use_22",
+   "company_id": "co_3",
+   "group_id": "grp_1",
+   "kind": "training_round",
+   "units": 1,
+   "amount": null,
+   "currency": null,
+   "payment_ref": null,
+   "created_at": "2026-10-18T14:04Z"
+  },
+  {
+   "id": "use_23",
+   "company_id": "co_3",
+   "group_id": "grp_1",
+   "kind": "contribution",
+   "units": 120,
+   "amount": null,
+   "currency": null,
+   "payment_ref": null,
+   "created_at": "2026-10-18T14:04Z"
+  }
+ ]
+}
