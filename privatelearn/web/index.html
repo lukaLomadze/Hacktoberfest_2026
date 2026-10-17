@@ -3,60 +3,80 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>PrivateLearn — demo player</title>
+    <title>PrivateLearn — demo</title>
     <link rel="stylesheet" href="player.css" />
   </head>
   <body>
-    <header>
-      <h1>PrivateLearn</h1>
-      <span class="sub">one model · zero shared data</span>
-      <div class="controls">
-        <button id="play">Play</button>
-        <button id="reset">Reset</button>
-        <input id="scrub" type="range" min="0" max="0" step="1" value="0" aria-label="round" />
-        <span id="roundLabel">round 0 / 0</span>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <div class="brand-text">
+          <h1>PrivateLearn</h1>
+          <p class="tagline">one model · zero shared data</p>
+        </div>
       </div>
-      <div class="privacy">
-        <span class="counter">patient data transferred: <b id="bytes">0</b> bytes</span>
+
+      <div class="hero-stat">
+        <span class="hero-value" id="bytes">0</span>
+        <span class="hero-label">bytes of patient data<br />transferred</span>
+      </div>
+
+      <div class="controls">
+        <button id="play" class="btn primary">Play</button>
+        <button id="reset" class="btn ghost">Reset</button>
+        <input id="scrub" type="range" min="0" max="0" step="1" value="0" aria-label="Round" />
+        <span id="roundLabel" class="round">Round 0 / 0</span>
       </div>
     </header>
 
-    <div class="toggles" role="group" aria-label="overlays">
-      <label><input type="checkbox" id="showMask" checked /> secure aggregation (masking)</label>
-      <label><input type="checkbox" id="showDp" checked /> differential privacy (ε)</label>
-      <span id="source" class="muted"></span>
-    </div>
-
-    <main>
-      <canvas id="graph" width="960" height="360"></canvas>
-
-      <section id="side">
-        <div class="panel">
-          <h2>accuracy (AUC) <span id="aucNow" class="now"></span></h2>
-          <canvas id="chart" width="316" height="150"></canvas>
-          <div class="legend">
-            <span><i class="sw fed"></i>federated</span>
-            <span><i class="sw solo"></i>best solo</span>
-            <span><i class="sw cen"></i>centralized (illegal)</span>
+    <main class="layout">
+      <div class="left">
+        <section class="stage panel">
+          <div class="panel-head">
+            <h2>Federation</h2>
+            <div class="toggles" role="group" aria-label="privacy overlays">
+              <label class="chip"><input type="checkbox" id="showMask" checked /> secure aggregation</label>
+              <label class="chip"><input type="checkbox" id="showDp" checked /> differential privacy</label>
+            </div>
+            <div class="legend" id="legend"></div>
           </div>
-        </div>
-        <div class="panel">
-          <h2>training loss <span id="lossNow" class="now"></span></h2>
-          <canvas id="lossChart" width="316" height="110"></canvas>
-        </div>
-        <div class="panel">
-          <h2>decision log</h2>
-          <ul id="log"></ul>
-        </div>
-        <div class="panel">
-          <h2>gradient-inversion attack</h2>
-          <div class="seg" role="group" aria-label="attack scenario">
-            <button id="atkOff" class="on">unprotected update</button>
-            <button id="atkOn">masking + DP</button>
+          <canvas id="graph" width="960" height="340"></canvas>
+          <p class="stage-caption">
+            Each hospital runs 4 agents — Schema · Planner · Trainer · Challenger — and sends only a
+            7-number weight update. No patient row ever crosses these lines.
+            <span id="source" class="source"></span>
+          </p>
+        </section>
+
+        <section class="panel grow">
+          <div class="panel-head"><h2>Decision log</h2><span class="metric-hint">why the Coordinator chose each strategy</span></div>
+          <ul id="log" class="log"></ul>
+        </section>
+      </div>
+
+      <aside class="rail">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Accuracy</h2>
+            <span class="metric"><span class="metric-hint">AUC</span> <b id="aucNow">—</b></span>
           </div>
-          <div id="attack"></div>
-        </div>
-      </section>
+          <canvas id="chart" width="336" height="190"></canvas>
+          <div class="chart-legend">
+            <span><i class="sw solo"></i><span id="soloLabel">solo</span> <b id="aucSolo"></b></span>
+            <span><i class="sw fed"></i>federated <b id="aucFed"></b></span>
+            <span><i class="sw cen"></i>centralized <b id="aucCen"></b></span>
+          </div>
+          <div class="chart-note" id="soloNote"></div>
+          <div class="loss-head"><span>training loss</span><b id="lossNow">—</b></div>
+          <canvas id="lossChart" width="336" height="44"></canvas>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head"><h2>Gradient-inversion attack</h2></div>
+          <div id="attack" class="attack"></div>
+          <p class="attack-caption">same attack, same sample — only the privacy layer changed.</p>
+        </section>
+      </aside>
     </main>
 
     <script src="player.js"></script>

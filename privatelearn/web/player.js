@@ -1,33 +1,37 @@
-/* PrivateLearn demo player — replays a trace.json. Vanilla JS, no framework.
+/* PrivateLearn demo player — replays a trace.json per docs/DESIGN.md. Vanilla JS, no framework.
    It never computes results: every number on screen comes from the trace.
-   Serve from privatelearn/ with `python -m http.server 8000` and open /web/index.html.
-   Loads ../trace.json (T9 output) and falls back to ../data/sample_trace.json;
-   force a file with index.html?trace=<path>.   */
+   Colors come from the CSS tokens in player.css (read at load), never raw hex.
+   Serve privatelearn/ with `python -m http.server 8000`, open /web/index.html.
+   Loads ../trace.json (T9 output), falls back to ../data/sample_trace.json; ?trace=<path> overrides. */
 
 const TRACE_PARAM = new URLSearchParams(location.search).get('trace');
 const TRACE_CANDIDATES = TRACE_PARAM ? [TRACE_PARAM] : ['../trace.json', '../data/sample_trace.json'];
+const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const $ = (id) => document.getElementById(id);
 const graph = $('graph');
-const chart = $('chart');
-const lossChart = $('lossChart');
-const logEl = $('log');
-const attackEl = $('attack');
 const playBtn = $('play');
 const scrub = $('scrub');
-const roundLabel = $('roundLabel');
 const showMask = $('showMask');
 const showDp = $('showDp');
 
+const css = getComputedStyle(document.documentElement);
+const T = (name) => css.getPropertyValue(`--${name}`).trim();
+const COL = {
+  bgRaise: T('bg-raise'), panel: T('panel'), panel2: T('panel-2'), border: T('border'),
+  text: T('text'), dim: T('text-dim'), faint: T('text-faint'),
+  h0: T('hosp-a'), h1: T('hosp-b'), h2: T('hosp-c'), coord: T('coord'), ok: T('ok'), danger: T('danger'),
+};
+const FONT_DATA = T('font-data');
+const FONT_UI = T('font-ui');
+
 const HOSPITALS = ['h0', 'h1', 'h2'];
-const DEFAULT_COLORS = { h0: '#4c6ef5', h1: '#40c057', h2: '#fa5252', coord: '#fab005' };
-const C = { line: '#2a2e3a', muted: '#8b93a7', text: '#e7e9f0', bad: '#fa5252', good: '#4ade80', accent: '#fab005', cen: '#4c6ef5' };
+const HOP_MS = 600; // DESIGN §8: ~600 ms per hop
 
 let trace = null;
-let round = 0; // committed state: number of completed rounds shown (0 = before round 1)
+let round = 0; // completed rounds shown (0 = before round 1)
 let timer = null;
-let phase = 0; // 0..1 animation of round+1 while playing: 0–0.5 updates fly in, 0.5–1 broadcast out
-let attackProtected = false;
+let phase = 0; // 0..1 while animating round+1: 0–0.5 updates in, 0.5–1 broadcast out
 
 // ---------- canvas helpers (crisp on HiDPI; logical size = width/height attributes) ----------
 
@@ -43,8 +47,8 @@ function setupCanvas(canvas) {
 }
 
 const G = setupCanvas(graph);
-const A = setupCanvas(chart);
-const L = setupCanvas(lossChart);
+const A = setupCanvas($('chart'));
+const L = setupCanvas($('lossChart'));
 
 function el(tag, cls, text) {
   const e = document.createElement(tag);
@@ -53,177 +57,216 @@ function el(tag, cls, text) {
   return e;
 }
 
-const fmt = (v, d = 3) => (typeof v === 'number' ? v.toFixed(d) : '—');
+const fmt = (v, d = 3) => (typeof v === 'number' && isFinite(v) ? v.toFixed(d) : '—');
+const ease = (t) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2); // ease-in-out
 
 // ---------- graph ----------
 
-function nodePos(id) {
+function pos(id) {
   const i = HOSPITALS.indexOf(id);
-  if (i >= 0) return { x: 160 + i * 320, y: 72 };
-  return { x: 480, y: 222 };
+  if (i >= 0) return { x: 160 + i * 320, y: 78 };
+  return { x: 480, y: 232 };
 }
 
 function node(id) {
   return trace.nodes.find((n) => n.id === id) || { id, label: id };
 }
 
-function drawNode(id, { active = false, dim = false, sub = '', sub2 = '' } = {}) {
-  const ctx = G.ctx;
-  const p = nodePos(id);
-  const n = node(id);
-  ctx.globalAlpha = dim ? 0.35 : 1;
+function roundedRect(ctx, x, y, w, h, r) {
   ctx.beginPath();
-  ctx.arc(p.x, p.y, active ? 31 : 27, 0, Math.PI * 2);
-  ctx.fillStyle = n.color || DEFAULT_COLORS[id];
-  ctx.fill();
-  if (active) {
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = '#fff';
-    ctx.stroke();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function drawGrid() {
+  const ctx = G.ctx;
+  ctx.fillStyle = COL.bgRaise;
+  for (let x = 16; x < G.w; x += 32) {
+    for (let y = 16; y < G.h; y += 32) ctx.fillRect(x - 1, y - 1, 2, 2);
   }
-  ctx.fillStyle = '#fff';
-  ctx.font = '600 17px ui-sans-serif, system-ui, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText(n.label, p.x, id === 'coord' ? p.y + 54 : p.y - 40);
-  ctx.globalAlpha = 1;
-  ctx.font = '15px ui-sans-serif, system-ui, sans-serif';
-  const below = id === 'coord' ? p.y + 76 : p.y + 52;
-  if (sub) { ctx.fillStyle = C.muted; ctx.fillText(sub, p.x, below); }
-  if (sub2) { ctx.fillStyle = C.accent; ctx.fillText(sub2, p.x, below + 20); }
+}
+
+function text(str, x, y, { size = 13, color = COL.dim, font = FONT_UI, weight = '', align = 'center' } = {}) {
+  const ctx = G.ctx;
+  ctx.font = `${weight} ${size}px ${font}`.trim();
+  ctx.fillStyle = color;
+  ctx.textAlign = align;
+  ctx.fillText(str, x, y);
   ctx.textAlign = 'left';
 }
 
-function drawLock(x, y) {
+function drawLock(x, y, color) {
   const ctx = G.ctx;
-  ctx.strokeStyle = '#fff';
+  ctx.strokeStyle = color;
   ctx.lineWidth = 1.5;
   ctx.beginPath();
   ctx.arc(x, y - 3, 3, Math.PI, 0);
   ctx.stroke();
-  ctx.fillStyle = '#fff';
+  ctx.fillStyle = color;
   ctx.fillRect(x - 4.5, y - 3, 9, 7);
 }
 
-function drawPacket(from, to, t, { color = '#fff', locked = false, rejected = false } = {}) {
+function drawHospital(id, u) {
   const ctx = G.ctx;
-  const a = nodePos(from);
-  const b = nodePos(to);
-  const tt = rejected ? Math.min(t, 0.8) : t; // a rejected update is stopped before it is aggregated
-  const x = a.x + (b.x - a.x) * tt;
-  const y = a.y + (b.y - a.y) * tt;
+  const p = pos(id);
+  const offline = u && !u.sent;
+  const rejected = u && u.rejected;
+  const active = u && u.sent && !rejected;
+  ctx.globalAlpha = offline ? 0.3 : 1;
   ctx.beginPath();
-  ctx.arc(x, y, locked ? 9 : 6, 0, Math.PI * 2);
-  ctx.fillStyle = rejected && t > 0.8 ? C.bad : color;
+  ctx.arc(p.x, p.y, 26, 0, Math.PI * 2);
+  ctx.fillStyle = COL[id];
   ctx.fill();
-  if (locked) drawLock(x, y + 1);
-  if (rejected && t > 0.8) {
-    ctx.strokeStyle = C.bad;
+  if (active) {
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = COL.text;
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+  text(node(id).label, p.x, p.y - 38, { size: 16, color: COL.text, weight: 600 });
+  let sub = `${u ? u.n : trace.meta.rows_per_hospital} rows · 4 agents`;
+  let subColor = COL.faint;
+  if (offline) { sub = 'offline this round'; subColor = COL.danger; }
+  else if (rejected) { sub = `excluded: ${u.reason || 'outlier'}`; subColor = COL.danger; }
+  text(sub, p.x, p.y + 46, { size: 13, color: subColor });
+  if (showDp.checked && u && u.sent && !rejected) {
+    text(`ε ${fmt(u.dp_eps, 1)} this round`, p.x, p.y + 64, { size: 12, color: COL.dim, font: FONT_DATA });
+  }
+}
+
+function drawCoordinator(shown) {
+  const ctx = G.ctx;
+  const p = pos('coord');
+  roundedRect(ctx, p.x - 28, p.y - 28, 56, 56, 8);
+  ctx.fillStyle = COL.coord;
+  ctx.fill();
+  text('Coordinator', p.x, p.y + 50, { size: 16, color: COL.text, weight: 600 });
+  text(showMask.checked ? 'sees only the masked sum Σ' : 'aggregates the updates', p.x, p.y + 70, { size: 13 });
+  if (showDp.checked) {
+    text(`ε spent ${fmt(shown ? shown.eps_total : 0, 1)}`, p.x, p.y + 88, { size: 12, color: COL.dim, font: FONT_DATA });
+  }
+}
+
+// DESIGN §7.1: a packet is 7 numbers, drawn as a small stack of bars.
+function drawPacket(from, to, t, { color, locked = false, rejected = false } = {}) {
+  const ctx = G.ctx;
+  const a = pos(from);
+  const b = pos(to);
+  const stop = rejected ? 0.78 : 1; // a rejected update never reaches aggregation
+  const k = ease(Math.min(t, 1)) * stop;
+  const x = a.x + (b.x - a.x) * k;
+  const y = a.y + (b.y - a.y) * k;
+  const halted = rejected && t >= 1;
+  ctx.fillStyle = halted ? COL.danger : color;
+  [10, 14, 8].forEach((h, i) => ctx.fillRect(x - 7 + i * 5, y + 7 - h, 4, h));
+  if (locked) drawLock(x + 14, y + 2, COL.text);
+  if (halted) {
+    ctx.strokeStyle = COL.danger;
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(x + 10, y - 10); ctx.lineTo(x + 20, y);
-    ctx.moveTo(x + 20, y - 10); ctx.lineTo(x + 10, y);
+    ctx.moveTo(x - 10, y - 14); ctx.lineTo(x + 10, y + 6);
+    ctx.moveTo(x + 10, y - 14); ctx.lineTo(x - 10, y + 6);
     ctx.stroke();
   }
 }
 
-function updateFor(r, h) {
-  return r ? r.updates.find((u) => u.hospital === h) : null;
-}
+const updateFor = (r, h) => (r ? r.updates.find((u) => u.hospital === h) : null);
 
 function renderGraph() {
   const ctx = G.ctx;
   ctx.clearRect(0, 0, G.w, G.h);
+  drawGrid();
   const playing = timer !== null && phase > 0;
-  const shown = playing ? trace.rounds[round] : trace.rounds[round - 1]; // round being animated or last completed
-  const coord = nodePos('coord');
+  const shown = playing ? trace.rounds[round] : trace.rounds[round - 1];
 
-  ctx.strokeStyle = C.line;
+  const c = pos('coord');
+  ctx.strokeStyle = COL.border;
   ctx.lineWidth = 1;
   HOSPITALS.forEach((h) => {
-    const p = nodePos(h);
+    const p = pos(h);
     ctx.beginPath();
     ctx.moveTo(p.x, p.y);
-    ctx.lineTo(coord.x, coord.y);
+    ctx.lineTo(c.x, c.y);
     ctx.stroke();
   });
 
-  HOSPITALS.forEach((h) => {
-    const u = updateFor(shown, h);
-    const offline = u && !u.sent;
-    const rejected = u && u.rejected;
-    let sub = `${u ? u.n : trace.meta.rows_per_hospital} rows · never leave`;
-    if (offline) sub = 'offline this round';
-    else if (rejected) sub = `rejected: ${u.reason || 'outlier'}`;
-    const sub2 = showDp.checked && u && u.sent ? `ε ${fmt(u.dp_eps, 1)} this round` : '';
-    drawNode(h, { active: !!(u && u.sent && !rejected), dim: offline, sub, sub2 });
-  });
+  HOSPITALS.forEach((h) => drawHospital(h, updateFor(shown, h)));
+  drawCoordinator(shown);
 
-  const eps = shown ? shown.eps_total : 0;
-  drawNode('coord', {
-    sub: showMask.checked ? 'sees only the masked sum Σ' : 'aggregates updates',
-    sub2: showDp.checked ? `ε spent: ${fmt(eps, 1)}` : '',
-  });
-
-  if (playing) {
+  if (playing && !REDUCED) {
     const r = trace.rounds[round];
     if (phase < 0.5) {
       r.updates.forEach((u) => {
         if (!u.sent) return;
         drawPacket(u.hospital, 'coord', phase * 2, {
-          color: node(u.hospital).color || DEFAULT_COLORS[u.hospital],
-          locked: showMask.checked && u.masked,
-          rejected: !!u.rejected,
+          color: COL[u.hospital], locked: showMask.checked && u.masked, rejected: !!u.rejected,
         });
       });
     } else {
       HOSPITALS.forEach((h) => {
-        // everyone online gets the new model, including a hospital whose update was rejected
-        if (updateFor(r, h)?.sent !== false) drawPacket('coord', h, (phase - 0.5) * 2, { color: C.accent });
+        // every hospital that is online gets the new model, including one whose update was excluded
+        if (updateFor(r, h)?.sent !== false) drawPacket('coord', h, (phase - 0.5) * 2, { color: COL.coord });
       });
     }
   }
+}
 
-  ctx.fillStyle = C.muted;
-  ctx.font = '14px ui-sans-serif, system-ui, sans-serif';
-  ctx.fillText('only 7 weight deltas + a loss cross each line — never a patient row', 16, G.h - 14);
+function renderLegend() {
+  const lg = $('legend');
+  lg.replaceChildren();
+  HOSPITALS.concat('coord').forEach((id) => {
+    const s = el('span');
+    const sw = el('i', id === 'coord' ? 'sq' : '');
+    sw.style.background = COL[id];
+    s.append(sw, document.createTextNode(node(id).label));
+    lg.appendChild(s);
+  });
 }
 
 // ---------- charts ----------
 
-function drawSeries(S, series, upto, { refs = [], color = C.accent, pad = 26, decimals = 2 } = {}) {
+function drawSeries(S, series, upto, { refs = [], color, pad = 30, decimals = 1, fixedMax, step } = {}) {
   const { ctx, w, h } = S;
   ctx.clearRect(0, 0, w, h);
   const vals = series.concat(refs.map((r) => r.v)).filter((v) => typeof v === 'number');
-  let min = Math.min(...vals);
-  let max = Math.max(...vals);
-  const span = Math.max(max - min, 0.02);
-  min -= span * 0.12;
-  max += span * 0.12;
-  const n = series.length;
-  const X = (i) => pad + (n > 1 ? i / (n - 1) : 0) * (w - pad - 10);
-  const Y = (v) => h - 18 - ((v - min) / (max - min)) * (h - 28);
-
-  ctx.font = '10px ui-monospace, monospace';
-  ctx.fillStyle = C.muted;
-  ctx.strokeStyle = C.line;
-  ctx.lineWidth = 1;
-  for (let i = 0; i < n; i++) {
-    ctx.textAlign = 'center';
-    ctx.fillText(`r${i}`, X(i), h - 4);
+  let min, max;
+  if (step) { // DESIGN §7.2: AUC axis up to 1.0 with 0.1 gridlines; floor follows the data
+    min = Math.min(0.6, Math.floor(Math.min(...vals) / step) * step);
+    max = fixedMax ?? Math.ceil(Math.max(...vals) / step) * step;
+  } else {
+    const lo = Math.min(...vals), hi = Math.max(...vals), span = Math.max(hi - lo, 1e-3);
+    min = lo - span * 0.15; max = hi + span * 0.15;
   }
-  ctx.textAlign = 'right';
-  ctx.fillText(max.toFixed(decimals), pad - 4, 12);
-  ctx.fillText(min.toFixed(decimals), pad - 4, h - 18);
-  ctx.textAlign = 'left';
+  const n = series.length;
+  const top = 6, bottom = step ? 18 : 6;
+  const X = (i) => pad + (n > 1 ? i / (n - 1) : 0) * (w - pad - 8);
+  const Y = (v) => h - bottom - ((v - min) / (max - min)) * (h - top - bottom);
+
+  ctx.font = `12px ${FONT_DATA}`;
+  if (step) {
+    ctx.strokeStyle = COL.border;
+    ctx.lineWidth = 1;
+    ctx.fillStyle = COL.faint;
+    ctx.textAlign = 'right';
+    for (let v = min; v <= max + 1e-9; v += step) {
+      ctx.beginPath(); ctx.moveTo(pad, Y(v)); ctx.lineTo(w - 8, Y(v)); ctx.stroke();
+      ctx.fillText(v.toFixed(decimals), pad - 4, Y(v) + 4);
+    }
+    ctx.textAlign = 'center';
+    for (let i = 0; i < n; i++) ctx.fillText(`r${i}`, X(i), h - 4);
+    ctx.textAlign = 'left';
+  }
 
   refs.forEach((r) => {
     if (typeof r.v !== 'number') return;
     ctx.strokeStyle = r.color;
     ctx.setLineDash([4, 4]);
-    ctx.beginPath();
-    ctx.moveTo(pad, Y(r.v));
-    ctx.lineTo(w - 10, Y(r.v));
-    ctx.stroke();
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(pad, Y(r.v)); ctx.lineTo(w - 8, Y(r.v)); ctx.stroke();
     ctx.setLineDash([]);
   });
 
@@ -231,29 +274,41 @@ function drawSeries(S, series, upto, { refs = [], color = C.accent, pad = 26, de
   ctx.strokeStyle = color;
   ctx.lineWidth = 2;
   ctx.beginPath();
-  for (let i = 0; i <= last; i++) {
-    i === 0 ? ctx.moveTo(X(i), Y(series[i])) : ctx.lineTo(X(i), Y(series[i]));
-  }
+  for (let i = 0; i <= last; i++) (i === 0 ? ctx.moveTo : ctx.lineTo).call(ctx, X(i), Y(series[i]));
   ctx.stroke();
+  ctx.fillStyle = color;
   for (let i = 0; i <= last; i++) {
     ctx.beginPath();
     ctx.arc(X(i), Y(series[i]), i === last ? 4 : 2.5, 0, Math.PI * 2);
-    ctx.fillStyle = color;
     ctx.fill();
   }
 }
 
 function renderCharts() {
   const m = trace.metrics;
+  const meta = trace.meta;
+  // The red line is the hospital that is worst off alone — the one federation is for.
+  // The best single hospital is still stated, so nothing is hidden.
+  let solo = meta.auc_solo;
+  let soloLabel = 'solo';
+  const byH = meta.auc_solo_by_hospital;
+  if (byH && Object.keys(byH).length) {
+    const [hid, v] = Object.entries(byH).sort((a, b) => a[1] - b[1])[0];
+    solo = v;
+    soloLabel = `${node(hid).label} alone`;
+    $('soloNote').textContent = `best single hospital alone: ${fmt(Math.max(...Object.values(byH)))}`;
+  }
   drawSeries(A, m.auc_series, round, {
-    refs: [
-      { v: trace.meta.auc_solo, color: C.muted },
-      { v: trace.meta.auc_centralized, color: C.cen },
-    ],
+    color: COL.coord, step: 0.1, fixedMax: 1.0,
+    refs: [{ v: solo, color: COL.danger }, { v: meta.auc_centralized, color: COL.ok }],
   });
   $('aucNow').textContent = fmt(m.auc_series[Math.min(round, m.auc_series.length - 1)]);
+  $('soloLabel').textContent = soloLabel;
+  $('aucSolo').textContent = fmt(solo);
+  $('aucFed').textContent = fmt(meta.auc_federated);
+  $('aucCen').textContent = fmt(meta.auc_centralized);
   if (Array.isArray(m.loss_series) && m.loss_series.length) {
-    drawSeries(L, m.loss_series, round, { color: '#40c057' });
+    drawSeries(L, m.loss_series, round, { color: COL.dim, pad: 8 });
     $('lossNow').textContent = fmt(m.loss_series[Math.min(round, m.loss_series.length - 1)]);
   }
 }
@@ -261,63 +316,52 @@ function renderCharts() {
 // ---------- decision log ----------
 
 function renderLog() {
-  logEl.replaceChildren();
+  const log = $('log');
+  log.replaceChildren();
   if (round === 0) {
-    logEl.appendChild(el('li', 'empty', 'press Play — each round the Coordinator picks a strategy'));
+    log.appendChild(el('li', 'empty', 'Press Play — each round the Coordinator picks a strategy.'));
     return;
   }
   trace.rounds.slice(0, round).forEach((r, i) => {
-    const li = el('li', i === round - 1 ? 'current' : '');
-    const head = el('div');
-    head.append(el('b', '', `r${r.round} `), el('span', 'badge', r.strategy), document.createTextNode(r.decision || ''));
-    li.appendChild(head);
-    const meta = el('span', 'meta',
-      `AUC ${fmt(r.auc_before)} → ${fmt(r.auc_after)} · ε total ${fmt(r.eps_total, 1)}`);
-    li.appendChild(meta);
-    const out = (r.updates || []).filter((u) => !u.sent || u.rejected);
-    if (out.length) {
-      const warn = el('span', 'meta warn',
-        out.map((u) => `${node(u.hospital).label}: ${u.sent ? 'rejected' : 'offline'}${u.reason ? ` (${u.reason})` : ''}`).join(' · '));
-      li.appendChild(warn);
-    }
-    logEl.appendChild(li);
+    const excluded = r.excluded || [];
+    const li = el('li', [excluded.length ? 'excluded' : '', i < round - 1 ? 'past' : ''].join(' ').trim());
+    const row = el('div', 'row');
+    row.append(el('span', `badge ${r.strategy}`, r.strategy), el('span', 'num', `round ${r.round}`));
+    excluded.forEach((h) => row.appendChild(el('span', 'tag', `excluded ${node(h).label}`)));
+    li.append(row, el('div', 'text', r.decision || ''));
+    li.appendChild(el('div', 'meta', `AUC ${fmt(r.auc_before)} → ${fmt(r.auc_after)} · ε ${fmt(r.eps_total, 1)}`));
+    log.appendChild(li);
   });
 }
 
-// ---------- attack ----------
+// ---------- attack (DESIGN §7.4: two cards, before / after) ----------
+
+function attackCard(label, s) {
+  const card = el('div', 'attack-card');
+  card.appendChild(el('div', 'label', label));
+  card.appendChild(el('span', `stamp ${s.recovered ? 'recovered' : 'failed'}`, s.recovered ? 'RECOVERED' : 'FAILED'));
+  const err = el('div', 'err', 'feature error ');
+  err.appendChild(el('b', '', fmt(s.feature_error, 2)));
+  card.appendChild(err);
+  return card;
+}
 
 function renderAttack() {
   const a = trace.attack;
-  const s = attackProtected ? a.with_privacy : a.without_privacy;
-  $('atkOff').classList.toggle('on', !attackProtected);
-  $('atkOn').classList.toggle('on', attackProtected);
-  attackEl.replaceChildren();
-  attackEl.appendChild(el('div', `stamp ${s.recovered ? 'recovered' : 'fail'}`, s.recovered ? 'ROW RECOVERED' : 'ATTACK FAILS'));
-  const line = el('div');
-  line.append(document.createTextNode(`target ${node(a.target).label} · feature error `), el('b', '', fmt(s.feature_error, 2)));
-  attackEl.appendChild(line);
-  // bar on a shared scale so the two scenarios are comparable
-  const top = Math.max(a.without_privacy.feature_error || 0, a.with_privacy.feature_error || 0, 1e-9);
-  const bar = el('div', 'bar');
-  const fill = el('i');
-  fill.style.width = `${Math.max(2, (100 * (s.feature_error || 0)) / top)}%`;
-  fill.style.background = s.recovered ? C.bad : C.good;
-  bar.appendChild(fill);
-  attackEl.appendChild(bar);
-  attackEl.appendChild(el('div', 'muted', s.recovered
-    ? 'from one unmasked update the attacker reconstructs a real-looking patient row'
-    : 'masked + noised updates: the reconstruction is noise'));
+  $('attack').replaceChildren(
+    attackCard('Without protection', a.without_privacy),
+    attackCard('With masking + DP', a.with_privacy),
+  );
 }
 
 // ---------- playback ----------
 
 function render() {
-  roundLabel.textContent = `round ${round} / ${trace.rounds.length}`;
+  $('roundLabel').textContent = `Round ${round} / ${trace.rounds.length}`;
   scrub.value = round;
   renderGraph();
   renderCharts();
   renderLog();
-  renderAttack();
 }
 
 function stop() {
@@ -336,16 +380,17 @@ function seek(r) {
 function play() {
   if (timer) { stop(); render(); return; }
   if (round >= trace.rounds.length) round = 0;
+  if (REDUCED) { seek(trace.rounds.length); return; } // DESIGN §8: jump to the final state
   playBtn.textContent = 'Pause';
   phase = 0;
-  const msPerRound = Math.max(1200, Math.min(6000, (trace.timeline_ms || 16000) / trace.rounds.length / 2));
-  const tick = 40;
+  const tick = 30;
+  const roundMs = 4 * HOP_MS; // update hop + broadcast hop, each with a short hold
   timer = setInterval(() => {
-    phase += tick / msPerRound;
+    phase += tick / roundMs;
     if (phase >= 1) {
       phase = 0;
-      round += 1; // the animated round is now complete
-      if (round >= trace.rounds.length) { stop(); }
+      round += 1;
+      if (round >= trace.rounds.length) stop();
     }
     render();
   }, tick);
@@ -356,8 +401,6 @@ playBtn.onclick = play;
 scrub.oninput = () => seek(+scrub.value);
 showMask.onchange = render;
 showDp.onchange = render;
-$('atkOff').onclick = () => { attackProtected = false; renderAttack(); };
-$('atkOn').onclick = () => { attackProtected = true; renderAttack(); };
 document.addEventListener('keydown', (e) => {
   if (!trace || (e.target.tagName === 'INPUT' && e.target.type !== 'checkbox')) return;
   if (e.key === ' ') { e.preventDefault(); play(); }
@@ -379,16 +422,22 @@ async function loadTrace() {
   throw new Error(errors.join('\n'));
 }
 
+// DESIGN §9 loading state
+G.ctx.clearRect(0, 0, G.w, G.h);
+text('loading trace…', G.w / 2, G.h / 2, { size: 13, color: COL.faint, font: FONT_DATA });
+
 loadTrace()
   .then(({ url, data }) => {
     trace = data;
     scrub.max = trace.rounds.length;
     $('bytes').textContent = '0';
     $('source').textContent = `replaying ${url.replace(/^\.\.\//, '')}`;
+    renderLegend();
+    renderAttack();
     render();
   })
   .catch((e) => {
-    const pre = el('pre', '', `failed to load a trace\n${e.message}\n\nserve privatelearn/ with: python -m http.server 8000\nthen open http://localhost:8000/web/index.html  (or ?trace=<path>)`);
-    pre.style.cssText = 'color:#fa5252;padding:2em;white-space:pre-wrap';
+    const pre = el('pre', 'state error',
+      `failed to load a trace\n${e.message}\n\nserve privatelearn/ with: python -m http.server 8000\nthen open http://localhost:8000/web/index.html  (or ?trace=<path>)`);
     document.body.replaceChildren(pre);
   });
