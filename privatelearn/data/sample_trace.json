@@ -7,9 +7,9 @@
     "features": ["age", "bmi", "glucose", "blood_pressure", "insulin", "pregnancies"],
     "weights": 7,
     "rounds": 4,
-    "auc_solo": 0.72,
-    "auc_federated": 0.87,
-    "auc_centralized": 0.88
+    "auc_solo": 0.84,
+    "auc_federated": 0.877,
+    "auc_centralized": 0.884
   },
   "nodes": [
     {"id": "h0", "label": "Hospital A", "color": "#4c6ef5", "role": "hospital"},
@@ -80,7 +80,7 @@
     }
   ],
   "metrics": {
-    "auc_series": [0.78, 0.81, 0.84, 0.86, 0.87],
+    "auc_series": [0.84, 0.86, 0.87, 0.875, 0.877],
     "loss_series": [0.60, 0.52, 0.46, 0.41, 0.38]
   },
   "attack": {

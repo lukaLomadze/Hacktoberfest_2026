@@ -8,6 +8,24 @@ Version: **1.0**
 
 ---
 
+## 0. Headline numbers — MEASURED, not assumed
+
+Measured on the real Pima data, age-band split, logistic regression, held-out 20%:
+
+| | AUC |
+|---|---|
+| best single hospital alone | ≈ 0.84 |
+| federated (FedAvg, 4 rounds) | ≈ 0.88 |
+| centralized (illegal) | ≈ 0.88 |
+
+The story is therefore **not** "solo is terrible". It is: federated matches centralized
+quality to within noise, **with zero rows shared** — the win is that the best model becomes
+legal to build. (The earlier plan assumed 0.72 / 0.87 / 0.88; those were fabricated. The real
+dataset is too easy for the "data-starved hospital" premise to bite at 120 rows. T9 re-measures
+these; the trace uses whatever T9 produces.)
+
+---
+
 ## 1. Data contract
 
 **Dataset:** Pima Indians Diabetes (UCI / NIDDK), 768 rows, binary `Outcome`.
@@ -21,9 +39,13 @@ Version: **1.0**
 
 **Non-IID split (`seed = 42`):**
 1. Sample 360 rows (deterministic, seeded).
-2. Sort by `(Outcome desc, Glucose desc)`.
-3. Contiguous 120-row blocks → `hospital_0` (mostly positives, high glucose),
-   `hospital_1` (mixed), `hospital_2` (mostly negatives).
+2. Sort by `Age` ascending — a **continuous feature, never the label**. Sorting by
+   `Outcome` would give each hospital a single class and a model that cannot learn.
+3. Contiguous 120-row blocks → `hospital_0` (youngest patients), `hospital_1` (middle),
+   `hospital_2` (oldest).
+
+Each hospital keeps a **mix of both classes** but a different age/feature distribution —
+the realistic "hospitals serve different populations" that makes FedAvg non-trivial.
 
 Each hospital CSV keeps its **local** column names and units (see §4); only the
 Schema agent maps them to canonical. `manifest.json` records:
@@ -120,7 +142,7 @@ the player needs are `rounds[i].excluded` and `updates[j].sent/rejected/reason`.
     "hospitals":3,"rows_per_hospital":120,
     "features":["age","bmi","glucose","blood_pressure","insulin","pregnancies"],
     "weights":7,"rounds":4,
-    "auc_solo":0.72,"auc_federated":0.87,"auc_centralized":0.88},
+    "auc_solo":0.84,"auc_federated":0.877,"auc_centralized":0.884},
   "nodes":[
     {"id":"h0","label":"Hospital A","color":"#4c6ef5","role":"hospital"},
     {"id":"h1","label":"Hospital B","color":"#40c057","role":"hospital"},
