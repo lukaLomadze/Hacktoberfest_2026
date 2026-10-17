@@ -20,12 +20,12 @@ from . import errors, paths
 from .context import Hub, Settings
 from .db import Database
 from .enums import API_VERSION
-from .routes import auth, meta
+from .routes import auth, companies, meta
 from .seed import seed
 
 log = logging.getLogger("hub.server")
 
-ROUTERS = [meta.router, auth.router]
+ROUTERS = [meta.router, auth.router, companies.router]
 
 
 class WebFiles(StaticFiles):
