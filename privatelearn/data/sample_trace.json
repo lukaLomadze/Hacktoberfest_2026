@@ -1,0 +1,92 @@
+{
+  "v": "1.0",
+  "meta": {
+    "dataset": "Pima Indians Diabetes (NIDDK)",
+    "hospitals": 3,
+    "rows_per_hospital": 120,
+    "features": ["age", "bmi", "glucose", "blood_pressure", "insulin", "pregnancies"],
+    "weights": 7,
+    "rounds": 4,
+    "auc_solo": 0.72,
+    "auc_federated": 0.87,
+    "auc_centralized": 0.88
+  },
+  "nodes": [
+    {"id": "h0", "label": "Hospital A", "color": "#4c6ef5", "role": "hospital"},
+    {"id": "h1", "label": "Hospital B", "color": "#40c057", "role": "hospital"},
+    {"id": "h2", "label": "Hospital C", "color": "#fa5252", "role": "hospital"},
+    {"id": "coord", "label": "Coordinator", "color": "#fab005", "role": "coordinator"}
+  ],
+  "rounds": [
+    {
+      "round": 1,
+      "strategy": "fedavg",
+      "eps_total": 1.5,
+      "auc_before": 0.78,
+      "auc_after": 0.81,
+      "decision": "loss variance below τ → FedAvg",
+      "excluded": [],
+      "updates": [
+        {"hospital": "h0", "loss": 0.51, "n": 120, "sent": true, "masked": true, "dp_eps": 1.5},
+        {"hospital": "h1", "loss": 0.53, "n": 120, "sent": true, "masked": true, "dp_eps": 1.5},
+        {"hospital": "h2", "loss": 0.49, "n": 120, "sent": true, "masked": true, "dp_eps": 1.5}
+      ],
+      "broadcast": {"v": "1.0", "round": 1, "w": [0.40, 0.85, -0.11, 1.00, 0.30, -0.03, 0.05], "strategy": "fedavg", "eps_total": 1.5, "auc": 0.81, "losses": [0.51, 0.53, 0.49], "converged": false}
+    },
+    {
+      "round": 2,
+      "strategy": "fedprox",
+      "eps_total": 3.0,
+      "auc_before": 0.81,
+      "auc_after": 0.84,
+      "decision": "Hospital C offline → FedProx over A and B, C excluded",
+      "excluded": ["h2"],
+      "updates": [
+        {"hospital": "h0", "loss": 0.46, "n": 120, "sent": true, "masked": true, "dp_eps": 1.5},
+        {"hospital": "h1", "loss": 0.48, "n": 120, "sent": true, "masked": true, "dp_eps": 1.5},
+        {"hospital": "h2", "loss": null, "n": 120, "sent": false, "masked": false, "dp_eps": 0.0}
+      ],
+      "broadcast": {"v": "1.0", "round": 2, "w": [0.42, 0.90, -0.14, 1.05, 0.32, -0.04, 0.06], "strategy": "fedprox", "eps_total": 3.0, "auc": 0.84, "losses": [0.46, 0.48], "converged": false}
+    },
+    {
+      "round": 3,
+      "strategy": "trimmed_mean",
+      "eps_total": 4.5,
+      "auc_before": 0.84,
+      "auc_after": 0.86,
+      "decision": "C update norm 4.2σ → trimmed-mean, C rejected",
+      "excluded": ["h2"],
+      "updates": [
+        {"hospital": "h0", "loss": 0.42, "n": 120, "sent": true, "masked": true, "dp_eps": 1.5},
+        {"hospital": "h1", "loss": 0.44, "n": 120, "sent": true, "masked": true, "dp_eps": 1.5},
+        {"hospital": "h2", "loss": 0.99, "n": 120, "sent": true, "rejected": true, "reason": "update norm 4.2σ", "masked": true, "dp_eps": 1.5}
+      ],
+      "broadcast": {"v": "1.0", "round": 3, "w": [0.43, 0.93, -0.15, 1.08, 0.33, -0.05, 0.06], "strategy": "trimmed_mean", "eps_total": 4.5, "auc": 0.86, "losses": [0.42, 0.44], "converged": false}
+    },
+    {
+      "round": 4,
+      "strategy": "fedavg",
+      "eps_total": 6.0,
+      "auc_before": 0.86,
+      "auc_after": 0.87,
+      "decision": "all updates stable → FedAvg, converged",
+      "excluded": [],
+      "updates": [
+        {"hospital": "h0", "loss": 0.39, "n": 120, "sent": true, "masked": true, "dp_eps": 1.5},
+        {"hospital": "h1", "loss": 0.40, "n": 120, "sent": true, "masked": true, "dp_eps": 1.5},
+        {"hospital": "h2", "loss": 0.41, "n": 120, "sent": true, "masked": true, "dp_eps": 1.5}
+      ],
+      "broadcast": {"v": "1.0", "round": 4, "w": [0.44, 0.95, -0.16, 1.10, 0.34, -0.05, 0.07], "strategy": "fedavg", "eps_total": 6.0, "auc": 0.87, "losses": [0.39, 0.40, 0.41], "converged": true}
+    }
+  ],
+  "metrics": {
+    "auc_series": [0.78, 0.81, 0.84, 0.86, 0.87],
+    "loss_series": [0.60, 0.52, 0.46, 0.41, 0.38]
+  },
+  "attack": {
+    "target": "h0",
+    "without_privacy": {"recovered": true, "feature_error": 0.12},
+    "with_privacy": {"recovered": false, "feature_error": 1.9}
+  },
+  "timeline_ms": 60000
+}
