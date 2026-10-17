@@ -11,7 +11,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 import numpy as np
 
-from agents.hospital import HospitalAgent, SchemaAgent, load_local_csv
+from agents.hospital import HospitalAgent, PlannerAgent, SchemaAgent, load_local_csv, no_protection
 from agents.runtime import Agent, Message, MessageBus, sanitize
 from model import logistic
 from model.privacy import make_pair_secrets, mask_update, unmask_sum
@@ -177,6 +177,17 @@ class TestHospitalRound(unittest.TestCase):
         self.assertEqual(h.w_global, [0.1] * 7)
         self.assertEqual(h.activity[-1]["agent"], "challenger")
 
+    def test_protector_receives_the_plan_it_must_calibrate_to(self):
+        seen = []
+
+        def spy(delta, idx, participants, round_, plan=None):
+            seen.append(plan)
+            return no_protection(delta, idx, participants, round_)
+
+        h = agreed(hospital(0, protector=spy, planner=PlannerAgent(epochs=10, lr=0.05)))
+        h.step([msg("train", train_msg(1, np.zeros(7)))])
+        self.assertEqual((seen[0]["epochs"], seen[0]["lr"]), (10, 0.05))
+
     def test_requires_agreed_schema_and_known_kinds(self):
         h = hospital(0)
         with self.assertRaises(RuntimeError):
@@ -191,7 +202,7 @@ class TestMaskedRoundOnTheBus(unittest.TestCase):
     def test_masked_updates_sum_to_fedavg_step(self):
         secrets = make_pair_secrets([0, 1, 2], seed="test-handshake")
 
-        def protector(delta, idx, participants, round_):
+        def protector(delta, idx, participants, round_, plan=None):
             own = {k: v for k, v in secrets.items() if idx in k}
             vec = mask_update(delta, idx, participants, round_, own)
             return vec, {"masked": True, "mask_seed": f"r{round_}", "dp_eps": 0.0,

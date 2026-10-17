@@ -35,6 +35,35 @@ def assert_same_trace(test, a, b, tol=1e-9, path="trace"):
         test.assertEqual(a, b, path)
 
 
+class TenEpochDecider(PimaDecider):
+    """The Planner picks 10 epochs instead of the default 4 every round."""
+
+    def plan(self, context, fallback):
+        d = super().plan(context, fallback)
+        return {**d, "epochs": 10}
+
+
+class TestSigmaFollowsThePlan(unittest.TestCase):
+    """X1: DP σ is calibrated to the epochs/lr the Planner chose, not the constants."""
+
+    def test_sigma_scales_with_epochs_times_lr_at_the_same_epsilon(self):
+        base = run_loop.plan_sigma(120, 4, 0.1)
+        self.assertAlmostEqual(run_loop.plan_sigma(120, 10, 0.1) / base, 2.5, places=4)
+        self.assertAlmostEqual(run_loop.plan_sigma(120, 4, 0.2) / base, 2.0, places=4)
+
+    def test_a_ten_epoch_plan_records_a_larger_sigma_at_the_same_epsilon(self):
+        default = run_loop.run(decider=PimaDecider())
+        longer = run_loop.run(decider=TenEpochDecider())
+        for a, b in zip(default["rounds"], longer["rounds"]):
+            for u, v in zip(a["updates"], b["updates"]):
+                if not (u["sent"] and not u.get("rejected")):
+                    self.assertEqual((u["dp_sigma"], v["dp_sigma"]), (0.0, 0.0))  # nothing was noised
+                    continue
+                self.assertEqual(u["dp_eps"], v["dp_eps"])  # same ε …
+                self.assertAlmostEqual(v["dp_sigma"] / u["dp_sigma"], 2.5, places=4)  # … more noise
+        self.assertEqual([r["eps_total"] for r in longer["rounds"]], [1.5, 3.0, 4.5, 6.0])
+
+
 class TestEndToEnd(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -83,6 +112,14 @@ class TestEndToEnd(unittest.TestCase):
                 if u["sent"] and not u.get("rejected"):
                     self.assertTrue(u["masked"])
                     self.assertEqual(u["dp_eps"], run_loop.EPS_PER_ROUND)
+
+    def test_every_update_records_the_sigma_of_its_plan(self):
+        # the default plan (4 epochs @ lr 0.1): σ = meta.dp_sigma / participants
+        for r in self.trace["rounds"]:
+            parts = sum(1 for u in r["updates"] if u["sent"] and not u.get("rejected"))
+            for u in r["updates"]:
+                expected = self.trace["meta"]["dp_sigma"] / parts if u["sent"] and not u.get("rejected") else 0.0
+                self.assertAlmostEqual(u["dp_sigma"], expected, places=9)
 
     def test_epsilon_accounting(self):
         self.assertEqual([r["eps_total"] for r in self.trace["rounds"]], [1.5, 3.0, 4.5, 6.0])

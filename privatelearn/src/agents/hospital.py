@@ -26,8 +26,10 @@ The coordinator fixes `participants` from the clear-text probe losses BEFORE any
 masking, so pairwise masks cancel over exactly that set. Each participant sends
 `weights[hospital]·Δw` (weights = n_i/Σn), so the sum of updates is the FedAvg step.
 
-Privacy is injected: `protector(delta, hospital_index, participants, round)` returns
-(vector_to_send, privacy_dict). The default sends the vector unprotected and says
+Privacy is injected: `protector(delta, hospital_index, participants, round, plan=plan)`
+returns (vector_to_send, privacy_dict). `plan` is the Planner's plan this update was
+trained with ({epochs, lr, mu, ...}): a record's influence on Δw grows with epochs·lr, so
+DP noise must be calibrated to the plan actually run, not to a constant. The default sends the vector unprotected and says
 so; the end-to-end run (T9) plugs in model.privacy's clip → DP noise → masking.
 Training is injected too (`train_fn`, default model.logistic.train), so DP training
 with per-example clipping can be swapped in.
@@ -178,7 +180,7 @@ class ChallengerAgent:
         return {"loss": logistic.loss(w, X, labels), "auc": logistic.auc(labels, p)}
 
 
-def no_protection(delta, hospital_index, participants, round_):
+def no_protection(delta, hospital_index, participants, round_, plan=None):
     """Default protector: send the update as is, and report that honestly."""
     return np.asarray(delta, dtype=float), {
         "masked": False, "mask_seed": "", "dp_eps": 0.0, "dp_mechanism": "gaussian", "dp_sigma": 0.0}
@@ -291,7 +293,7 @@ class HospitalAgent(Agent):
         delta, local_loss = self.trainer.train(p["w"], X, labels, plan)
         weight = float(p["weights"][self.id])
         participants = sorted(int(h.lstrip("h")) for h in p["participants"])
-        vec, privacy = self.protector(weight * delta, self.index, participants, r)
+        vec, privacy = self.protector(weight * delta, self.index, participants, r, plan=plan)
         self._log(r, "trainer", f"trained on {self.n} local rows, loss {local_loss:.3f}; "
                                 f"sent {'masked ' if privacy['masked'] else ''}Δw")
         update = {"v": "1.0", "round": r, "hospital": self.id,
