@@ -158,7 +158,7 @@ input[type="range"] { width: 160px; accent-color: var(--coord); }
 /* decision log: one card per round, all rounds visible at once */
 .log {
   list-style: none; margin: 0; padding: 0;
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(184px, 1fr)); gap: 8px;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px;
   overflow-y: auto; min-height: 0; align-content: start;
 }
 .log li {

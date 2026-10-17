@@ -135,12 +135,11 @@ function drawHospital(id, u) {
   if (offline) { sub = 'offline this round'; subColor = COL.danger; }
   else if (rejected) { sub = 'excluded this round'; subColor = COL.danger; } // why: ticker + decision log
   text(sub, p.x, p.y + 46, { size: 13, color: subColor });
-  // the hospital's real agent team — visible, not just a count
-  text('Schema · Planner · Trainer · Challenger', p.x, p.y + 64, { size: 10, color: COL.faint });
-  if (showDp.checked && u && u.sent && !rejected) {
-    text(`ε ${fmt(u.dp_eps, 1)} this round`, p.x, p.y + 80, { size: 12, color: COL.dim, font: FONT_DATA });
-  }
+  // the agent team is the chip row; the stage caption explains the letters
   drawAgentChips(id, p);
+  if (showDp.checked && u && u.sent && !rejected) {
+    text(`ε ${fmt(u.dp_eps, 1)} this round`, p.x, p.y + 112, { size: 12, color: COL.dim, font: FONT_DATA });
+  }
 }
 
 // The four agents inside a hospital: a chip lights up when that agent acted in the shown round
@@ -376,12 +375,6 @@ function renderLog() {
                el('span', 'tag coord', 'coordinator'));
     excluded.forEach((h) => row.appendChild(el('span', 'tag', `excluded ${node(h).label}`)));
     li.append(row, el('div', 'text', r.decision || ''));
-    // the hospital agents that actually acted this round, from trace.agents
-    const acts = HOSPITALS.map((h) => {
-      const names = (trace.agents?.[h] || []).filter((a) => a.round === r.round).map((a) => a.agent);
-      return names.length ? `${node(h).label}: ${names.join(' → ')}` : null;
-    }).filter(Boolean);
-    if (acts.length) li.appendChild(el('div', 'agents', acts.join(' · ')));
     li.appendChild(el('div', 'meta', `AUC ${fmt(r.auc_before)} → ${fmt(r.auc_after)} · ε ${fmt(r.eps_total, 1)}`));
     log.appendChild(li);
   });
