@@ -15,6 +15,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from starlette.routing import Match, Route
 
 from . import errors, paths
 from .context import Hub, Settings
@@ -29,11 +30,22 @@ ROUTERS = [meta.router, auth.router, companies.router]
 
 
 class WebFiles(StaticFiles):
-    """hub/web at `/`, except that an unknown /api/... path is a JSON 404, not an HTML page."""
+    """hub/web at `/`, except that /api/... never reaches the static files.
+
+    Starlette prefers this mount's full match over a route that matches the path but not
+    the method, so `GET /api/v1/auth/login` lands here: answer it with the API's 405, and
+    any other /api/... path with a JSON 404. `path` comes with OS separators ("api\\v1" on
+    Windows), so it is normalised before the check.
+    """
 
     async def get_response(self, path: str, scope):
-        if path == "api" or path.startswith("api/"):
-            raise errors.not_found(f"route /{path}")
+        route_path = path.replace(os.sep, "/")
+        if route_path == "api" or route_path.startswith("api/"):
+            probe = {"type": "http", "path": "/" + route_path, "method": scope["method"], "root_path": ""}
+            if any(isinstance(r, Route) and r.matches(probe)[0] == Match.PARTIAL
+                   for r in scope["app"].router.routes):
+                raise errors.ApiError(405, "method_not_allowed", f"{scope['method']} is not allowed on /{route_path}")
+            raise errors.not_found(f"route /{route_path}")
         return await super().get_response(path, scope)
 
 
