@@ -72,6 +72,15 @@ SYSTEM_PLAN = (
     '"epochs" (positive integer), "lr" (positive float), "mu" (float >= 0, used only for fedprox) '
     'and "reasoning" (one sentence).'
 )
+SUPPORTED_MODELS = ("logistic",)
+SYSTEM_CONTRACT = (
+    "You are the Coordinator agent of a federation. Each hospital has proposed a mapping from its "
+    "local columns to semantic feature names. Agree the contract for the federation: the feature "
+    "set that EVERY hospital can provide (a feature is usable only if all hospitals proposed it) "
+    "and the model type. Reply with a single JSON object with keys "
+    '"features" (list of feature names), "model" (one of the supported models) and "reasoning" '
+    "(one sentence)."
+)
 
 
 class RuleDecider:
@@ -92,6 +101,10 @@ class RuleDecider:
         d = fallback()
         return {"strategy": d.strategy, "flagged": list(d.flagged),
                 "reasoning": d.reason, "made_by": "rule"}
+
+    def contract(self, proposals, fallback):
+        """Agree the federation contract from every hospital's proposed feature names."""
+        return fallback()
 
     def info(self):
         return {"provider": "rule", "model": "deterministic", "llm_calls": 0, "fallbacks": 0}
@@ -228,6 +241,24 @@ class LLMDecider:
             self.calls += 1
             return {"epochs": epochs, "lr": lr, "mu": mu,
                     "why": str(out.get("reasoning", "")).strip(), "made_by": "llm"}
+        except Exception as exc:  # noqa: BLE001
+            d = self._fallback(exc, fallback)
+            return {**d, "made_by": "rule"}
+
+    def contract(self, proposals, fallback):
+        try:
+            out = self._ask(SYSTEM_CONTRACT, json.dumps(
+                {"hospitals": proposals, "supported_models": list(SUPPORTED_MODELS)}))
+            feats = [str(f) for f in out["features"]]
+            model = str(out.get("model", "logistic"))
+            common = set.intersection(*(set(p["features"]) for p in proposals.values())) if proposals else set()
+            if not feats or not set(feats) <= common:
+                raise ValueError("features must be a non-empty subset every hospital can provide")
+            if model not in SUPPORTED_MODELS:
+                raise ValueError(f"unsupported model {model!r}")
+            self.calls += 1
+            return {"features": feats, "model": model,
+                    "reasoning": str(out.get("reasoning", "")).strip(), "made_by": "llm"}
         except Exception as exc:  # noqa: BLE001
             d = self._fallback(exc, fallback)
             return {**d, "made_by": "rule"}

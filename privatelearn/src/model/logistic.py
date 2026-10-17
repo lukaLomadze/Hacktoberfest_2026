@@ -20,9 +20,10 @@ def sigmoid(z: np.ndarray) -> np.ndarray:
 
 
 def add_bias(X: np.ndarray) -> np.ndarray:
+    """Prepend a 1 column. The feature count is whatever the negotiated contract agreed."""
     X = np.asarray(X, dtype=float)
-    if X.ndim != 2 or X.shape[1] != N_FEATURES:
-        raise ValueError(f"X must be (n, {N_FEATURES}), got {X.shape}")
+    if X.ndim != 2:
+        raise ValueError(f"X must be 2-D (n, features), got shape {X.shape}")
     return np.hstack([np.ones((X.shape[0], 1)), X])
 
 

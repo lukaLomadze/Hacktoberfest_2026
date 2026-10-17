@@ -55,7 +55,11 @@ class CoordinatorAgent(Agent):
         self.outlier_sigma = outlier_sigma
         self.mu = mu
         self.converge_tol = converge_tol
-        self.w = np.zeros(7) if w0 is None else np.asarray(w0, dtype=float).copy()
+        self.w = None  # initialised from the negotiated contract
+        self._w0 = None if w0 is None else np.asarray(w0, dtype=float).copy()
+        self.features = None
+        self.model = None
+        self.n_weights = None
 
         self.round = 0
         self.phase = "start"  # start → schema → probe → train → (probe …) → done
@@ -91,20 +95,42 @@ class CoordinatorAgent(Agent):
         missing = [h for h in self.hospitals if h not in self.schemas]
         if missing:
             raise RuntimeError(f"schema negotiation: no schema from {missing}")
-        sources = {}
-        for h, s in self.schemas.items():
-            covered = {c["canonical"] for c in s["columns"]}
-            if covered != set(CANONICAL):
-                raise ValueError(f"schema from {h} covers {sorted(covered)}, not the canonical six")
-            sources[h] = {c["canonical"]: {"source": c["source"], "unit": c["unit"],
-                                           "transform": c["transform"]} for c in s["columns"]}
-        self.schema_report = {"features": CANONICAL, "per_hospital": sources}
-        return {"features": CANONICAL, "feature_mean": self.feature_mean,
-                "feature_std": self.feature_std}
+        proposals = {h: {"features": [c["canonical"] for c in s["columns"]]}
+                     for h, s in self.schemas.items()}
+
+        def _rule():
+            # generic fallback: a feature is usable only if every hospital proposed it
+            common = set(proposals[self.hospitals[0]]["features"])
+            for h in self.hospitals[1:]:
+                common &= set(proposals[h]["features"])
+            return {"features": [f for f in CANONICAL if f in common], "model": "logistic",
+                    "reasoning": f"every hospital can provide {sorted(common)}"}
+
+        d = self.decider.contract(proposals, _rule)
+        self.features = [str(f) for f in d["features"]]
+        self.model = str(d["model"])
+        self.contract_reasoning = d.get("reasoning", "")
+        self.n_weights = len(self.features) + 1
+        # the normalisation statistics must follow the negotiated feature order
+        idx = [CANONICAL.index(f) for f in self.features]
+        self.feature_mean = [self.feature_mean[i] for i in idx]
+        self.feature_std = [self.feature_std[i] for i in idx]
+        self.w = (np.zeros(self.n_weights) if self._w0 is None
+                  else np.asarray(self._w0, dtype=float).copy())
+        if len(self.w) != self.n_weights:
+            raise ValueError(f"initial w has {len(self.w)} weights; the contract needs {self.n_weights}")
+        sources = {h: {c["canonical"]: {"source": c["source"], "unit": c["unit"],
+                                        "transform": c["transform"]}
+                       for c in s["columns"] if c["canonical"] in self.features}
+                   for h, s in self.schemas.items()}
+        self.schema_report = {"features": self.features, "model": self.model,
+                              "per_hospital": sources}
+        return {"features": self.features, "model": self.model,
+                "feature_mean": self.feature_mean, "feature_std": self.feature_std}
 
     def _start_round(self):
         self.round += 1
-        auc_before = float(self.eval_fn(self.w))
+        auc_before = float(self.eval_fn(self.w, self.features))
         if not self.auc_series:
             self.auc_series.append(auc_before)
         self._round = {"round": self.round, "auc_before": auc_before}
@@ -170,7 +196,7 @@ class CoordinatorAgent(Agent):
             for h in r["participants"]:
                 self.eps_spent[h] += float(updates[h]["privacy"]["dp_eps"])
 
-        auc_after = float(self.eval_fn(self.w))
+        auc_after = float(self.eval_fn(self.w, self.features))
         part_losses = [float(updates[h]["loss"]) for h in r["participants"] if h in updates]
         mean_loss = float(np.mean(part_losses)) if part_losses else float("nan")
         prev = self.loss_series[-1] if self.loss_series else None

@@ -288,9 +288,9 @@ class HospitalAgent(Agent):
 
     def _on_schema_agreed(self, msg):
         p = msg.payload
-        order = p.get("features", CANONICAL)
-        if sorted(order) != sorted(CANONICAL):
-            raise ValueError(f"{self.id}: agreed features {order} are not the canonical six")
+        order = list(p.get("features") or [])
+        if not order or any(c not in self.schema.mapping for c in order):
+            raise ValueError(f"{self.id}: agreed features {order} are not provided by this hospital")
         if "feature_mean" in p:
             self._mean = np.asarray(p["feature_mean"], dtype=float)
             self._std = np.asarray(p["feature_std"], dtype=float)

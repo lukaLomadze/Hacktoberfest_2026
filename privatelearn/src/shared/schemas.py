@@ -33,6 +33,14 @@ def _vec(value, length, path):
         _num(x, f"{path}[{i}]")
 
 
+def _vec_min(value, minlen, path):
+    """A weight vector whose length is set by the negotiated contract, not a constant."""
+    if not isinstance(value, list) or len(value) < minlen:
+        _fail(path, f"must be a list of at least {minlen} numbers")
+    for i, x in enumerate(value):
+        _num(x, f"{path}[{i}]")
+
+
 def validate_update(msg):
     if not isinstance(msg, dict):
         _fail("update", "must be an object")
@@ -42,7 +50,7 @@ def validate_update(msg):
         _fail("update.round", "must be an int")
     if msg.get("hospital") not in ALLOWED_HOSPITALS:
         _fail("update.hospital", f"must be one of {sorted(ALLOWED_HOSPITALS)}")
-    _vec(msg.get("delta_w"), N_WEIGHTS, "update.delta_w")
+    _vec_min(msg.get("delta_w"), 2, "update.delta_w")
     _num(msg.get("loss"), "update.loss")
     if not isinstance(msg.get("n"), int) or msg["n"] <= 0:
         _fail("update.n", "must be a positive int")
@@ -65,7 +73,7 @@ def validate_broadcast(msg):
         _fail("broadcast.v", f"must be {VERSION!r}")
     if not isinstance(msg.get("round"), int):
         _fail("broadcast.round", "must be an int")
-    _vec(msg.get("w"), N_WEIGHTS, "broadcast.w")
+    _vec_min(msg.get("w"), 2, "broadcast.w")
     if msg.get("strategy") not in ALLOWED_STRATEGIES:
         _fail("broadcast.strategy", f"must be one of {sorted(ALLOWED_STRATEGIES)}")
     _num(msg.get("eps_total"), "broadcast.eps_total")

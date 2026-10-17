@@ -77,7 +77,7 @@ class TestSanitize(unittest.TestCase):
 
     def test_invalid_update_rejected_by_contract(self):
         bad = make_update()
-        bad["delta_w"] = bad["delta_w"][:6]
+        bad["delta_w"] = [1.0]  # the contract's weight count is negotiated, so too short is invalid
         with self.assertRaisesRegex(ValueError, "delta_w"):
             sanitize("update", bad)
 
