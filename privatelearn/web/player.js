@@ -26,6 +26,8 @@ const FONT_DATA = T('font-data');
 const FONT_UI = T('font-ui');
 
 const HOSPITALS = ['h0', 'h1', 'h2'];
+const AGENTS = [['schema', 'S', 'Schema'], ['planner', 'P', 'Planner'], ['trainer', 'T', 'Trainer'],
+  ['challenger', 'C', 'Challenger']];
 const HOP_MS = 600; // DESIGN §8: ~600 ms per hop
 
 let trace = null;
@@ -128,14 +130,46 @@ function drawHospital(id, u) {
   }
   ctx.globalAlpha = 1;
   text(node(id).label, p.x, p.y - 38, { size: 16, color: COL.text, weight: 600 });
-  let sub = `${u ? u.n : trace.meta.rows_per_hospital} rows · 4 agents`;
+  let sub = `${u ? u.n : trace.meta.rows_per_hospital} rows · never leave`;
   let subColor = COL.faint;
   if (offline) { sub = 'offline this round'; subColor = COL.danger; }
-  else if (rejected) { sub = `excluded: ${u.reason || 'outlier'}`; subColor = COL.danger; }
+  else if (rejected) { sub = 'excluded this round'; subColor = COL.danger; } // why: ticker + decision log
   text(sub, p.x, p.y + 46, { size: 13, color: subColor });
   if (showDp.checked && u && u.sent && !rejected) {
     text(`ε ${fmt(u.dp_eps, 1)} this round`, p.x, p.y + 64, { size: 12, color: COL.dim, font: FONT_DATA });
   }
+  drawAgentChips(id, p);
+}
+
+// The four agents inside a hospital: a chip lights up when that agent acted in the shown round
+// (round 0 = schema negotiation). Read from trace.agents; hidden for traces without it.
+function agentActivity(id, r) {
+  return ((trace.agents || {})[id] || []).filter((a) => a.round === r);
+}
+
+function drawAgentChips(id, p) {
+  if (!trace.agents) return;
+  const ctx = G.ctx;
+  const acted = new Set(agentActivity(id, shownRound()).map((a) => a.agent));
+  const w = 20, gap = 4, x0 = p.x - (AGENTS.length * w + (AGENTS.length - 1) * gap) / 2, y = p.y + 76;
+  AGENTS.forEach(([key, letter], i) => {
+    const x = x0 + i * (w + gap);
+    roundedRect(ctx, x, y, w, 16, 4);
+    if (acted.has(key)) {
+      ctx.fillStyle = COL[id];
+      ctx.fill();
+    } else {
+      ctx.strokeStyle = COL.border;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+    text(letter, x + w / 2, y + 12, { size: 11, weight: 700, font: FONT_DATA, color: acted.has(key) ? COL.panel : COL.faint });
+  });
+}
+
+// the round whose state the graph shows: the one animating, else the last completed (0 = setup)
+function shownRound() {
+  return timer !== null && phase > 0 ? round + 1 : round;
 }
 
 function drawCoordinator(shown) {
@@ -358,6 +392,45 @@ function renderAttack() {
   );
 }
 
+// ---------- agent ticker (stage caption) ----------
+
+let STATIC_CAPTION = '';
+
+function setTicker(parts) {
+  const t = $('ticker');
+  t.replaceChildren(...parts.map((p) => (typeof p === 'string' ? document.createTextNode(p) : p)));
+}
+
+function renderTicker() {
+  if (!trace.agents) return;
+  const name = (id) => el('b', '', node(id).label);
+  const r = shownRound();
+  if (timer !== null && phase > 0) {
+    // narrate one hospital's agents at a time while the round animates
+    const id = HOSPITALS[Math.min(HOSPITALS.length - 1, Math.floor(phase * HOSPITALS.length))];
+    const acts = agentActivity(id, r);
+    const label = (k) => (AGENTS.find((a) => a[0] === k) || [k, k, k])[2];
+    setTicker(acts.length
+      ? [name(id), ' · ', acts.map((a) => `${label(a.agent)}: ${a.action}`).join(' → ')]
+      : [name(id), ' · no agent activity this round']);
+    return;
+  }
+  if (r === 0) {
+    setTicker([STATIC_CAPTION]);
+    return;
+  }
+  // paused on a completed round: what each hospital's Challenger measured on its own data
+  const parts = [`Round ${r} · each Challenger scored the new model on its own patients: `];
+  HOSPITALS.forEach((id, i) => {
+    const last = agentActivity(id, r).filter((a) => a.agent === 'challenger').pop();
+    const m = last && /local AUC ([0-9.]+)/.exec(last.action);
+    const offline = updateFor(trace.rounds[r - 1], id)?.sent === false; // from the trace, not inferred
+    parts.push(name(id), m ? ` ${m[1]}` : offline ? ' offline this round' : ' —');
+    if (i < HOSPITALS.length - 1) parts.push(' · ');
+  });
+  setTicker(parts);
+}
+
 // ---------- playback ----------
 
 function render() {
@@ -366,6 +439,7 @@ function render() {
   renderGraph();
   renderCharts();
   renderLog();
+  renderTicker();
 }
 
 function stop() {
@@ -433,6 +507,7 @@ text('loading trace…', G.w / 2, G.h / 2, { size: 13, color: COL.faint, font: F
 loadTrace()
   .then(({ url, data }) => {
     trace = data;
+    STATIC_CAPTION = $('ticker').textContent.replace(/\s+/g, ' ').trim();
     scrub.max = trace.rounds.length;
     $('bytes').textContent = '0';
     $('source').textContent = `replaying ${url.replace(/^\.\.\//, '')}`;
