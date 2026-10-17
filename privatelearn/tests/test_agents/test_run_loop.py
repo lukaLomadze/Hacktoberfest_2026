@@ -51,6 +51,12 @@ class TestSigmaFollowsThePlan(unittest.TestCase):
         self.assertAlmostEqual(run_loop.plan_sigma(120, 10, 0.1) / base, 2.5, places=4)
         self.assertAlmostEqual(run_loop.plan_sigma(120, 4, 0.2) / base, 2.0, places=4)
 
+    def test_sigma_refuses_a_plan_it_cannot_calibrate_to(self):
+        # NaN would bisect to σ ≈ 1e-6: an update with no noise reported as ε-DP
+        for epochs, lr in ((4, float("nan")), (4, float("inf")), (4, 0.0), (0, 0.1), (4.5, 0.1)):
+            with self.assertRaises(ValueError):
+                run_loop.plan_sigma(120, epochs, lr)
+
     def test_a_ten_epoch_plan_records_a_larger_sigma_at_the_same_epsilon(self):
         default = run_loop.run(decider=PimaDecider())
         longer = run_loop.run(decider=TenEpochDecider())

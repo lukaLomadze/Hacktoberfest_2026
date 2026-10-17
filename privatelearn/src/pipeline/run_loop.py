@@ -32,6 +32,7 @@ import csv
 import functools
 import hashlib
 import json
+import math
 import pathlib
 import sys
 import time
@@ -109,7 +110,10 @@ def plan_sigma(n: int, epochs: int, lr: float, example_clip: float = EXAMPLE_CLI
 
     Patient-level sensitivity is 2·epochs·lr·clip/n (privacy.record_sensitivity), so σ
     scales with epochs·lr. Cached: the planner usually repeats a plan and the ε→σ search
-    is a nested bisection."""
+    is a nested bisection. A non-finite or non-positive epochs/lr is refused: NaN would
+    make the bisection return its floor (σ ≈ 1e-6, no noise) while ε still reads as met."""
+    if not (isinstance(epochs, int) and epochs > 0 and math.isfinite(lr) and lr > 0):
+        raise ValueError(f"cannot calibrate DP noise to epochs={epochs!r}, lr={lr!r}")
     return sigma_for_epsilon(eps, record_sensitivity(n, lr, epochs, example_clip), dp_delta)
 
 
@@ -151,8 +155,8 @@ def run(seed: int = SEED, out_path=None, private: bool = True, use_llm: bool = F
             # The hospital sends weight·Δw, whose patient-level sensitivity is weight·Δ, so the
             # noise scales by the same weight (equal n → weight = 1/len(participants)).
             # C is far above any real update norm: the DP bound comes from per-example clipping.
-            plan = plan or {"epochs": EPOCHS, "lr": LR}
-            s = plan_sigma(n, int(plan["epochs"]), float(plan["lr"])) / len(participants)
+            plan = plan or {}
+            s = plan_sigma(n, int(plan.get("epochs", EPOCHS)), float(plan.get("lr", LR))) / len(participants)
             sigmas[(round_, HOSPITALS[idx])] = float(s)
             masked, _ = prepare_update(delta, hospital_index, participants, round_, own,
                                        noise_seed=f"dp-{seed}-h{idx}", C=10.0, sigma=s, dp_delta=DP_DELTA)
