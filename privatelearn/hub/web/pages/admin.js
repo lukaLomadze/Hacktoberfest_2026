@@ -135,11 +135,13 @@ function decisionControls({ label, act, canApprove }) {
   const status = h("div.row-status");
   const controls = h("div.row-actions");
   let busy = false;
+  let shownWhy; // the canApprove() answer the buttons on screen were built for
 
   function setBusy(on) {
     busy = on;
     cell.querySelectorAll("button, input").forEach((n) => { n.disabled = on; });
-    if (!on) update();
+    // the loop above re-enabled Approve too: rebuild so it follows canApprove() again
+    if (!on && !controls.querySelector(".reason")) showButtons();
   }
 
   async function run(kind, body) {
@@ -156,6 +158,7 @@ function decisionControls({ label, act, canApprove }) {
 
   function showButtons() {
     const why = canApprove();
+    shownWhy = why;
     const approve = h("button.btn.primary.small", { type: "button", disabled: Boolean(why), title: why || null,
                                                     "aria-label": `Approve ${label()}` }, "Approve");
     approve.addEventListener("click", () => run("approve"));
@@ -187,7 +190,9 @@ function decisionControls({ label, act, canApprove }) {
   /** Re-evaluate whether Approve is possible (the company may have been approved meanwhile). */
   function update() {
     if (busy || controls.querySelector(".reason")) return; // never interrupt a decision in progress
-    showButtons();
+    // rebuild only when Approve's state changed: replacing the buttons on every 10 s poll
+    // dropped keyboard focus and could swallow a click landing during the swap
+    if (canApprove() !== shownWhy || !controls.querySelector("button")) showButtons();
   }
 
   showButtons();
