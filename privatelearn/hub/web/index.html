@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PrivateLearn platform</title>
+    <link rel="stylesheet" href="app.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="#/">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-text">
+          <span class="brand-name">PrivateLearn</span>
+          <span class="tagline">one model · zero shared data</span>
+        </span>
+      </a>
+      <nav id="nav" class="nav" aria-label="Main"></nav>
+      <div class="topbar-end">
+        <span id="mock-badge" class="mock-badge" hidden title="Served from hub/web/mock: no backend">mock data</span>
+        <div id="who" class="who"></div>
+      </div>
+    </header>
+    <div id="banner" class="banner" role="status" hidden></div>
+    <main id="main" class="main">
+      <p class="loading">loading…</p>
+    </main>
+    <noscript><p class="error-box">This app needs JavaScript.</p></noscript>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
