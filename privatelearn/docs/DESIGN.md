@@ -133,8 +133,10 @@ The whole page fits a 16:9 recording frame at 1280×720 without scrolling.
   `meta.auc_solo_by_hospital`, the solo line is the hospital that is **worst off alone** (labelled
   e.g. "Hospital C alone") and a note under the legend states the best single hospital's AUC —
   the line shows who federation is for, the note keeps it honest.
-- Y axis labelled AUC (0.6 → 1.0; the floor drops in 0.1 steps if the trace starts lower,
-  e.g. a round-0 model at 0.5), X axis = rounds. Gridlines every 0.1 in `--border`.
+- Y axis labelled AUC, fitted to the data (floor/ceiling in 0.05 steps around the series and the
+  reference lines) — never a fixed 0.6–1.0, which squashes the curves into the top of the panel
+  and hides the federated climb. The labels always show the true extent, so nothing is hidden.
+  X axis = rounds. Gridlines every 0.05 in `--border`.
 - Legend line under the chart: solo / federated / centralized in their colors, each with
   its number from `trace.meta`.
 - Under it, a small **training loss** strip of `metrics.loss_series` in `--text-dim`, drawn up
