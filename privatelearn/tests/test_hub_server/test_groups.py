@@ -5,9 +5,10 @@ from __future__ import annotations
 import copy
 import unittest
 
-from hubtest import GORI, TBILISI, err, login, make_client
+from hubtest import GORI, RUSTAVI, TBILISI, err, login, make_client
 
 from hub.server import taskspec
+from hub.server.db import now_iso
 from hub.server.errors import ApiError
 from hub.server.seed import DIABETES_SPEC
 
@@ -65,6 +66,9 @@ class TaskSpecTest(unittest.TestCase):
         s = spec()
         s["input_schema"] = s["input_schema"] + [{"name": "glucose", "type": "number"}]
         self.bad(s, "task_spec.input_schema[6].name")
+        s = spec()
+        s["input_schema"] = s["input_schema"] + [{"name": "glucose\n", "type": "number"}]
+        self.bad(s, "task_spec.input_schema[6].name")  # `$` would let a trailing newline through
         self.bad(spec(input_schema=[]), "task_spec.input_schema")
         self.bad(spec(input_schema=[{"name": "a", "type": "number", "required": False}]), "task_spec.input_schema")
         self.bad(spec(input_schema=[{"name": "a", "type": "number", "shape": [2, 2]}]),
@@ -123,6 +127,21 @@ class GroupRoutesTest(unittest.TestCase):
         gori = login(self.c, GORI)
         outsider = self.c.get(f"/api/v1/groups/{self.diabetes['id']}", headers=gori).json()
         self.assertEqual((outsider["members"], outsider["versions"]), ([], []))
+
+    def test_a_pending_join_request_does_not_reveal_versions(self):
+        gid, hub = self.diabetes["id"], self.c.app.state.hub
+        with hub.db.tx() as c:
+            c.execute("INSERT INTO model_versions (id, group_id, version, job_id, model_type, features, norm, "
+                      "weights, metrics, contributors, sha256, created_at) VALUES "
+                      "('mv_t', ?, 1, 'job_t', 'logistic', '[]', '{}', '[]', '{}', '[]', 'x', ?)", (gid, now_iso()))
+            company = c.execute("SELECT company_id FROM users WHERE email = ?", (RUSTAVI,)).fetchone()[0]
+            c.execute("INSERT INTO memberships (id, company_id, group_id, status, requested_at, updated_at) "
+                      "VALUES ('mem_t', ?, ?, 'requested', ?, ?)", (company, gid, now_iso(), now_iso()))
+        rustavi = login(self.c, RUSTAVI)
+        self.assertEqual(self.c.get(f"/api/v1/groups/{gid}", headers=rustavi).json()["versions"], [])
+        hub.db.execute("UPDATE memberships SET status = 'approved' WHERE id = 'mem_t'")
+        versions = self.c.get(f"/api/v1/groups/{gid}", headers=rustavi).json()["versions"]
+        self.assertEqual([v["id"] for v in versions], ["mv_t"])
 
     def test_create_publish_archive(self):
         r = self.c.post("/api/v1/groups", headers=self.admin,
