@@ -46,8 +46,11 @@ def visible_group_or_404(db, p, group_id):
 
 
 def is_group_member(db, p, group_id) -> bool:
-    """Admin, or a company with a non-rejected membership: may see jobs, versions, events."""
-    return p.is_admin or has_membership(db, p.company_id, group_id)
+    """Admin, or a company the admin let in (now or before): may see jobs, versions, events.
+
+    A request the admin has not approved yet does not count, or any approved company could
+    read a group's models and job history just by asking to join it."""
+    return p.is_admin or has_membership(db, p.company_id, group_id, exclude=("rejected", "requested"))
 
 
 def require_group_member(db, p, group_id):

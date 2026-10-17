@@ -63,9 +63,9 @@ def get_group(group_id: str, request: Request):
     row = visible_group_or_404(db, p, group_id)
     out = group_out(db, row)
     if p.is_admin:
-        members = db.all("SELECT * FROM memberships WHERE group_id = ? ORDER BY requested_at", (group_id,))
+        members = db.all("SELECT * FROM memberships WHERE group_id = ? ORDER BY requested_at, rowid", (group_id,))
     else:
-        members = db.all("SELECT * FROM memberships WHERE group_id = ? AND company_id = ? ORDER BY requested_at",
+        members = db.all("SELECT * FROM memberships WHERE group_id = ? AND company_id = ? ORDER BY requested_at, rowid",
                          (group_id, p.company_id))
     out["members"] = [membership_out(hub, m) for m in members]
     versions = (db.all("SELECT * FROM model_versions WHERE group_id = ? ORDER BY version DESC", (group_id,))
