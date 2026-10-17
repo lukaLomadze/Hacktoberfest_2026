@@ -424,7 +424,8 @@ function renderTicker() {
   HOSPITALS.forEach((id, i) => {
     const last = agentActivity(id, r).filter((a) => a.agent === 'challenger').pop();
     const m = last && /local AUC ([0-9.]+)/.exec(last.action);
-    parts.push(name(id), m ? ` ${m[1]}` : ' missed this round (offline)');
+    const offline = updateFor(trace.rounds[r - 1], id)?.sent === false; // from the trace, not inferred
+    parts.push(name(id), m ? ` ${m[1]}` : offline ? ' offline this round' : ' —');
     if (i < HOSPITALS.length - 1) parts.push(' · ');
   });
   setTicker(parts);
