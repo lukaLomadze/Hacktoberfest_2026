@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PrivateLearn — demo player</title>
+    <link rel="stylesheet" href="player.css" />
+  </head>
+  <body>
+    <header>
+      <h1>PrivateLearn</h1>
+      <span class="sub">one model · zero shared data</span>
+      <div class="controls">
+        <button id="play">Play</button>
+        <button id="reset">Reset</button>
+        <input id="scrub" type="range" min="0" max="0" step="1" value="0" />
+        <span id="roundLabel">round 0 / 0</span>
+      </div>
+      <div class="privacy">
+        <span class="counter">patient data transferred: <b id="bytes">0</b> bytes</span>
+      </div>
+    </header>
+
+    <main>
+      <canvas id="graph" width="960" height="360"></canvas>
+
+      <section id="side">
+        <div class="panel">
+          <h2>accuracy (AUC)</h2>
+          <canvas id="chart" width="440" height="160"></canvas>
+        </div>
+        <div class="panel">
+          <h2>decision log</h2>
+          <ul id="log"></ul>
+        </div>
+        <div class="panel">
+          <h2>attack</h2>
+          <div id="attack"></div>
+        </div>
+      </section>
+    </main>
+
+    <script src="player.js"></script>
+  </body>
+</html>
