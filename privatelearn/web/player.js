@@ -1,369 +1,432 @@
-/* PrivateLearn demo player — replays a trace.json per docs/DESIGN.md.
-   Vanilla JS, no framework. Colors and type come from player.css tokens. */
+/* PrivateLearn demo player — replays a trace.json per docs/DESIGN.md. Vanilla JS, no framework.
+   It never computes results: every number on screen comes from the trace.
+   Colors come from the CSS tokens in player.css (read at load), never raw hex.
+   Serve privatelearn/ with `python -m http.server 8000`, open /web/index.html.
+   Loads ../trace.json (T9 output), falls back to ../data/sample_trace.json; ?trace=<path> overrides. */
 
-const TRACE_URL = new URLSearchParams(location.search).get('trace') || '../data/sample_trace.json';
+const TRACE_PARAM = new URLSearchParams(location.search).get('trace');
+const TRACE_CANDIDATES = TRACE_PARAM ? [TRACE_PARAM] : ['../trace.json', '../data/sample_trace.json'];
 const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const $ = (id) => document.getElementById(id);
-const graph = $('graph'), g = graph.getContext('2d');
-const chart = $('chart'), c = chart.getContext('2d');
-const logEl = $('log'), attackEl = $('attack'), legendEl = $('legend'), chartLegendEl = $('chartLegend');
-const playBtn = $('play'), resetBtn = $('reset'), scrub = $('scrub'), roundLabel = $('roundLabel'), bytesEl = $('bytes');
+const graph = $('graph');
+const playBtn = $('play');
+const scrub = $('scrub');
+const showMask = $('showMask');
+const showDp = $('showDp');
 
-const CSS = getComputedStyle(document.documentElement);
-const T = (n) => CSS.getPropertyValue(n).trim();
+const css = getComputedStyle(document.documentElement);
+const T = (name) => css.getPropertyValue(`--${name}`).trim();
 const COL = {
-  hosp: [T('--hosp-a'), T('--hosp-b'), T('--hosp-c')],
-  coord: T('--coord'), ok: T('--ok'), danger: T('--danger'),
-  border: T('--border'), bgRaise: T('--bg-raise'),
-  text: T('--text'), dim: T('--text-dim'), faint: T('--text-faint'),
+  bgRaise: T('bg-raise'), panel: T('panel'), panel2: T('panel-2'), border: T('border'),
+  text: T('text'), dim: T('text-dim'), faint: T('text-faint'),
+  h0: T('hosp-a'), h1: T('hosp-b'), h2: T('hosp-c'), coord: T('coord'), ok: T('ok'), danger: T('danger'),
 };
+const FONT_DATA = T('font-data');
+const FONT_UI = T('font-ui');
 
-const HOSP = ['h0', 'h1', 'h2'];
-const nodeColor = (id) => (id === 'coord' ? COL.coord : COL.hosp[HOSP.indexOf(id)]);
+const HOSPITALS = ['h0', 'h1', 'h2'];
+const HOP_MS = 600; // DESIGN §8: ~600 ms per hop
 
 let trace = null;
-let round = 0;       // rounds completed so far
-let phase = 0;       // packet animation progress 0..1
+let round = 0; // completed rounds shown (0 = before round 1)
 let timer = null;
+let phase = 0; // 0..1 while animating round+1: 0–0.5 updates in, 0.5–1 broadcast out
 
-/* ---------------- graph ---------------- */
-function pos(id) {
-  if (id === 'coord') return { x: 480, y: 320 };
-  return { x: 160 + HOSP.indexOf(id) * 320, y: 90 };
+// ---------- canvas helpers (crisp on HiDPI; logical size = width/height attributes) ----------
+
+function setupCanvas(canvas) {
+  const w = +canvas.getAttribute('width');
+  const h = +canvas.getAttribute('height');
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = Math.round(w * dpr);
+  canvas.height = Math.round(h * dpr);
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { ctx, w, h };
 }
 
-function roundedRect(x, y, w, h, r) {
-  g.beginPath();
-  g.moveTo(x + r, y);
-  g.arcTo(x + w, y, x + w, y + h, r);
-  g.arcTo(x + w, y + h, x, y + h, r);
-  g.arcTo(x, y + h, x, y, r);
-  g.arcTo(x, y, x + w, y, r);
-  g.closePath();
+const G = setupCanvas(graph);
+const A = setupCanvas($('chart'));
+const L = setupCanvas($('lossChart'));
+
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+
+const fmt = (v, d = 3) => (typeof v === 'number' && isFinite(v) ? v.toFixed(d) : '—');
+const ease = (t) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2); // ease-in-out
+
+// ---------- graph ----------
+
+function pos(id) {
+  const i = HOSPITALS.indexOf(id);
+  if (i >= 0) return { x: 160 + i * 320, y: 84 };
+  return { x: 480, y: 262 };
+}
+
+function node(id) {
+  return trace.nodes.find((n) => n.id === id) || { id, label: id };
+}
+
+function roundedRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
 }
 
 function drawGrid() {
-  g.fillStyle = COL.bgRaise;
-  for (let x = 0; x <= graph.width; x += 32) {
-    for (let y = 0; y <= graph.height; y += 32) {
-      g.fillRect(x, y, 1.5, 1.5);
-    }
+  const ctx = G.ctx;
+  ctx.fillStyle = COL.bgRaise;
+  for (let x = 16; x < G.w; x += 32) {
+    for (let y = 16; y < G.h; y += 32) ctx.fillRect(x - 1, y - 1, 2, 2);
   }
 }
 
-function drawEdges() {
-  const coord = pos('coord');
-  g.strokeStyle = COL.border;
-  g.lineWidth = 1;
-  HOSP.forEach((h) => {
-    const p = pos(h);
-    g.beginPath();
-    g.moveTo(p.x, p.y + 30);
-    g.lineTo(coord.x, coord.y - 26);
-    g.stroke();
-  });
+function text(str, x, y, { size = 13, color = COL.dim, font = FONT_UI, weight = '', align = 'center' } = {}) {
+  const ctx = G.ctx;
+  ctx.font = `${weight} ${size}px ${font}`.trim();
+  ctx.fillStyle = color;
+  ctx.textAlign = align;
+  ctx.fillText(str, x, y);
+  ctx.textAlign = 'left';
 }
 
-function drawNode(id, label) {
+function drawLock(x, y, color) {
+  const ctx = G.ctx;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(x, y - 3, 3, Math.PI, 0);
+  ctx.stroke();
+  ctx.fillStyle = color;
+  ctx.fillRect(x - 4.5, y - 3, 9, 7);
+}
+
+function drawHospital(id, u) {
+  const ctx = G.ctx;
   const p = pos(id);
-  const color = nodeColor(id);
-  if (id === 'coord') {
-    g.fillStyle = color;
-    roundedRect(p.x - 60, p.y - 18, 120, 36, 10);
-    g.fill();
-    g.fillStyle = '#14100a';
-    g.font = '600 12px ' + 'ui-monospace, monospace';
-    g.textAlign = 'center';
-    g.textBaseline = 'middle';
-    g.fillText(label, p.x, p.y);
-  } else {
-    g.beginPath();
-    g.arc(p.x, p.y, 26, 0, Math.PI * 2);
-    g.fillStyle = color;
-    g.fill();
-    // short letter inside the disc
-    g.fillStyle = '#fff';
-    g.font = '700 16px ' + 'ui-monospace, monospace';
-    g.textAlign = 'center';
-    g.textBaseline = 'middle';
-    g.fillText(label.slice(-1), p.x, p.y);
-    // full name + role count below
-    g.font = '11px ' + 'ui-monospace, monospace';
-    g.fillStyle = COL.dim;
-    g.fillText(label, p.x, p.y + 40);
-    g.fillStyle = COL.faint;
-    g.fillText('4 agents', p.x, p.y + 52);
+  const offline = u && !u.sent;
+  const rejected = u && u.rejected;
+  const active = u && u.sent && !rejected;
+  ctx.globalAlpha = offline ? 0.3 : 1;
+  ctx.beginPath();
+  ctx.arc(p.x, p.y, 26, 0, Math.PI * 2);
+  ctx.fillStyle = COL[id];
+  ctx.fill();
+  if (active) {
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = COL.text;
+    ctx.stroke();
   }
-  g.textBaseline = 'alphabetic';
-  g.textAlign = 'left';
+  ctx.globalAlpha = 1;
+  text(node(id).label, p.x, p.y - 38, { size: 16, color: COL.text, weight: 600 });
+  let sub = `${u ? u.n : trace.meta.rows_per_hospital} rows · 4 agents`;
+  let subColor = COL.faint;
+  if (offline) { sub = 'offline this round'; subColor = COL.danger; }
+  else if (rejected) { sub = `excluded: ${u.reason || 'outlier'}`; subColor = COL.danger; }
+  text(sub, p.x, p.y + 46, { size: 13, color: subColor });
+  if (showDp.checked && u && u.sent && !rejected) {
+    text(`ε ${fmt(u.dp_eps, 1)} this round`, p.x, p.y + 64, { size: 12, color: COL.dim, font: FONT_DATA });
+  }
 }
 
-function drawPacket(from, to, t, color) {
-  const a = pos(from), b = pos(to);
-  const x = a.x + (b.x - a.x) * t;
-  const y = a.y + (b.y - a.y) * t;
-  // a small stack of three bars = "numbers", not a dot
-  g.fillStyle = color;
-  const w = [10, 6, 8];
-  w.forEach((len, i) => {
-    g.fillRect(x - len / 2, y - 6 + i * 5, len, 3);
-  });
+function drawCoordinator(shown) {
+  const ctx = G.ctx;
+  const p = pos('coord');
+  roundedRect(ctx, p.x - 28, p.y - 28, 56, 56, 8);
+  ctx.fillStyle = COL.coord;
+  ctx.fill();
+  text('Coordinator', p.x, p.y + 50, { size: 16, color: COL.text, weight: 600 });
+  text(showMask.checked ? 'sees only the masked sum Σ' : 'aggregates the updates', p.x, p.y + 70, { size: 13 });
+  if (showDp.checked) {
+    text(`ε spent ${fmt(shown ? shown.eps_total : 0, 1)}`, p.x, p.y + 88, { size: 12, color: COL.dim, font: FONT_DATA });
+  }
 }
+
+// DESIGN §7.1: a packet is 7 numbers, drawn as a small stack of bars.
+function drawPacket(from, to, t, { color, locked = false, rejected = false } = {}) {
+  const ctx = G.ctx;
+  const a = pos(from);
+  const b = pos(to);
+  const stop = rejected ? 0.78 : 1; // a rejected update never reaches aggregation
+  const k = ease(Math.min(t, 1)) * stop;
+  const x = a.x + (b.x - a.x) * k;
+  const y = a.y + (b.y - a.y) * k;
+  const halted = rejected && t >= 1;
+  ctx.fillStyle = halted ? COL.danger : color;
+  [10, 14, 8].forEach((h, i) => ctx.fillRect(x - 7 + i * 5, y + 7 - h, 4, h));
+  if (locked) drawLock(x + 14, y + 2, COL.text);
+  if (halted) {
+    ctx.strokeStyle = COL.danger;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x - 10, y - 14); ctx.lineTo(x + 10, y + 6);
+    ctx.moveTo(x + 10, y - 14); ctx.lineTo(x - 10, y + 6);
+    ctx.stroke();
+  }
+}
+
+const updateFor = (r, h) => (r ? r.updates.find((u) => u.hospital === h) : null);
 
 function renderGraph() {
-  g.clearRect(0, 0, graph.width, graph.height);
+  const ctx = G.ctx;
+  ctx.clearRect(0, 0, G.w, G.h);
   drawGrid();
-  drawEdges();
+  const playing = timer !== null && phase > 0;
+  const shown = playing ? trace.rounds[round] : trace.rounds[round - 1];
 
-  const current = trace.rounds[round - 1];
-
-  HOSP.forEach((h) => {
-    const node = trace.nodes.find((n) => n.id === h);
-    drawNode(h, (node && node.label) || h.toUpperCase());
+  const c = pos('coord');
+  ctx.strokeStyle = COL.border;
+  ctx.lineWidth = 1;
+  HOSPITALS.forEach((h) => {
+    const p = pos(h);
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y);
+    ctx.lineTo(c.x, c.y);
+    ctx.stroke();
   });
-  drawNode('coord', 'Coordinator');
 
-  if (current) {
-    // updates: hospital -> coordinator
-    current.updates.forEach((u) => {
-      if (u.sent && !u.rejected) drawPacket(u.hospital, 'coord', phase, nodeColor(u.hospital));
-    });
-    // broadcast: coordinator -> hospitals (not excluded)
-    if (phase > 0.5) {
-      HOSP.forEach((h) => {
-        if (!current.excluded.includes(h)) drawPacket('coord', h, (phase - 0.5) * 2, COL.coord);
+  HOSPITALS.forEach((h) => drawHospital(h, updateFor(shown, h)));
+  drawCoordinator(shown);
+
+  if (playing && !REDUCED) {
+    const r = trace.rounds[round];
+    if (phase < 0.5) {
+      r.updates.forEach((u) => {
+        if (!u.sent) return;
+        drawPacket(u.hospital, 'coord', phase * 2, {
+          color: COL[u.hospital], locked: showMask.checked && u.masked, rejected: !!u.rejected,
+        });
+      });
+    } else {
+      HOSPITALS.forEach((h) => {
+        // every hospital that is online gets the new model, including one whose update was excluded
+        if (updateFor(r, h)?.sent !== false) drawPacket('coord', h, (phase - 0.5) * 2, { color: COL.coord });
       });
     }
   }
 }
 
-/* ---------------- legend ---------------- */
 function renderLegend() {
-  legendEl.innerHTML = '';
-  const items = [
-    ...trace.nodes.filter((n) => n.id !== 'coord').map((n) => [n.label, nodeColor(n.id)]),
-    ['Coordinator', COL.coord],
-  ];
-  items.forEach(([label, color]) => {
-    const span = document.createElement('span');
-    span.className = 'legend-item';
-    const dot = document.createElement('span');
-    dot.className = 'legend-dot';
-    dot.style.background = color;
-    span.appendChild(dot);
-    span.appendChild(document.createTextNode(label));
-    legendEl.appendChild(span);
+  const lg = $('legend');
+  lg.replaceChildren();
+  HOSPITALS.concat('coord').forEach((id) => {
+    const s = el('span');
+    const sw = el('i', id === 'coord' ? 'sq' : '');
+    sw.style.background = COL[id];
+    s.append(sw, document.createTextNode(node(id).label));
+    lg.appendChild(s);
   });
 }
 
-/* ---------------- chart ---------------- */
-function renderChart() {
-  c.clearRect(0, 0, chart.width, chart.height);
-  const W = chart.width, H = chart.height;
-  const L = 34, R = 8, top = 10, bottom = 20;
-  const y0 = 0.6, y1 = 1.0;
+// ---------- charts ----------
 
-  const X = (i) => L + (i / (trace.rounds.length)) * (W - L - R);
-  const Y = (v) => top + (1 - (v - y0) / (y1 - y0)) * (H - top - bottom);
-
-  // gridlines + y labels
-  c.font = '9px ' + 'ui-monospace, monospace';
-  c.fillStyle = COL.faint;
-  for (let v = 0.6; v <= 1.0001; v += 0.1) {
-    const y = Y(v);
-    c.strokeStyle = COL.border;
-    c.lineWidth = 1;
-    c.beginPath();
-    c.moveTo(L, y);
-    c.lineTo(W - R, y);
-    c.stroke();
-    c.textAlign = 'right';
-    c.textBaseline = 'middle';
-    c.fillText(v.toFixed(1), L - 6, y);
+function drawSeries(S, series, upto, { refs = [], color, pad = 30, decimals = 1, fixedMax, step } = {}) {
+  const { ctx, w, h } = S;
+  ctx.clearRect(0, 0, w, h);
+  const vals = series.concat(refs.map((r) => r.v)).filter((v) => typeof v === 'number');
+  let min, max;
+  if (step) { // DESIGN §7.2: AUC axis up to 1.0 with 0.1 gridlines; floor follows the data
+    min = Math.min(0.6, Math.floor(Math.min(...vals) / step) * step);
+    max = fixedMax ?? Math.ceil(Math.max(...vals) / step) * step;
+  } else {
+    const lo = Math.min(...vals), hi = Math.max(...vals), span = Math.max(hi - lo, 1e-3);
+    min = lo - span * 0.15; max = hi + span * 0.15;
   }
-  // x labels
-  c.textAlign = 'center';
-  c.textBaseline = 'top';
-  for (let i = 0; i <= trace.rounds.length; i++) {
-    c.fillText(String(i), X(i), H - bottom + 4);
-  }
+  const n = series.length;
+  const top = 6, bottom = step ? 18 : 6;
+  const X = (i) => pad + (n > 1 ? i / (n - 1) : 0) * (w - pad - 8);
+  const Y = (v) => h - bottom - ((v - min) / (max - min)) * (h - top - bottom);
 
-  // reference lines: solo (danger), centralized (ok)
-  const refs = [
-    [trace.meta.auc_solo, COL.danger, 'solo'],
-    [trace.meta.auc_centralized, COL.ok, 'centralized'],
-  ];
-  refs.forEach(([v, color, label]) => {
-    const y = Y(v);
-    c.strokeStyle = color;
-    c.setLineDash([4, 3]);
-    c.lineWidth = 1;
-    c.beginPath();
-    c.moveTo(L, y);
-    c.lineTo(W - R, y);
-    c.stroke();
-    c.setLineDash([]);
-    c.textAlign = 'left';
-    c.textBaseline = 'bottom';
-    c.fillStyle = color;
-    c.fillText(label, L + 4, y - 1);
-  });
-
-  // federated line
-  const s = trace.metrics.auc_series;
-  c.strokeStyle = COL.coord;
-  c.lineWidth = 2;
-  c.beginPath();
-  s.forEach((v, i) => {
-    i === 0 ? c.moveTo(X(i), Y(v)) : c.lineTo(X(i), Y(v));
-  });
-  c.stroke();
-  s.forEach((v, i) => {
-    c.fillStyle = COL.coord;
-    c.beginPath();
-    c.arc(X(i), Y(v), 3, 0, Math.PI * 2);
-    c.fill();
-  });
-  c.textAlign = 'left';
-  c.textBaseline = 'alphabetic';
-
-  // legend
-  chartLegendEl.innerHTML = '';
-  [['solo', COL.danger], ['federated', COL.coord], ['centralized', COL.ok]].forEach(([lbl, colr]) => {
-    const span = document.createElement('span');
-    const sw = document.createElement('span');
-    sw.className = 'swatch';
-    sw.style.background = colr;
-    span.appendChild(sw);
-    span.appendChild(document.createTextNode(lbl));
-    chartLegendEl.appendChild(span);
-  });
-}
-
-/* ---------------- decision log ---------------- */
-function renderLog() {
-  logEl.innerHTML = '';
-  trace.rounds.slice(0, round).forEach((r) => {
-    const li = document.createElement('li');
-    if (r.excluded.length) li.classList.add('warn');
-
-    const badge = document.createElement('span');
-    badge.className = 'badge ' + r.strategy;
-    badge.textContent = r.strategy.replace('_', '-');
-
-    const num = document.createElement('span');
-    num.className = 'round-num';
-    num.textContent = 'r' + r.round;
-
-    const text = document.createElement('span');
-    text.textContent = r.decision;
-
-    li.appendChild(badge);
-    li.appendChild(num);
-    li.appendChild(text);
-
-    if (r.excluded.length) {
-      const tag = document.createElement('span');
-      tag.className = 'excluded-tag';
-      tag.textContent = 'excluded ' + r.excluded.join(',');
-      li.appendChild(tag);
+  ctx.font = `12px ${FONT_DATA}`;
+  if (step) {
+    ctx.strokeStyle = COL.border;
+    ctx.lineWidth = 1;
+    ctx.fillStyle = COL.faint;
+    ctx.textAlign = 'right';
+    for (let v = min; v <= max + 1e-9; v += step) {
+      ctx.beginPath(); ctx.moveTo(pad, Y(v)); ctx.lineTo(w - 8, Y(v)); ctx.stroke();
+      ctx.fillText(v.toFixed(decimals), pad - 4, Y(v) + 4);
     }
-    logEl.appendChild(li);
+    ctx.textAlign = 'center';
+    for (let i = 0; i < n; i++) ctx.fillText(`r${i}`, X(i), h - 4);
+    ctx.textAlign = 'left';
+  }
+
+  refs.forEach((r) => {
+    if (typeof r.v !== 'number') return;
+    ctx.strokeStyle = r.color;
+    ctx.setLineDash([4, 4]);
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(pad, Y(r.v)); ctx.lineTo(w - 8, Y(r.v)); ctx.stroke();
+    ctx.setLineDash([]);
   });
+
+  const last = Math.min(upto, n - 1);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let i = 0; i <= last; i++) (i === 0 ? ctx.moveTo : ctx.lineTo).call(ctx, X(i), Y(series[i]));
+  ctx.stroke();
+  ctx.fillStyle = color;
+  for (let i = 0; i <= last; i++) {
+    ctx.beginPath();
+    ctx.arc(X(i), Y(series[i]), i === last ? 4 : 2.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
 }
 
-/* ---------------- attack ---------------- */
-function attackCard(label, recovered, error) {
-  const card = document.createElement('div');
-  card.className = 'attack-card';
-  const l = document.createElement('span');
-  l.className = 'label';
-  l.textContent = label;
-  const stamp = document.createElement('span');
-  stamp.className = 'stamp ' + (recovered ? 'recovered' : 'failed');
-  stamp.textContent = recovered ? 'RECOVERED' : 'FAILED';
-  const err = document.createElement('span');
-  err.className = 'attack-err';
-  err.textContent = 'error ' + error;
-  card.appendChild(l);
-  card.appendChild(stamp);
+function renderCharts() {
+  const m = trace.metrics;
+  const meta = trace.meta;
+  drawSeries(A, m.auc_series, round, {
+    color: COL.coord, step: 0.1, fixedMax: 1.0,
+    refs: [{ v: meta.auc_solo, color: COL.danger }, { v: meta.auc_centralized, color: COL.ok }],
+  });
+  $('aucNow').textContent = fmt(m.auc_series[Math.min(round, m.auc_series.length - 1)]);
+  $('aucSolo').textContent = fmt(meta.auc_solo);
+  $('aucFed').textContent = fmt(meta.auc_federated);
+  $('aucCen').textContent = fmt(meta.auc_centralized);
+  if (Array.isArray(m.loss_series) && m.loss_series.length) {
+    drawSeries(L, m.loss_series, round, { color: COL.dim, pad: 8 });
+    $('lossNow').textContent = fmt(m.loss_series[Math.min(round, m.loss_series.length - 1)]);
+  }
+}
+
+// ---------- decision log ----------
+
+function renderLog() {
+  const log = $('log');
+  log.replaceChildren();
+  if (round === 0) {
+    log.appendChild(el('li', 'empty', 'Press Play — each round the Coordinator picks a strategy.'));
+    return;
+  }
+  trace.rounds.slice(0, round).forEach((r, i) => {
+    const excluded = r.excluded || [];
+    const li = el('li', [excluded.length ? 'excluded' : '', i < round - 1 ? 'past' : ''].join(' ').trim());
+    const row = el('div', 'row');
+    row.append(el('span', `badge ${r.strategy}`, r.strategy), el('span', 'num', `round ${r.round}`));
+    excluded.forEach((h) => row.appendChild(el('span', 'tag', `excluded ${node(h).label}`)));
+    li.append(row, el('div', 'text', r.decision || ''));
+    li.appendChild(el('div', 'meta', `AUC ${fmt(r.auc_before)} → ${fmt(r.auc_after)} · ε ${fmt(r.eps_total, 1)}`));
+    log.appendChild(li);
+  });
+  log.scrollTop = log.scrollHeight;
+}
+
+// ---------- attack (DESIGN §7.4: two cards, before / after) ----------
+
+function attackCard(label, s) {
+  const card = el('div', 'attack-card');
+  card.appendChild(el('div', 'label', label));
+  card.appendChild(el('span', `stamp ${s.recovered ? 'recovered' : 'failed'}`, s.recovered ? 'RECOVERED' : 'FAILED'));
+  const err = el('div', 'err', 'feature error ');
+  err.appendChild(el('b', '', fmt(s.feature_error, 2)));
   card.appendChild(err);
   return card;
 }
 
 function renderAttack() {
-  attackEl.innerHTML = '';
   const a = trace.attack;
-  attackEl.appendChild(attackCard('Without protection', a.without_privacy.recovered, a.without_privacy.feature_error));
-  attackEl.appendChild(attackCard('With masking + DP', a.with_privacy.recovered, a.with_privacy.feature_error));
+  $('attack').replaceChildren(
+    attackCard('Without protection', a.without_privacy),
+    attackCard('With masking + DP', a.with_privacy),
+  );
 }
 
-/* ---------------- orchestration ---------------- */
+// ---------- playback ----------
+
 function render() {
+  $('roundLabel').textContent = `Round ${round} / ${trace.rounds.length}`;
+  scrub.value = round;
   renderGraph();
-  renderChart();
+  renderCharts();
   renderLog();
-  renderAttack();
-  roundLabel.textContent = 'Round ' + round + ' / ' + trace.rounds.length;
 }
 
-function step(direction) {
-  round = Math.max(0, Math.min(trace.rounds.length, round + direction));
-  scrub.value = round;
+function stop() {
+  if (timer) clearInterval(timer);
+  timer = null;
   phase = 0;
+  playBtn.textContent = 'Play';
+}
+
+function seek(r) {
+  stop();
+  round = Math.max(0, Math.min(trace.rounds.length, r));
   render();
 }
 
 function play() {
-  if (timer) {
-    clearInterval(timer);
-    timer = null;
-    playBtn.textContent = 'Play';
-    return;
-  }
+  if (timer) { stop(); render(); return; }
+  if (round >= trace.rounds.length) round = 0;
+  if (REDUCED) { seek(trace.rounds.length); return; } // DESIGN §8: jump to the final state
   playBtn.textContent = 'Pause';
-  if (round >= trace.rounds.length) step(-trace.rounds.length);
-  if (REDUCED) {
-    round = trace.rounds.length;
-    phase = 1;
-    render();
-    playBtn.textContent = 'Play';
-    return;
-  }
+  phase = 0;
+  const tick = 30;
+  const roundMs = 4 * HOP_MS; // update hop + broadcast hop, each with a short hold
   timer = setInterval(() => {
-    phase += 0.04;
+    phase += tick / roundMs;
     if (phase >= 1) {
       phase = 0;
-      step(1);
-      if (round >= trace.rounds.length) {
-        clearInterval(timer);
-        timer = null;
-        playBtn.textContent = 'Play';
-      }
+      round += 1;
+      if (round >= trace.rounds.length) stop();
     }
     render();
-  }, 40);
+  }, tick);
 }
 
-resetBtn.onclick = () => step(-trace.rounds.length);
+$('reset').onclick = () => seek(0);
 playBtn.onclick = play;
-scrub.oninput = () => { round = +scrub.value; phase = 0; render(); };
+scrub.oninput = () => seek(+scrub.value);
+showMask.onchange = render;
+showDp.onchange = render;
+document.addEventListener('keydown', (e) => {
+  if (!trace || (e.target.tagName === 'INPUT' && e.target.type !== 'checkbox')) return;
+  if (e.key === ' ') { e.preventDefault(); play(); }
+  if (e.key === 'ArrowRight') seek(round + 1);
+  if (e.key === 'ArrowLeft') seek(round - 1);
+});
 
-/* ---------------- load ---------------- */
-fetch(TRACE_URL)
-  .then((r) => r.json())
-  .then((t) => {
-    trace = t;
+async function loadTrace() {
+  const errors = [];
+  for (const url of TRACE_CANDIDATES) {
+    try {
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return { url, data: await res.json() };
+    } catch (e) {
+      errors.push(`${url}: ${e.message}`);
+    }
+  }
+  throw new Error(errors.join('\n'));
+}
+
+// DESIGN §9 loading state
+G.ctx.clearRect(0, 0, G.w, G.h);
+text('loading trace…', G.w / 2, G.h / 2, { size: 13, color: COL.faint, font: FONT_DATA });
+
+loadTrace()
+  .then(({ url, data }) => {
+    trace = data;
     scrub.max = trace.rounds.length;
-    bytesEl.textContent = '0';
+    $('bytes').textContent = '0';
+    $('source').textContent = `replaying ${url.replace(/^\.\.\//, '')}`;
     renderLegend();
+    renderAttack();
     render();
   })
   .catch((e) => {
-    document.body.innerHTML =
-      '<pre style="color:#ff5c5c;padding:2em;font:12px monospace">' +
-      'failed to load ' + TRACE_URL + '\n' + e + '\n\n' +
-      'serve the repo with: python -m http.server 8000\n' +
-      'then open /web/index.html</pre>';
+    const pre = el('pre', 'state error',
+      `failed to load a trace\n${e.message}\n\nserve privatelearn/ with: python -m http.server 8000\nthen open http://localhost:8000/web/index.html  (or ?trace=<path>)`);
+    document.body.replaceChildren(pre);
   });

@@ -93,10 +93,10 @@ All numerals use `tabular-nums`.
 │ topbar: brand · HERO COUNTER · controls(play reset scrub round)        │
 ├──────────────────────────────────────────┬─────────────────────────────┤
 │  stage (panel)                            │  rail                       │
-│  ┌ panel-head: "Federation" · legend ┐    │  ┌ accuracy (AUC)         ┐ │
-│  ├ canvas: node graph                ┤    │  ├ decision log           ┤ │
-│  ├ stage caption                     ┤    │  └ gradient-inversion     ┘ │
-│  └────────────────────────────────────┘    │                             │
+│  ┌ head: "Federation" · toggles · legend┐ │  ┌ accuracy (AUC + loss)  ┐ │
+│  ├ canvas: node graph                  ┤ │  └ gradient-inversion     ┘ │
+│  └ stage caption                       ┘ │                             │
+│  decision log (panel): one card / round  │                             │
 └──────────────────────────────────────────┴─────────────────────────────┘
 ```
 
@@ -104,7 +104,9 @@ All numerals use `tabular-nums`.
   largest text on the page and always green.
 - **Stage** (flex 1): the node graph. Hospitals along the top, coordinator centered below,
   edges fanning in. A legend sits in the panel head.
-- **Rail** (fixed 360px): three stacked panels — accuracy, decision log, attack.
+- **Decision log** (left column, under the stage, flex 1): one card per round in a grid, so all
+  four rounds are readable at once in a still frame. (In the rail it only fit ~1 round at 720p.)
+- **Rail** (fixed 360px): two stacked panels — accuracy, attack.
 
 The whole page fits a 16:9 recording frame at 1280×720 without scrolling.
 
@@ -116,21 +118,28 @@ The whole page fits a 16:9 recording frame at 1280×720 without scrolling.
   tag beneath in `--text-faint` at 10px (the full role list lives in the stage caption).
 - **Coordinator:** a rounded square (not a circle) in `--coord`, label "Coordinator".
 - **Edges:** 1px `--border` lines from each hospital to the coordinator.
-- **Packets:** 5px disc in the source hospital's color, moving along the edge with an
-  ease-in-out curve. Broadcast packets move coordinator → hospital in `--coord` and only
-  to hospitals not in `round.excluded`.
+- **Packets:** in the source hospital's color, moving along the edge with an ease-in-out
+  curve. With the secure-aggregation toggle on, a masked update carries a small lock. A
+  rejected update stops short of the coordinator and turns `--danger` with a ✕.
+  Broadcast packets move coordinator → hospital in `--coord` to every hospital that is
+  online that round — including one whose update was excluded (it still receives the
+  new model); an offline hospital is drawn at 30% opacity and gets nothing.
 - A packet is 7 weights; draw it as a small stack (2–3 short bars) rather than a plain dot,
   so it reads as "numbers", not "a thing".
 
 ### 7.2 Accuracy panel
 - Line chart of `metrics.auc_series` in `--coord`, 2px, with a dot per round.
 - Two dashed reference lines, labelled at the left: **solo** in `--danger`, **centralized** in `--ok`.
-- Y axis labelled AUC (0.6 → 1.0), X axis = rounds. Gridlines every 0.1 in `--border`.
-- Legend line under the chart: solo / federated / centralized in their colors.
+- Y axis labelled AUC (0.6 → 1.0; the floor drops in 0.1 steps if the trace starts lower,
+  e.g. a round-0 model at 0.5), X axis = rounds. Gridlines every 0.1 in `--border`.
+- Legend line under the chart: solo / federated / centralized in their colors, each with
+  its number from `trace.meta`.
+- Under it, a small **training loss** strip of `metrics.loss_series` in `--text-dim`, drawn up
+  to the current round with the current value.
 
 ### 7.3 Decision log
-- One row per completed round: a strategy **badge** (pill) + the round number + the `decision`
-  string in `--text-dim` at 13px.
+- One card per completed round: a strategy **badge** (pill) + the round number + the
+  `decision` string in `--text-dim` at 13px, and `AUC before → after · ε total` in monospace.
 - Badge colors: `fedavg` = `--coord`, `fedprox` = `--hosp-a`, `trimmed_mean` = `--hosp-c`.
 - Rows where `round.excluded` is non-empty get a left border in `--danger` and a small
   "excluded h2" tag.
@@ -142,11 +151,20 @@ The whole page fits a 16:9 recording frame at 1280×720 without scrolling.
 - Bottom card "With masking + DP": if `not recovered` → green stamp **FAILED** + the error.
 - Caption: "same attack, same sample — only the privacy layer changed."
 
-### 7.5 Buttons & controls
+### 7.5 Privacy toggles
+- Two chips in the stage head: **secure aggregation** and **differential privacy** (both on).
+- Secure aggregation on: masked packets show a lock; the coordinator caption reads
+  "sees only the masked sum Σ". DP on: each hospital shows its ε for the round and the
+  coordinator shows cumulative ε spent. They change the overlay only, never the numbers.
+
+### 7.6 Buttons & controls
 - Primary (`Play`/`Pause`): filled `--coord` with dark text.
 - Ghost (`Reset`): transparent, `--border` hairline.
 - Scrubber: thin track `--border`, thumb `--coord`.
 - Round label: `Round 2 / 4` in `--text-dim`, tabular.
+- Keyboard: Space plays/pauses, ←/→ step one round. Scrubbing stops playback.
+- Trace source: `../trace.json` (the real run), falling back to `../data/sample_trace.json`;
+  `?trace=<path>` overrides. The file being replayed is named under the stage caption.
 
 ## 8. Motion
 
@@ -165,7 +183,8 @@ The whole page fits a 16:9 recording frame at 1280×720 without scrolling.
 
 ## 10. Verification
 
-The author cannot see a browser. After any change, **Person C must**:
+Verified in a browser at 1280×720 (no scroll, every panel readable) and at 375px (stacks,
+no horizontal scroll). After any change, **Person C must**:
 1. Open `http://localhost:8000/web/index.html` and confirm the three-zone layout at 1280×720.
 2. Confirm the hero counter stays green `0` for the whole replay.
 3. Confirm the attack panel shows red RECOVERED then green FAILED.

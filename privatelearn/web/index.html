@@ -30,31 +30,44 @@
     </header>
 
     <main class="layout">
-      <section class="stage panel">
-        <div class="panel-head">
-          <h2>Federation</h2>
-          <div class="legend" id="legend"></div>
-        </div>
-        <canvas id="graph" width="960" height="420"></canvas>
-        <p class="stage-caption">
-          Each hospital runs 4 agents — Schema · Planner · Trainer · Challenger — and sends only a
-          7-number weight update. No patient row ever crosses these lines.
-        </p>
-      </section>
+      <div class="left">
+        <section class="stage panel">
+          <div class="panel-head">
+            <h2>Federation</h2>
+            <div class="toggles" role="group" aria-label="privacy overlays">
+              <label class="chip"><input type="checkbox" id="showMask" checked /> secure aggregation</label>
+              <label class="chip"><input type="checkbox" id="showDp" checked /> differential privacy</label>
+            </div>
+            <div class="legend" id="legend"></div>
+          </div>
+          <canvas id="graph" width="960" height="400"></canvas>
+          <p class="stage-caption">
+            Each hospital runs 4 agents — Schema · Planner · Trainer · Challenger — and sends only a
+            7-number weight update. No patient row ever crosses these lines.
+            <span id="source" class="source"></span>
+          </p>
+        </section>
+
+        <section class="panel grow">
+          <div class="panel-head"><h2>Decision log</h2><span class="metric-hint">why the Coordinator chose each strategy</span></div>
+          <ul id="log" class="log"></ul>
+        </section>
+      </div>
 
       <aside class="rail">
         <section class="panel">
           <div class="panel-head">
             <h2>Accuracy</h2>
-            <span class="metric-hint">AUC</span>
+            <span class="metric"><span class="metric-hint">AUC</span> <b id="aucNow">—</b></span>
           </div>
-          <canvas id="chart" width="360" height="180"></canvas>
-          <div class="chart-legend" id="chartLegend"></div>
-        </section>
-
-        <section class="panel grow">
-          <div class="panel-head"><h2>Decision log</h2></div>
-          <ul id="log" class="log"></ul>
+          <canvas id="chart" width="336" height="190"></canvas>
+          <div class="chart-legend">
+            <span><i class="sw solo"></i>solo <b id="aucSolo"></b></span>
+            <span><i class="sw fed"></i>federated <b id="aucFed"></b></span>
+            <span><i class="sw cen"></i>centralized <b id="aucCen"></b></span>
+          </div>
+          <div class="loss-head"><span>training loss</span><b id="lossNow">—</b></div>
+          <canvas id="lossChart" width="336" height="44"></canvas>
         </section>
 
         <section class="panel">
