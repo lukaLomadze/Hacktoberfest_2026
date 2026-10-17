@@ -46,6 +46,11 @@ from model import logistic
 CANONICAL = ["pregnancies", "glucose", "blood_pressure", "bmi", "insulin", "age"]
 CANONICAL_UNITS = {"pregnancies": "count", "glucose": "mg/dL", "blood_pressure": "mmHg",
                    "bmi": "kg/m^2", "insulin": "uU/mL", "age": "years"}
+# --- OFFLINE FALLBACK ONLY ---------------------------------------------------
+# These name tables exist so the deterministic RuleDecider can run with no model
+# (tests, CI, an offline demo). The LLM path never reads them: it maps columns to
+# the canonical schema from the local profile. Do not add data here that an agent
+# should be deciding — see docs/AGENT-DECISIONS.md.
 LABEL_ALIASES = {"outcome", "label", "diabetic", "diabetes"}
 
 # Unit factors (CONTRACTS.md §4): canonical = local × factor.

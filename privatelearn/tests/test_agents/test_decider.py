@@ -86,15 +86,16 @@ class TestGuards(unittest.TestCase):
         d._ask = lambda system, user: reply  # type: ignore[method-assign]
         return d
 
-    def test_too_small_lr_falls_back(self):
-        # observed in a real run: "conservative" lr 0.01 left the model near-random
+    def test_low_lr_is_accepted(self):
+        # no domain bounds: the agent decides; the trace records what it chose
         d = self._decider({"epochs": 3, "lr": 0.01, "mu": 0.0, "reasoning": "conservative"})
         out = d.plan({}, lambda: {"epochs": 4, "lr": 0.1, "mu": 0.0, "why": "default"})
-        self.assertEqual(out["made_by"], "rule")
-        self.assertEqual((out["epochs"], out["lr"]), (4, 0.1))
+        self.assertEqual(out["made_by"], "llm")
+        self.assertEqual((out["epochs"], out["lr"]), (3, 0.01))
 
-    def test_too_few_epochs_falls_back(self):
-        d = self._decider({"epochs": 1, "lr": 0.1, "mu": 0.0, "reasoning": "fast"})
+    def test_nonpositive_hyperparameters_fall_back(self):
+        # only structural sanity is enforced, never a domain range
+        d = self._decider({"epochs": 0, "lr": 0.1, "mu": 0.0, "reasoning": "bad"})
         out = d.plan({}, lambda: {"epochs": 4, "lr": 0.1, "mu": 0.0, "why": "default"})
         self.assertEqual(out["made_by"], "rule")
 
