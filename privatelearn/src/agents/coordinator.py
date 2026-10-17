@@ -209,6 +209,7 @@ class CoordinatorAgent(Agent):
                     or (h in r["participants"] and h not in updates)]
         return {"round": r["round"], "strategy": r["strategy"], "eps_total": broadcast["eps_total"],
                 "auc_before": r["auc_before"], "auc_after": broadcast["auc"], "decision": r["decision"],
+                "probe_losses": {h: float(p["loss"]) for h, p in r["probes"].items()},
                 "applied": applied, "excluded": excluded, "updates": rows, "broadcast": broadcast}
 
     # ---------------------------------------------------------------- bus entry point

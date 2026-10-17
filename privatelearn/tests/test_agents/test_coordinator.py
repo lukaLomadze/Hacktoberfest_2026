@@ -140,6 +140,12 @@ class TestRounds(unittest.TestCase):
 
 
 class TestDecisions(unittest.TestCase):
+    def test_history_records_the_clear_text_losses_behind_each_decision(self):
+        coord, _, _ = run(faults={"h2": {2: "offline"}})
+        self.assertEqual(set(coord.history[0]["probe_losses"]), {"h0", "h1", "h2"})
+        self.assertEqual(set(coord.history[1]["probe_losses"]), {"h0", "h1"})
+        self.assertAlmostEqual(coord.history[0]["probe_losses"]["h0"], np.log(2), places=12)
+
     def test_offline_hospital_excluded_and_weights_renormalised(self):
         coord, hs, _ = run(faults={"h2": {2: "offline"}})
         r2 = coord.history[1]
