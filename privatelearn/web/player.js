@@ -373,6 +373,7 @@ function renderLog() {
     const row = el('div', 'row');
     row.append(el('span', `badge ${r.strategy}`, r.strategy), el('span', 'num', `round ${r.round}`),
                el('span', 'tag coord', 'coordinator'));
+    if (r.decided_by === 'llm') row.appendChild(el('span', 'tag llm', 'llm'));
     excluded.forEach((h) => row.appendChild(el('span', 'tag', `excluded ${node(h).label}`)));
     li.append(row, el('div', 'text', r.decision || ''));
     li.appendChild(el('div', 'meta', `AUC ${fmt(r.auc_before)} → ${fmt(r.auc_after)} · ε ${fmt(r.eps_total, 1)}`));
