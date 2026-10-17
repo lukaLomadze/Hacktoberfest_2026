@@ -112,6 +112,8 @@ input[type="range"] { width: 160px; accent-color: var(--coord); }
 .stage { display: flex; flex-direction: column; flex: none; }
 #graph { width: 100%; height: auto; max-height: 46vh; object-fit: contain; display: block; border-radius: 8px; background: var(--panel); }
 .stage-caption { margin-top: 8px; font-size: 13px; color: var(--text-dim); }
+#ticker { display: block; min-height: 2.6em; }
+#ticker b { color: var(--text); font-weight: 600; }
 .source { display: block; font: 12px var(--font-data); color: var(--text-faint); }
 
 .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-left: auto; font-size: 12px; color: var(--text-dim); }
@@ -176,6 +178,8 @@ input[type="range"] { width: 160px; accent-color: var(--coord); }
   border-radius: 999px;
   padding: 0 8px;
 }
+.log .tag.coord { color: var(--coord); border-color: var(--coord); }
+.log .agents { font: 11px var(--font-data); color: var(--text-faint); margin-top: 4px; line-height: 1.4; }
 .log .empty { grid-column: 1 / -1; border: 0; background: none; color: var(--text-faint); padding-left: 0; }
 
 .badge {

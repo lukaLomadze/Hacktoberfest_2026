@@ -17,6 +17,22 @@ def without_runtime(t):
     return json.loads(json.dumps(t))
 
 
+def assert_same_trace(test, a, b, tol=1e-9, path="trace"):
+    """Equal structure and strings; floats equal within tol (numpy builds differ in the last bits)."""
+    if isinstance(a, dict):
+        test.assertEqual(set(a), set(b), path)
+        for k in a:
+            assert_same_trace(test, a[k], b[k], tol, f"{path}.{k}")
+    elif isinstance(a, list):
+        test.assertEqual(len(a), len(b), path)
+        for i, (x, y) in enumerate(zip(a, b)):
+            assert_same_trace(test, x, y, tol, f"{path}[{i}]")
+    elif isinstance(a, float) or isinstance(b, float):
+        test.assertAlmostEqual(a, b, delta=tol, msg=path)
+    else:
+        test.assertEqual(a, b, path)
+
+
 class TestEndToEnd(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -97,7 +113,7 @@ class TestEndToEnd(unittest.TestCase):
         provider = saved.get("meta", {}).get("decision_maker", {}).get("provider", "rule")
         if provider != "rule":
             self.skipTest(f"committed trace was generated with {provider}; LLM choices are not byte-reproducible")
-        self.assertEqual(without_runtime(saved), without_runtime(self.trace))
+        assert_same_trace(self, saved, without_runtime(self.trace))
 
 
 if __name__ == "__main__":

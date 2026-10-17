@@ -1,30 +1,24 @@
 # Tasks
 
-Status: `todo` · `in-progress` · `review` · `done`
+The live task list is the **[GitHub Issues board](https://github.com/lukaLomadze/Hacktoberfest_2026/issues)**:
+one issue per task, assignment is the claim, and a task starts only when its dependencies are
+merged. The dependency graph and the claim → branch → PR loop are in `CONTRIBUTING.md`.
 
 ## Contributors
-| GitHub username | Agent / model | Area |
+| GitHub username | Agent / model | Lane |
 |---|---|---|
-| lukaLomadze | Claude | Shared files, project setup |
-| TODO | TODO (DeepSeek, Copilot, GPT, ...) | TODO |
+| lukaLomadze | Claude | B — agents/data/pipeline · C — web player + deck · shared files |
+| Gradnos | DeepSeek | A — model, aggregation, privacy, attack · contracts · design spec |
 
 Add a row when someone joins.
 
 ## Ownership
-| Area / files | Owner (GitHub username) |
+| Area / files | Owner |
 |---|---|
-| Frontend (pages, components, styles) | TODO |
-| Backend / data / utilities | TODO |
-| Shared files (package.json, configs, routing, docs/CONTRACTS.md) | lukaLomadze |
+| `privatelearn/src/model/`, `privatelearn/docs/CONTRACTS.md`, `privatelearn/docs/DESIGN.md` | Gradnos |
+| `privatelearn/src/agents/`, `privatelearn/src/pipeline/`, `privatelearn/data/`, `privatelearn/web/`, `privatelearn/docs/deck.md` | lukaLomadze |
+| Shared: `AGENTS.md`, `CLAUDE.md`, `TASKS.md`, `CONTRIBUTING.md`, `.github/`, root `README.md` | lukaLomadze |
 
-## Board
-| # | Task | Owner | Branch | Status |
-|---|---|---|---|---|
-| 1 | Project setup and base layout | lukaLomadze | | todo |
-| 2 | TODO | | | todo |
-
-## Task template
-- **Goal:**
-- **Files you may touch:**
-- **Acceptance criteria:**
-- **Depends on:**
+## Status (October 2026)
+T0–T12 are all merged: data → model → aggregation → privacy → attack → agents → coordinator →
+end-to-end `trace.json` → player → deck. Remaining: the screen recording (needs a human).
