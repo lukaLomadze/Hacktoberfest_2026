@@ -10,6 +10,7 @@ sys.path.insert(0, str(ROOT / "src"))
 import numpy as np
 
 from agents.coordinator import CANONICAL, CoordinatorAgent
+from agents.decider import RuleDecider
 from agents.runtime import Agent, MessageBus
 from model import logistic
 from model.aggregation import FEDPROX_MU
@@ -212,6 +213,23 @@ class TestSchemaNegotiation(unittest.TestCase):
         bus.run(max_ticks=10)
         self.assertEqual(coord.features, CANONICAL[:5])
         self.assertEqual(coord.n_weights, 6)
+
+    def test_contract_name_not_aligning_to_stats_falls_back(self):
+        # the LLM picks a semantic name the dataset's statistics are not keyed by; the
+        # coordinator must not crash (KeyError) — it falls back to the deterministic rule.
+        class WeirdDecider(RuleDecider):
+            def contract(self, proposals, fallback):
+                return {"features": ["bp"], "model": "logistic",
+                        "columns": {h: {"bp": {"source": ["x"], "factor": 1.0}} for h in proposals},
+                        "reasoning": "used bp", "made_by": "llm"}
+
+        bus = MessageBus()
+        bus.register(FakeHospital("h0", *DATA[0], columns=CANONICAL))
+        coord = CoordinatorAgent(["h0"], evaluate, [0.0] * 6, [1.0] * 6, rounds=1,
+                                 decider=WeirdDecider())
+        bus.register(coord)
+        bus.run(max_ticks=10)
+        self.assertEqual(coord.features, CANONICAL)
 
 
 if __name__ == "__main__":
