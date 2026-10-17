@@ -23,10 +23,11 @@ jobs:
       - name: Traces match the contracts
         run: |
           python -c "import sys; sys.path.insert(0, 'src'); from shared import schemas, io; schemas.validate_trace(io.load_json('data/sample_trace.json')); schemas.validate_trace(io.load_json('trace.json')); print('traces valid')"
-      - name: Committed data and trace.json are reproducible
+      # trace.json vs a fresh run is compared with a float tolerance in test_run_loop;
+      # the data files are rounded at write time, so they must match byte for byte
+      - name: Committed data is reproducible
         run: |
           python src/pipeline/prep_data.py
-          python src/pipeline/run_loop.py
-          git diff --exit-code -- data trace.json
+          git diff --exit-code -- data
       - name: Player JavaScript parses
         run: node --check web/player.js
