@@ -26,9 +26,9 @@ centralized quality — and we prove the data never moved.
 | Features | 6: age, BMI, glucose, blood_pressure, insulin, pregnancies |
 | Model | logistic regression → **7 weights** |
 | Rounds | 4 |
-| Solo AUC | ≈ 0.84 |
-| Federated AUC | ≈ 0.88 |
-| Centralized (illegal) AUC | ≈ 0.88 |
+| Solo AUC (A / B / C) | 0.840 / 0.838 / 0.763 |
+| Federated AUC (masked + DP) | 0.832 |
+| Centralized (illegal) AUC | 0.836 |
 
 These are **measured** on the real Pima data (age-band split, held-out 20%), not assumed —
 see `privatelearn/docs/CONTRACTS.md` §0. The story is **not** a big accuracy jump: federated
@@ -40,10 +40,10 @@ Pima is too easy for 120-row hospitals to underfit. Testing caught it.)
 
 **0:00–0:15 — Title.** "PrivateLearn — one model, zero shared data."
 
-**0:15–0:50 — The problem.** Three hospital cards, each "120 rows", each plateauing at AUC 0.84.
+**0:15–0:50 — The problem.** Three hospital cards, each "120 rows"; Hospital C (oldest patients) gets 0.76 alone.
 A red arrow tries to connect them → stamped **"sharing illegal"**. A ghost line above reads
-"centralized (illegal) 0.88".
-> *"Train alone and the best any of them gets is 0.84. Pool the data — that's 0.88 — but
+"centralized (illegal) 0.836".
+> *"Train alone and Hospital C gets 0.76. Pool the data — that's 0.84 — but
 > patient data can't legally leave the building. The best model is the one nobody is allowed
 > to build."*
 
@@ -66,8 +66,8 @@ updates dissolves into static. Stamp: **FAIL**.
 > *"Let's prove it. With no protection, it recovers real-looking values. Switch on masking and
 > DP — pure noise. The attack fails exactly where it used to succeed."*
 
-**3:45–4:30 — One identical model.** Solo curves sit at 0.84; the federated line climbs to meet
-0.88, the illegal centralized number. Below, three identical SHA-256 weight hashes appear over the three hospitals.
+**3:45–4:30 — One identical model.** Hospital C alone sits at 0.763; the federated model lands at
+0.832, within 0.004 of the illegal centralized 0.836. Below, three identical SHA-256 weight hashes appear over the three hospitals.
 
 **4:30–5:00 — Honesty + close.**
 > *"These are 360 simulated patient records. The mechanism — agents, secure aggregation,
@@ -77,7 +77,7 @@ updates dissolves into static. Stamp: **FAIL**.
 1. **Moving packets, never rows** — weight bars fly to the Coordinator while a "raw data"
    packet is visibly blocked at each hospital's wall.
 2. **The attack that dissolves** — a crisp reconstruction turns to static the moment masking + DP flip on.
-3. **Three lines, one crossing** — solo (0.84) below, federated and centralized (0.88) meeting at the top.
+3. **Three lines, one crossing** — Hospital C alone (0.763) below, federated (0.832) meeting centralized (0.836) at the top.
 4. **Matching fingerprints** — three identical weight hashes appear simultaneously.
 
 ---
@@ -141,7 +141,7 @@ BMI/Insulin` with column medians; z-score with full-dataset mean/std.
 `seed = 42` → sample 360 rows → sort by `Age` ascending (a feature, never the label — sorting by
 Outcome gives single-class hospitals that cannot train) → contiguous 120-row blocks →
 hospital_0 youngest, hospital_1 middle, hospital_2 oldest. Each hospital keeps both classes but a
-different age distribution. Measured (held-out): solo ≈ 0.84, federated ≈ 0.88, centralized ≈ 0.88.
+different age distribution. Measured (held-out, `trace.json`): solo A/B/C 0.840/0.838/0.763, federated 0.832, centralized 0.836.
 
 Each hospital CSV stores its **local** column names/units; only the Schema agent maps to canonical.
 
@@ -218,10 +218,10 @@ Lanes: **A** model+math · **B** agents+schema · **C** frontend+demo. `⟶` = c
 | **T6** | Agent runtime + message bus (B) | T0 | 3 | `agents/runtime.py` | Base `Agent` with `step(messages)`; messages are §5.3/§5.4 dicts; headless, unit-tested. |
 | **T7** | Hospital agents (B) | T6 | 3 | `agents/hospital.py`, tests | Schema agent maps h0/h1/h2 → canonical (1e-6); Planner schedules; Trainer emits `delta_w+loss+n`; Challenger reports local AUC; local data only. |
 | **T8** ⟶ | Coordinator agent (B) | T6,T3 | 3 | `agents/coordinator.py` | Negotiates one common schema from three Schema agents; sums masked updates; applies §5.4 broadcast; tracks `eps_total` + convergence. |
-| **T9** ⟶ | End-to-end run → `trace.json` (B) | T7,T8,T4 | 2 | `pipeline/run_loop.py`, `trace.json` | Exactly 4 rounds; trace validates; final AUC ≈ 0.88 and within 0.01 of centralized; runs < 60 s; honesty note present. |
+| **T9** ⟶ | End-to-end run → `trace.json` (B) | T7,T8,T4 | 2 | `pipeline/run_loop.py`, `trace.json` | Exactly 4 rounds; trace validates; final AUC within 0.01 of centralized (measured 0.832 vs 0.836); runs < 60 s; honesty note present. |
 | **T10** | Canvas player (C) | T0 | 5 | `web/index.html`, `player.js`, `player.css` | Renders 4 nodes + animated packets from `sample_trace.json`; scrubber seeks with correct state; vanilla JS, no framework. |
 | **T11** | Chart + decision log + privacy toggles (C) | T10 | 3 | extend `web/` | `auc_series`/`loss_series` redraw on scrub; decision log shows strategy + rationale; toggles overlay masking/DP + attack section; reads only `trace.json`. |
-| **T12** | Deck + recorded demo (C) | T9,T11 | 3 | `docs/deck.md`, recording, README | Deck ≤ 10 slides incl. honesty slide; recording shows replay + 0.84/0.88/0.88 + failed attack; README reproduces + replays in one command. |
+| **T12** | Deck + recorded demo (C) | T9,T11 | 3 | `docs/deck.md`, recording, README | Deck ≤ 10 slides incl. honesty slide; recording shows replay + the measured AUCs + failed attack; README reproduces + replays in one command. |
 
 **Critical path (19 h): `T0 → T2 → T3 → T4 → T8 → T9 → T12`.**
 Off-path (`T1,T5,T6,T7,T10,T11`) run in parallel; C builds against `sample_trace.json` until T9
@@ -261,11 +261,11 @@ inversion attack and its failure under masking + DP. Locality removes the worst 
 masking hides individual updates from the Coordinator; DP breaks exact inversion.
 
 **"Why not centralise?"** — Because pooling patient records is illegal in this setting. We
-get the same model (federated ≈ centralized, both ≈ 0.88) without a single row leaving —
+get the same model (federated 0.832 vs centralized 0.836) without a single row leaving —
 nothing is traded away.
 
 **"Did adaptive actually win?"** — We ran all three strategies on the same trace and kept the
-decision log. On this dataset adaptive and FedAvg land within noise (both ≈ 0.88); the honest
+decision log. On this dataset adaptive and FedAvg land within noise; the honest
 claim is the reproducible decision log and robustness to the dropout/poisoning cases, not a big
 accuracy margin. The trace is committed, so it's reproducible, not asserted.
 
@@ -279,7 +279,7 @@ deterministic code; the LLM never touches weights or data.
 
 **Real:** the loop, local logistic regression from scratch, real updates/losses, real FedAvg/
 FedProx/trimmed-mean, real pairwise masking, real DP noise, real attack-and-failure, and the
-measured 0.84/0.88/0.88 comparison.
+measured solo/federated/centralized comparison (0.763–0.840 / 0.832 / 0.836).
 
 **Simulated:** 360 *synthetic* patient records; three synthetic partitions (not live systems);
 the stage demo is a **replay** of a pre-recorded trace, not live networking.
