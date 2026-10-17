@@ -64,8 +64,8 @@ const ease = (t) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2); // 
 
 function pos(id) {
   const i = HOSPITALS.indexOf(id);
-  if (i >= 0) return { x: 160 + i * 320, y: 84 };
-  return { x: 480, y: 262 };
+  if (i >= 0) return { x: 160 + i * 320, y: 78 };
+  return { x: 480, y: 232 };
 }
 
 function node(id) {
@@ -287,12 +287,24 @@ function drawSeries(S, series, upto, { refs = [], color, pad = 30, decimals = 1,
 function renderCharts() {
   const m = trace.metrics;
   const meta = trace.meta;
+  // The red line is the hospital that is worst off alone — the one federation is for.
+  // The best single hospital is still stated, so nothing is hidden.
+  let solo = meta.auc_solo;
+  let soloLabel = 'solo';
+  const byH = meta.auc_solo_by_hospital;
+  if (byH && Object.keys(byH).length) {
+    const [hid, v] = Object.entries(byH).sort((a, b) => a[1] - b[1])[0];
+    solo = v;
+    soloLabel = `${node(hid).label} alone`;
+    $('soloNote').textContent = `best single hospital alone: ${fmt(Math.max(...Object.values(byH)))}`;
+  }
   drawSeries(A, m.auc_series, round, {
     color: COL.coord, step: 0.1, fixedMax: 1.0,
-    refs: [{ v: meta.auc_solo, color: COL.danger }, { v: meta.auc_centralized, color: COL.ok }],
+    refs: [{ v: solo, color: COL.danger }, { v: meta.auc_centralized, color: COL.ok }],
   });
   $('aucNow').textContent = fmt(m.auc_series[Math.min(round, m.auc_series.length - 1)]);
-  $('aucSolo').textContent = fmt(meta.auc_solo);
+  $('soloLabel').textContent = soloLabel;
+  $('aucSolo').textContent = fmt(solo);
   $('aucFed').textContent = fmt(meta.auc_federated);
   $('aucCen').textContent = fmt(meta.auc_centralized);
   if (Array.isArray(m.loss_series) && m.loss_series.length) {
@@ -320,7 +332,6 @@ function renderLog() {
     li.appendChild(el('div', 'meta', `AUC ${fmt(r.auc_before)} → ${fmt(r.auc_after)} · ε ${fmt(r.eps_total, 1)}`));
     log.appendChild(li);
   });
-  log.scrollTop = log.scrollHeight;
 }
 
 // ---------- attack (DESIGN §7.4: two cards, before / after) ----------

@@ -129,7 +129,10 @@ The whole page fits a 16:9 recording frame at 1280×720 without scrolling.
 
 ### 7.2 Accuracy panel
 - Line chart of `metrics.auc_series` in `--coord`, 2px, with a dot per round.
-- Two dashed reference lines, labelled at the left: **solo** in `--danger`, **centralized** in `--ok`.
+- Two dashed reference lines: **solo** in `--danger`, **centralized** in `--ok`. When the trace has
+  `meta.auc_solo_by_hospital`, the solo line is the hospital that is **worst off alone** (labelled
+  e.g. "Hospital C alone") and a note under the legend states the best single hospital's AUC —
+  the line shows who federation is for, the note keeps it honest.
 - Y axis labelled AUC (0.6 → 1.0; the floor drops in 0.1 steps if the trace starts lower,
   e.g. a round-0 model at 0.5), X axis = rounds. Gridlines every 0.1 in `--border`.
 - Legend line under the chart: solo / federated / centralized in their colors, each with

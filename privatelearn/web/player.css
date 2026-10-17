@@ -149,6 +149,7 @@ input[type="range"] { width: 160px; accent-color: var(--coord); }
 .sw.solo { border-color: var(--danger); border-top-style: dashed; }
 .sw.cen { border-color: var(--ok); border-top-style: dashed; }
 
+.chart-note { margin-top: 4px; font: 12px var(--font-data); color: var(--text-faint); }
 .loss-head { display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; color: var(--text-faint); }
 .loss-head b { font: 12px var(--font-data); color: var(--text-dim); }
 

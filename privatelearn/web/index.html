@@ -40,7 +40,7 @@
             </div>
             <div class="legend" id="legend"></div>
           </div>
-          <canvas id="graph" width="960" height="400"></canvas>
+          <canvas id="graph" width="960" height="340"></canvas>
           <p class="stage-caption">
             Each hospital runs 4 agents — Schema · Planner · Trainer · Challenger — and sends only a
             7-number weight update. No patient row ever crosses these lines.
@@ -62,10 +62,11 @@
           </div>
           <canvas id="chart" width="336" height="190"></canvas>
           <div class="chart-legend">
-            <span><i class="sw solo"></i>solo <b id="aucSolo"></b></span>
+            <span><i class="sw solo"></i><span id="soloLabel">solo</span> <b id="aucSolo"></b></span>
             <span><i class="sw fed"></i>federated <b id="aucFed"></b></span>
             <span><i class="sw cen"></i>centralized <b id="aucCen"></b></span>
           </div>
+          <div class="chart-note" id="soloNote"></div>
           <div class="loss-head"><span>training loss</span><b id="lossNow">—</b></div>
           <canvas id="lossChart" width="336" height="44"></canvas>
         </section>
