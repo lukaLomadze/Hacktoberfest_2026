@@ -1,13 +1,18 @@
 """Gradient-inversion attack demo for PrivateLearn.
 
 For logistic regression on a SINGLE sample, the gradient is g = (p − y)·[1; x],
-so the sample is exactly recoverable from the update: x = g[1:] / g[0]. This is
-the "deep leakage from gradients" idea in its simplest, provably-exact form.
+so the sample is exactly recoverable from the update: x = g[1:] / g[0] (any
+scaling, e.g. delta_w = −lr·g or norm clipping, cancels in the ratio). This is the
+"deep leakage from gradients" idea in its simplest, provably exact form.
+
+Honest framing: our hospitals send delta_w after 4 epochs over 120 rows, not a
+one-row gradient. The demo is the WORST CASE — a batch of one — and shows that
+even then masking + DP leave nothing to invert.
 
 The demo runs the same attack twice on the same sample:
-- without_privacy: recover x from the raw update → error ≈ 0 (recovered=True).
-- with_privacy: recover x from a masked + DP-noised update → huge error
-  (recovered=False).
+- without_privacy: invert the raw update → error ≈ 0 (recovered=True).
+- with_privacy: invert the clipped + DP-noised + masked update the coordinator
+  actually sees → error ≫ 1 (recovered=False).
 
 The returned dict matches the `attack` field of trace.json exactly.
 """
@@ -17,7 +22,9 @@ from __future__ import annotations
 import numpy as np
 
 from model.logistic import gradient
-from model.privacy import add_dp_noise, clip_norm, mask_update
+from model.privacy import DP_DELTA, make_pair_secrets, prepare_update
+
+RECOVERY_THRESHOLD = 0.2  # relative feature error below which a row counts as recovered
 
 
 def reconstruct_single_sample(delta_w):
@@ -35,23 +42,29 @@ def relative_error(x_true, x_rec):
     return float(np.linalg.norm(np.asarray(x_rec, dtype=float) - x) / (np.linalg.norm(x) + 1e-9))
 
 
-def run_attack(w, x, y, client_id=0, other_ids=(0, 1, 2), C=1.0, sigma=0.1, base_seed=42):
-    """Run gradient inversion on a single (x, y) sample, with and without privacy."""
+def run_attack(w, x, y, client_id=0, participants=(0, 1, 2), round_=1, secrets=None,
+               C=1.0, sigma=1.0, seed=42, dp_delta=DP_DELTA):
+    """Run gradient inversion on a single (x, y) sample, with and without privacy.
+
+    `secrets` are the hospitals' pair secrets (generated from `seed` if omitted);
+    the attacker never has them, only the masked vector.
+    """
     w = np.asarray(w, dtype=float)
     x_true = np.asarray(x, dtype=float)
+    if secrets is None:
+        secrets = make_pair_secrets(participants, seed)
 
     # the update a hospital would send (true gradient, before any protection)
     delta = gradient(w, x_true.reshape(1, -1), np.array([float(y)]))
 
-    rec_plain = reconstruct_single_sample(delta)
-    err_plain = relative_error(x_true, rec_plain)
+    err_plain = relative_error(x_true, reconstruct_single_sample(delta))
 
-    protected = mask_update(add_dp_noise(clip_norm(delta, C), sigma), client_id, other_ids, base_seed)
-    rec_protected = reconstruct_single_sample(protected)
-    err_protected = relative_error(x_true, rec_protected)
+    protected, _ = prepare_update(delta, client_id, participants, round_, secrets,
+                                  noise_seed=seed, C=C, sigma=sigma, dp_delta=dp_delta)
+    err_protected = relative_error(x_true, reconstruct_single_sample(protected))
 
-    return {
-        "target": f"h{client_id}",
-        "without_privacy": {"recovered": bool(err_plain < 0.2), "feature_error": round(err_plain, 4)},
-        "with_privacy": {"recovered": bool(err_protected < 0.2), "feature_error": round(err_protected, 4)},
-    }
+    def result(err):
+        return {"recovered": bool(err < RECOVERY_THRESHOLD),
+                "feature_error": round(err, 4) if np.isfinite(err) else 1e9}
+
+    return {"target": f"h{client_id}", "without_privacy": result(err_plain), "with_privacy": result(err_protected)}
