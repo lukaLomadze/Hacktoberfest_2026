@@ -40,6 +40,7 @@ class FakeHospital(Agent):
         self.dp_eps = dp_eps
         self.trained = []
         self.broadcasts = []
+        self.roster = None
 
     def step(self, messages):
         out = []
@@ -48,6 +49,8 @@ class FakeHospital(Agent):
             if m.kind == "schema_request":
                 out.append(self.send(m.sender, "schema", {"hospital": self.id, "label": "outcome", "columns": [
                     {"semantic": c, "source": [c], "unit": "x", "factor": 1.0} for c in self.columns]}))
+            elif m.kind == "schema_agreed":
+                self.roster = p["participants"]
             elif m.kind == "probe":
                 if self.faults.get(p["round"]) == "offline":
                     continue
@@ -66,9 +69,9 @@ class FakeHospital(Agent):
                     continue
                 w = np.array(p["w"])
                 delta = p["weights"][self.id] * (logistic.train(w, self.X, self.y) - w)
-                idx = int(self.id[1])
+                idx = self.roster.index(self.id)  # mask index = position in the sorted list
                 if self.masked:
-                    parts = sorted(int(h[1]) for h in p["participants"])
+                    parts = sorted(self.roster.index(h) for h in p["participants"])
                     delta = mask_update(delta, idx, parts, p["round"], SECRETS)
                 out.append(self.send(m.sender, "update", {
                     "v": "1.0", "round": p["round"], "hospital": self.id,
@@ -90,13 +93,13 @@ def evaluate(w, features=None):
     return logistic.auc(YT, logistic.predict_proba(w, XT))
 
 
-def run(masked=False, faults=None, rounds=4, dp_eps=0.0, **kw):
+def run(masked=False, faults=None, rounds=4, dp_eps=0.0, ids=("h0", "h1", "h2"), **kw):
     faults = faults or {}
     bus = MessageBus()
-    hs = [bus.register(FakeHospital(f"h{i}", *DATA[i], masked=masked, faults=faults.get(f"h{i}"),
-                                    dp_eps=dp_eps)) for i in range(3)]
-    coord = bus.register(CoordinatorAgent(["h0", "h1", "h2"], evaluate, [0.0] * 6, [1.0] * 6,
-                                          rounds=rounds, names={"h0": "A", "h1": "B", "h2": "C"},
+    hs = [bus.register(FakeHospital(h, *DATA[i], masked=masked, faults=faults.get(h),
+                                    dp_eps=dp_eps)) for i, h in enumerate(ids)]
+    coord = bus.register(CoordinatorAgent(list(ids), evaluate, [0.0] * 6, [1.0] * 6,
+                                          rounds=rounds, names=dict(zip(ids, "ABC")),
                                           feature_names=FEATURES, **kw))
     bus.run(max_ticks=60)
     return coord, hs, bus
@@ -143,6 +146,37 @@ class TestRounds(unittest.TestCase):
             schemas.validate_broadcast(r["broadcast"])
             for u in r["updates"]:
                 schemas.validate_trace_update(u)
+
+
+class TestParticipantIds(unittest.TestCase):
+    """Ids are opaque strings; mask indices are positions in the sorted participant list."""
+
+    IDS = ("node_9f3a", "acme-clinic", "Z.lab")  # sorted: Z.lab, acme-clinic, node_9f3a
+
+    def test_schema_agreed_carries_the_sorted_participant_list(self):
+        _, _, bus = run(rounds=1, ids=self.IDS)
+        agreed = [m.payload for m in bus.log if m.kind == "schema_agreed"]
+        self.assertEqual(agreed[0]["participants"], sorted(self.IDS))
+
+    def test_any_ids_masks_cancel_with_a_middle_participant_offline(self):
+        # acme-clinic sits at index 1 of the sorted list; with it offline the round's indices
+        # are [0, 2], not [0, 1], and the masks still cancel to the unmasked result.
+        faults = {"acme-clinic": {2: "offline"}}
+        plain, _, _ = run(tau=10.0, ids=self.IDS, faults=faults)
+        masked, _, bus = run(masked=True, tau=10.0, ids=self.IDS, faults=faults)
+        np.testing.assert_allclose(masked.w, plain.w, atol=1e-9)
+        self.assertEqual(masked.history[1]["excluded"], ["acme-clinic"])
+        for m in bus.log:
+            if m.kind == "update":
+                schemas.validate_update(m.payload)
+        for r in masked.history:
+            for u in r["updates"]:
+                schemas.validate_trace_update(u, set(self.IDS))
+
+    def test_renaming_the_participants_changes_nothing(self):
+        a, _, _ = run(masked=True, tau=10.0)
+        b, _, _ = run(masked=True, tau=10.0, ids=("p1", "p2", "p3"))  # same sorted order
+        np.testing.assert_allclose(a.w, b.w, atol=1e-12)
 
 
 class TestDecisions(unittest.TestCase):

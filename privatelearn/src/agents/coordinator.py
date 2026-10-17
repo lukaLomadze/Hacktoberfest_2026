@@ -145,7 +145,10 @@ class CoordinatorAgent(Agent):
                               "per_hospital": {h: {f: {"source": self.columns[h][f]["source"]}
                                                    for f in self.features}
                                                for h in self.hospitals}}
+        # the full, sorted participant list: each participant's position in it is its mask
+        # index, so ids can be any string and indices stay fixed when someone drops out
         return {"features": self.features, "model": self.model, "columns": self.columns,
+                "participants": sorted(self.hospitals),
                 "feature_mean": self.feature_mean, "feature_std": self.feature_std}
 
     def _start_round(self):

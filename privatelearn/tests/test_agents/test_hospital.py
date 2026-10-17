@@ -25,9 +25,9 @@ MANIFEST = json.loads((DATA / "hospitals" / "manifest.json").read_text(encoding=
 MEAN, STD = MANIFEST["feature_mean"], MANIFEST["feature_std"]
 
 
-def hospital(h, **kw):
+def hospital(h, hid=None, **kw):
     kw.setdefault("decider", PimaDecider())
-    return HospitalAgent.from_csv(f"h{h}", DATA / "hospitals" / f"hospital_{h}.csv",
+    return HospitalAgent.from_csv(hid or f"h{h}", DATA / "hospitals" / f"hospital_{h}.csv",
                                   feature_mean=MEAN, feature_std=STD, **kw)
 
 
@@ -188,6 +188,36 @@ class TestHospitalRound(unittest.TestCase):
         h.step([msg("train", train_msg(1, np.zeros(7)))])
         self.assertEqual((seen[0]["epochs"], seen[0]["lr"]), (10, 0.05))
 
+    def test_mask_index_is_position_in_sorted_participant_list(self):
+        seen = []
+
+        def spy(delta, idx, participants, round_, plan=None):
+            seen.append((idx, participants))
+            return no_protection(delta, idx, participants, round_)
+
+        roster = ["node_9f3a", "acme", "b-17"]  # sorted: acme, b-17, node_9f3a
+        h = hospital(0, hid="node_9f3a", protector=spy)
+        h.step([msg("schema_agreed", {"features": FEATURES, "participants": roster}, to=h.id)])
+        self.assertEqual((h.roster, h.index), (sorted(roster), 2))
+        (out,) = h.step([msg("train", train_msg(1, np.zeros(7), participants=("node_9f3a", "acme")),
+                             to=h.id)])
+        self.assertEqual(seen, [(2, [0, 2])])  # stable indices: b-17 (index 1) is absent
+        self.assertEqual(out.payload["hospital"], "node_9f3a")
+        sanitize("update", out.payload)  # an opaque id passes the contract validator
+
+    def test_train_with_a_participant_outside_the_roster_names_it(self):
+        h = hospital(0, hid="node_1")
+        h.step([msg("schema_agreed", {"features": FEATURES, "participants": ["node_1", "node_2"]},
+                    to=h.id)])
+        with self.assertRaisesRegex(ValueError, "'node_9' is not a participant"):
+            h.step([msg("train", train_msg(1, np.zeros(7), participants=("node_1", "node_9")),
+                        to=h.id)])
+
+    def test_rejects_a_participant_list_without_itself(self):
+        h = hospital(0, hid="node_1")
+        with self.assertRaises(ValueError):
+            h.step([msg("schema_agreed", {"features": FEATURES, "participants": ["node_2"]}, to=h.id)])
+
     def test_requires_agreed_schema_and_known_kinds(self):
         h = hospital(0)
         with self.assertRaises(RuntimeError):
@@ -198,6 +228,41 @@ class TestHospitalRound(unittest.TestCase):
 
 class TestMaskedRoundOnTheBus(unittest.TestCase):
     """Three hospital agents + a scripted coordinator on the real bus, with masking."""
+
+    def test_opaque_ids_with_a_middle_participant_absent(self):
+        secrets = make_pair_secrets([0, 1, 2], seed="test-handshake")
+        ids = ["clinic-a", "clinic-b", "clinic-c"]
+
+        def protector(delta, idx, participants, round_, plan=None):
+            own = {k: v for k, v in secrets.items() if idx in k}  # each holds only its own pairs
+            return mask_update(delta, idx, participants, round_, own), {
+                "masked": True, "mask_seed": f"r{round_}", "dp_eps": 0.0,
+                "dp_mechanism": "gaussian", "dp_sigma": 0.0}
+
+        class Coord(Agent):
+            def __init__(self):
+                super().__init__("coord")
+                self.tick = 0
+                self.updates = []
+
+            def step(self, messages):
+                self.updates += [m.payload for m in messages if m.kind == "update"]
+                self.tick += 1
+                if self.tick == 1:
+                    return [self.send("*", "schema_agreed", {"features": FEATURES, "participants": ids})]
+                if self.tick == 2:
+                    return [self.send("*", "train", train_msg(1, [0.0] * 7,
+                                                              participants=("clinic-a", "clinic-c")))]
+                return []
+
+        bus = MessageBus()
+        hs = [bus.register(hospital(i, hid=ids[i], protector=protector)) for i in range(3)]
+        coord = bus.register(Coord())
+        bus.run(max_ticks=10)
+        self.assertEqual(sorted(u["hospital"] for u in coord.updates), ["clinic-a", "clinic-c"])
+        total = unmask_sum([u["delta_w"] for u in coord.updates])
+        fedavg = np.mean([logistic.train(np.zeros(7), h._X, h._labels) for h in (hs[0], hs[2])], axis=0)
+        np.testing.assert_allclose(total, fedavg, atol=1e-9)
 
     def test_masked_updates_sum_to_fedavg_step(self):
         secrets = make_pair_secrets([0, 1, 2], seed="test-handshake")
