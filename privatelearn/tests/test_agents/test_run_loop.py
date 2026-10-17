@@ -34,6 +34,12 @@ class TestEndToEnd(unittest.TestCase):
         self.assertLessEqual(abs(m["auc_federated"] - m["auc_centralized"]), 0.01)
         self.assertEqual(m["auc_federated"], self.trace["metrics"]["auc_series"][-1])
 
+    def test_privacy_cost_is_measured_and_small(self):
+        m = self.trace["meta"]
+        self.assertLess(abs(m["auc_federated"] - m["auc_federated_no_privacy"]), 0.01)
+        plain = run_loop.run(private=False)
+        self.assertFalse(any(u["masked"] for r in plain["rounds"] for u in r["updates"]))
+
     def test_weakest_hospital_gains_from_federation(self):
         m = self.trace["meta"]
         self.assertGreater(m["auc_federated"], min(m["auc_solo_by_hospital"].values()) + 0.03)

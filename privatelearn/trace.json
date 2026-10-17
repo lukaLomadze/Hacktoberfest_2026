@@ -22,6 +22,7 @@
     },
     "auc_federated": 0.832,
     "auc_centralized": 0.8358,
+    "auc_federated_no_privacy": 0.8305,
     "eps_per_round": 1.5,
     "dp_delta": 1e-05,
     "dp_sensitivity": 0.006666666666666667,

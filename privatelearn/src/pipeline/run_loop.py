@@ -37,7 +37,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
 from agents.coordinator import CANONICAL, CoordinatorAgent  # noqa: E402
-from agents.hospital import HospitalAgent  # noqa: E402
+from agents.hospital import HospitalAgent, no_protection  # noqa: E402
 from agents.runtime import MessageBus  # noqa: E402
 from model import logistic  # noqa: E402
 from model.attack import run_attack  # noqa: E402
@@ -86,7 +86,9 @@ def model_hash(w) -> str:
     return hashlib.sha256(json.dumps([round(float(v), 12) for v in w]).encode()).hexdigest()
 
 
-def run(seed: int = SEED, out_path=None) -> dict:
+def run(seed: int = SEED, out_path=None, private: bool = True) -> dict:
+    """The full run. private=False replays the same scenario with masking and DP off
+    (plain training, unprotected updates) to measure what privacy costs."""
     t0 = time.perf_counter()
     manifest = io.load_json(ROOT / "data" / "hospitals" / "manifest.json")
     if manifest["canonical_features"] != CANONICAL:
@@ -124,7 +126,8 @@ def run(seed: int = SEED, out_path=None) -> dict:
 
     hospitals = [
         HospitalAgent.from_csv(h, ROOT / "data" / "hospitals" / f"hospital_{i}.csv",
-                               protector=protector_for(i), train_fn=dp_train, faults=FAULTS.get(h))
+                               protector=protector_for(i) if private else no_protection,
+                               train_fn=dp_train if private else logistic.train, faults=FAULTS.get(h))
         for i, h in enumerate(HOSPITALS)
     ]
     names = {nd["id"]: nd["label"] for nd in NODES}
@@ -172,6 +175,9 @@ def run(seed: int = SEED, out_path=None) -> dict:
             "auc_solo_by_hospital": solo,
             "auc_federated": auc_fed,
             "auc_centralized": auc_central,
+            # same scenario with masking + DP switched off: the measured cost of privacy
+            "auc_federated_no_privacy": (run(seed, None, private=False)["meta"]["auc_federated"]
+                                         if private else auc_fed),
             "eps_per_round": EPS_PER_ROUND, "dp_delta": DP_DELTA,
             "dp_sensitivity": sensitivity, "dp_sigma": sigma, "example_clip": EXAMPLE_CLIP,
             "local_epochs": EPOCHS, "lr": LR, "seed": seed,
