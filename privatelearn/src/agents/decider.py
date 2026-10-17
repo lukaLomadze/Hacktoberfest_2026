@@ -60,19 +60,17 @@ SYSTEM_SCHEMA = (
     "You receive local_column_profile: min/p05/median/mean/p95/max per column. Use that "
     "distribution to decide the unit: compare its magnitude with what the canonical unit "
     "implies for this measurement, using your own knowledge of plausible physical values. "
-    "When the local values are in a different unit, convert with the standard factor "
-    "(for example mmol/L to mg/dL for glucose, kPa to mmHg for blood pressure, pmol/L to "
-    "uU/mL for insulin, months to years for age). BMI kg/m^2 may be derived from weight_kg "
-    "and height_m (factor null, source [weight, height]). Anything already in the canonical "
-    "unit gets factor 1.0."
+    "When the local values are in a different unit, convert with the standard factor for "
+    "that unit. BMI kg/m^2 may be derived from weight_kg and height_m (factor null, source "
+    "[weight, height]). Anything already in the canonical unit gets factor 1.0."
 )
 SYSTEM_PLAN = (
     "You are the Planner agent of one hospital in a federated learning run. You see the round, "
-    "the aggregation strategy and the previous mean loss. Local training must actually move the "
-    "model: use epochs 3-10 and lr 0.05-0.5. The validated default is 4 epochs at lr 0.1; only "
-    "deviate with a reason. Reply with a single JSON object with keys "
-    '"epochs" (integer), "lr" (float), "mu" (float >= 0, used only for fedprox) and "reasoning" '
-    "(one sentence)."
+    "the aggregation strategy and the previous mean loss. Choose local training hyperparameters "
+    "that actually move the model; the validated default is 4 epochs at lr 0.1, so deviate only "
+    "with a reason. Reply with a single JSON object with keys "
+    '"epochs" (positive integer), "lr" (positive float), "mu" (float >= 0, used only for fedprox) '
+    'and "reasoning" (one sentence).'
 )
 
 
@@ -219,13 +217,12 @@ class LLMDecider:
             epochs = int(out["epochs"])
             lr = float(out["lr"])
             mu = float(out.get("mu", 0.0) or 0.0)
-            # Guardrails: a "conservative" lr below 0.05 leaves the model near-random after
-            # four rounds (observed: probe loss stuck at 0.69, federated AUC 0.68). Reject it
-            # and fall back to the validated default rather than ship a broken run.
-            if not 3 <= epochs <= 10:
-                raise ValueError(f"epochs {epochs} outside the converging range 3-10")
-            if not 0.05 <= lr <= 0.5:
-                raise ValueError(f"lr {lr} outside the converging range 0.05-0.5")
+            # Only structural sanity is enforced. No domain bounds: the agent decides the
+            # hyperparameters and the trace records them; the machinery does not overrule it.
+            if epochs <= 0:
+                raise ValueError(f"epochs {epochs} must be positive")
+            if lr <= 0:
+                raise ValueError(f"lr {lr} must be positive")
             if mu < 0:
                 raise ValueError(f"mu {mu} negative")
             self.calls += 1
