@@ -3,14 +3,16 @@
 from __future__ import annotations
 
 import os
+import pathlib
 import shutil
 import tempfile
 import threading
 import unittest
+from unittest import mock
 
 from hubtest import ADMIN_EMAIL, TBILISI, err, login, make_client
 
-from hub.server import enums
+from hub.server import enums, paths
 from hub.server.app import create_app
 from hub.server.context import Settings
 from hub.server.db import Database
@@ -42,6 +44,30 @@ class ErrorShapeTest(unittest.TestCase):
         r = self.c.post("/api/v1/auth/login", json={"email": "not-an-email"})
         e = err(r)
         self.assertEqual((r.status_code, e["code"], e["field"]), (422, "validation_error", "email"))
+
+
+class WebMountTest(unittest.TestCase):
+    """With hub/web present the static mount at / must not swallow API errors."""
+
+    def setUp(self):
+        self.web = tempfile.mkdtemp()
+        with open(os.path.join(self.web, "index.html"), "w", encoding="utf-8") as fh:
+            fh.write("<!doctype html><title>web</title>")
+        self.addCleanup(shutil.rmtree, self.web, True)
+        patcher = mock.patch.object(paths, "WEB", pathlib.Path(self.web))
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        self.c = make_client()
+
+    def test_web_is_served_and_api_errors_keep_their_shape(self):
+        r = self.c.get("/")
+        self.assertEqual((r.status_code, r.text), (200, "<!doctype html><title>web</title>"))
+        r = self.c.get("/api/v1/auth/login")  # the path exists, the method does not
+        self.assertEqual((r.status_code, err(r)["code"]), (405, "method_not_allowed"))
+        for path in ("/api/v1/does-not-exist", "/api", "/api/index.html"):
+            r = self.c.get(path)
+            self.assertEqual((r.status_code, err(r)["code"]), (404, "not_found"), path)
+            self.assertIn("route /api", err(r)["message"])  # ours, not the static files' 404
 
 
 class AuthTest(unittest.TestCase):
