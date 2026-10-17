@@ -15,7 +15,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from starlette.routing import Match, Route
+from starlette.routing import Match, Mount
 
 from . import errors, paths
 from .context import Hub, Settings
@@ -43,7 +43,9 @@ class WebFiles(StaticFiles):
         route_path = path.replace(os.sep, "/")
         if route_path == "api" or route_path.startswith("api/"):
             probe = {"type": "http", "path": "/" + route_path, "method": scope["method"], "root_path": ""}
-            if any(isinstance(r, Route) and r.matches(probe)[0] == Match.PARTIAL
+            # every route but mounts: newer FastAPI keeps each included router as one route
+            # object rather than flattening it into Routes, so filtering on Route finds nothing
+            if any(not isinstance(r, Mount) and r.matches(probe)[0] == Match.PARTIAL
                    for r in scope["app"].router.routes):
                 raise errors.ApiError(405, "method_not_allowed", f"{scope['method']} is not allowed on /{route_path}")
             raise errors.not_found(f"route /{route_path}")
