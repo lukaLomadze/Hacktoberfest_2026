@@ -10,19 +10,26 @@ Version: **1.0**
 
 ## 0. Headline numbers — MEASURED, not assumed
 
-Measured on the real Pima data, age-band split, logistic regression, held-out 20%:
+From the recorded T9 run (`trace.json`, seed 42): real Pima data, age-band split,
+logistic regression, evaluated on the disjoint 154-row holdout (`data/holdout/test.csv`):
 
 | | AUC |
 |---|---|
-| best single hospital alone | ≈ 0.84 |
-| federated (FedAvg, 4 rounds) | ≈ 0.88 |
-| centralized (illegal) | ≈ 0.88 |
+| Hospital A alone (youngest, converged) | 0.840 |
+| Hospital B alone | 0.838 |
+| **Hospital C alone** (oldest) | **0.763** |
+| **federated** — 4 rounds, masking + patient-level DP ε=1.5/round | **0.832** |
+| centralized — all 360 rows pooled (illegal) | 0.836 |
 
-The story is therefore **not** "solo is terrible". It is: federated matches centralized
-quality to within noise, **with zero rows shared** — the win is that the best model becomes
-legal to build. (The earlier plan assumed 0.72 / 0.87 / 0.88; those were fabricated. The real
-dataset is too easy for the "data-starved hospital" premise to bite at 120 rows. T9 re-measures
-these; the trace uses whatever T9 produces.)
+The story is **not** "federation beats everyone". It is:
+1. federated lands within **0.004** of the illegal centralized model, **with zero rows shared**
+   and every update masked and DP-noised;
+2. the hospital that is worst off alone (C, 0.763) gets **+0.07** by joining;
+3. all three hospitals end holding the byte-identical model (same SHA-256).
+
+The original plan's 0.84 / 0.88 / 0.88 (and the earlier 0.72 / 0.87 / 0.88) did not reproduce
+on this split (#21). Regenerate with `python src/pipeline/run_loop.py`; the trace is the source
+of truth and `meta` carries every number above.
 
 ---
 
