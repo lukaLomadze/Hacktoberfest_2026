@@ -90,19 +90,70 @@ def load_local_csv(path):
         return list(reader.fieldnames), rows
 
 
+PLAUSIBLE = {"pregnancies": (0, 20), "glucose": (20, 600), "blood_pressure": (40, 300),
+             "bmi": (10, 80), "insulin": (0, 3000), "age": (0, 120)}
+
+
+def column_profile(columns, rows):
+    """Summary statistics per column, computed on the hospital's own rows.
+
+    A column named "height" could be metres or inches; only the value range can
+    tell. This profile is what the schema agent may send to the model — statistics,
+    never an individual row. (For stricter privacy, make these DP statistics.)
+    """
+    n = len(rows)
+    prof = {}
+    if not n:
+        return prof
+    for c in columns:
+        vals = sorted(float(r[c]) for r in rows)
+
+        def q(p):
+            i = min(n - 1, max(0, int(round(p * (n - 1)))))
+            return round(vals[i], 4)
+
+        prof[c] = {"min": round(vals[0], 4), "p05": q(0.05), "median": q(0.5),
+                   "p95": q(0.95), "max": round(vals[-1], 4)}
+    return prof
+
+
 class SchemaAgent:
     """Maps a hospital's local columns to the canonical schema (names + units)."""
 
-    def __init__(self, columns, decider=None):
+    def __init__(self, columns, decider=None, profile=None):
         self.columns = list(columns)
         self.decider = decider
-        d = decider.schema(self.columns, self._infer) if decider is not None else None
+        self.profile = profile
+        d = decider.schema(self.columns, self._infer, profile) if decider is not None else None
         if d is None:
             self.mapping, self.label = self._infer()
             self.reasoning, self.made_by = "matched the known column aliases", "rule"
         else:
             self.mapping, self.label = d["mapping"], d["label"]
             self.reasoning, self.made_by = d["reasoning"], d["made_by"]
+            # Guardrail: catch a misread unit (height in inches treated as metres, age in
+            # months as years) by checking the mapped medians against plausible ranges.
+            if self.made_by == "llm" and profile and not self._plausible():
+                self.mapping, self.label = self._infer()
+                self.reasoning = ("LLM mapping put a feature outside plausible ranges; "
+                                  "fell back to the alias table")
+                self.made_by = "rule"
+
+    def _plausible(self):
+        for c in CANONICAL:
+            m = self.mapping[c]
+            try:
+                if c == "bmi" and m["factor"] is None:
+                    w, h = m["source"]
+                    med = self.profile[w]["median"] / (self.profile[h]["median"] ** 2)
+                else:
+                    med = self.profile[m["source"][0]]["median"] * (m["factor"] or 1.0)
+            except (KeyError, ZeroDivisionError, TypeError):
+                return False
+            lo, hi = PLAUSIBLE[c]
+            if not (lo <= med <= hi):
+                return False
+        return True
 
     def _infer(self):
         by_norm = {_norm(c): c for c in self.columns}
@@ -208,7 +259,7 @@ class HospitalAgent(Agent):
         super().__init__(hospital_id)
         self.index = int(hospital_id.lstrip("h"))
         self._rows = rows  # local patient rows: never put on the bus
-        self.schema = SchemaAgent(columns, decider)
+        self.schema = SchemaAgent(columns, decider, column_profile(columns, rows))
         self.planner = planner or PlannerAgent(decider=decider)
         self.trainer = TrainerAgent(train_fn)
         self.challenger = ChallengerAgent()

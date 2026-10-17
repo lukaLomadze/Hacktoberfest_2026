@@ -60,7 +60,12 @@ SYSTEM_SCHEMA = (
     "glucose mmol/L x 18.0182 -> mg/dL; blood pressure kPa x 7.50062 -> mmHg; "
     "insulin pmol/L / 6.945 -> uU/mL; age months / 12 -> years. "
     "BMI kg/m^2 may be derived from weight_kg and height_m (factor null, source [weight, height]). "
-    "Anything already in the canonical unit gets factor 1.0."
+    "Anything already in the canonical unit gets factor 1.0. "
+    "You also receive local_column_profile: min/p05/median/p95/max per column, computed on the "
+    "hospital's own rows (statistics only, no patient values). Use those ranges to resolve "
+    "ambiguous units: e.g. height 1.5-1.95 is metres but 58-77 is inches; age 18-90 is years "
+    "but 216-1080 is months; glucose 60-200 is mg/dL but 3.3-11 is mmol/L; blood pressure "
+    "90-180 is mmHg but 12-24 is kPa."
 )
 SYSTEM_PLAN = (
     "You are the Planner agent of one hospital in a federated learning run. You see the round, "
@@ -77,7 +82,7 @@ class RuleDecider:
 
     made_by = "rule"
 
-    def schema(self, columns, fallback):
+    def schema(self, columns, fallback, profile=None):
         mapping, label = fallback()
         return {"mapping": mapping, "label": label,
                 "reasoning": "matched the known column aliases", "made_by": "rule"}
@@ -180,9 +185,10 @@ class LLMDecider:
             return {"strategy": d.strategy, "flagged": list(d.flagged),
                     "reasoning": d.reason, "made_by": "rule"}
 
-    def schema(self, columns, fallback):
+    def schema(self, columns, fallback, profile=None):
         try:
             ctx = {"local_columns": list(columns), "canonical": CANONICAL_UNITS,
+                   "local_column_profile": profile,
                    "note": "local values may need a unit conversion; BMI may be weight/height^2"}
             out = self._ask(SYSTEM_SCHEMA, json.dumps(ctx))
             mapping = {}
