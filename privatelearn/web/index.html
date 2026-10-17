@@ -3,41 +3,66 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>PrivateLearn — demo player</title>
+    <title>PrivateLearn — demo</title>
     <link rel="stylesheet" href="player.css" />
   </head>
   <body>
-    <header>
-      <h1>PrivateLearn</h1>
-      <span class="sub">one model · zero shared data</span>
-      <div class="controls">
-        <button id="play">Play</button>
-        <button id="reset">Reset</button>
-        <input id="scrub" type="range" min="0" max="0" step="1" value="0" />
-        <span id="roundLabel">round 0 / 0</span>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <div class="brand-text">
+          <h1>PrivateLearn</h1>
+          <p class="tagline">one model · zero shared data</p>
+        </div>
       </div>
-      <div class="privacy">
-        <span class="counter">patient data transferred: <b id="bytes">0</b> bytes</span>
+
+      <div class="hero-stat">
+        <span class="hero-value" id="bytes">0</span>
+        <span class="hero-label">bytes of patient data<br />transferred</span>
+      </div>
+
+      <div class="controls">
+        <button id="play" class="btn primary">Play</button>
+        <button id="reset" class="btn ghost">Reset</button>
+        <input id="scrub" type="range" min="0" max="0" step="1" value="0" aria-label="Round" />
+        <span id="roundLabel" class="round">Round 0 / 0</span>
       </div>
     </header>
 
-    <main>
-      <canvas id="graph" width="960" height="360"></canvas>
-
-      <section id="side">
-        <div class="panel">
-          <h2>accuracy (AUC)</h2>
-          <canvas id="chart" width="440" height="160"></canvas>
+    <main class="layout">
+      <section class="stage panel">
+        <div class="panel-head">
+          <h2>Federation</h2>
+          <div class="legend" id="legend"></div>
         </div>
-        <div class="panel">
-          <h2>decision log</h2>
-          <ul id="log"></ul>
-        </div>
-        <div class="panel">
-          <h2>attack</h2>
-          <div id="attack"></div>
-        </div>
+        <canvas id="graph" width="960" height="420"></canvas>
+        <p class="stage-caption">
+          Each hospital runs 4 agents — Schema · Planner · Trainer · Challenger — and sends only a
+          7-number weight update. No patient row ever crosses these lines.
+        </p>
       </section>
+
+      <aside class="rail">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Accuracy</h2>
+            <span class="metric-hint">AUC</span>
+          </div>
+          <canvas id="chart" width="360" height="180"></canvas>
+          <div class="chart-legend" id="chartLegend"></div>
+        </section>
+
+        <section class="panel grow">
+          <div class="panel-head"><h2>Decision log</h2></div>
+          <ul id="log" class="log"></ul>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head"><h2>Gradient-inversion attack</h2></div>
+          <div id="attack" class="attack"></div>
+          <p class="attack-caption">same attack, same sample — only the privacy layer changed.</p>
+        </section>
+      </aside>
     </main>
 
     <script src="player.js"></script>
