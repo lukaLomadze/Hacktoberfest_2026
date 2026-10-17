@@ -158,12 +158,17 @@ function groupCard(group, memberships, company, onJoin) {
 export async function render({ el }) {
   ensureStyle();
   let flash = null; // the outcome of the last join, kept across the redraw it triggers
+  let loads = 0;
 
   async function load() {
+    // two quick joins on different cards overlap their reloads: only the newest may draw,
+    // or an older answer would hide the second membership
+    const gen = ++loads;
     // /auth/me too: the admin may have approved the company since it signed in, and the
     // shell's "waiting for approval" banner should follow
     const [me, groups, memberships] = await Promise.all([
       api.get("/auth/me"), api.get("/groups"), api.get("/memberships")]);
+    if (gen !== loads) return;
     setSession(me);
     draw(me.company, groups.items || [], newestFirst(memberships.items || []));
   }
