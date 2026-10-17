@@ -180,7 +180,7 @@ class TestHospitalRound(unittest.TestCase):
     def test_mask_index_is_position_in_sorted_participant_list(self):
         seen = []
 
-        def spy(delta, idx, participants, round_):
+        def spy(delta, idx, participants, round_, plan=None):
             seen.append((idx, participants))
             return no_protection(delta, idx, participants, round_)
 
@@ -214,7 +214,7 @@ class TestMaskedRoundOnTheBus(unittest.TestCase):
         secrets = make_pair_secrets([0, 1, 2], seed="test-handshake")
         ids = ["clinic-a", "clinic-b", "clinic-c"]
 
-        def protector(delta, idx, participants, round_):
+        def protector(delta, idx, participants, round_, plan=None):
             own = {k: v for k, v in secrets.items() if idx in k}  # each holds only its own pairs
             return mask_update(delta, idx, participants, round_, own), {
                 "masked": True, "mask_seed": f"r{round_}", "dp_eps": 0.0,
