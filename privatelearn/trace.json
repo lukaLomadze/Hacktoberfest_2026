@@ -543,7 +543,7 @@
       {
         "round": 1,
         "agent": "planner",
-        "action": "4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
       },
       {
         "round": 1,
@@ -563,7 +563,7 @@
       {
         "round": 2,
         "agent": "planner",
-        "action": "4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
       },
       {
         "round": 2,
@@ -583,7 +583,7 @@
       {
         "round": 3,
         "agent": "planner",
-        "action": "4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
       },
       {
         "round": 3,
@@ -603,7 +603,7 @@
       {
         "round": 4,
         "agent": "planner",
-        "action": "4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
       },
       {
         "round": 4,
@@ -635,7 +635,7 @@
       {
         "round": 1,
         "agent": "planner",
-        "action": "4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
       },
       {
         "round": 1,
@@ -655,7 +655,7 @@
       {
         "round": 2,
         "agent": "planner",
-        "action": "4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
       },
       {
         "round": 2,
@@ -675,7 +675,7 @@
       {
         "round": 3,
         "agent": "planner",
-        "action": "4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
       },
       {
         "round": 3,
@@ -695,7 +695,7 @@
       {
         "round": 4,
         "agent": "planner",
-        "action": "4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
       },
       {
         "round": 4,
@@ -727,7 +727,7 @@
       {
         "round": 1,
         "agent": "planner",
-        "action": "4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
       },
       {
         "round": 1,
@@ -767,7 +767,7 @@
       {
         "round": 4,
         "agent": "planner",
-        "action": "4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
       },
       {
         "round": 4,
