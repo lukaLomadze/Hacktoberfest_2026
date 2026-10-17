@@ -84,12 +84,14 @@ def trimmed_mean(deltas, ns, drop=None, k: int = 1):
 
 
 def select_strategy(losses, deltas=None, tau: float = 0.1, outlier_sigma: float = 2.0,
-                    names=None) -> Decision:
+                    names=None, min_gap: float = 0.15) -> Decision:
     """Choose the aggregation rule for this round and explain why.
 
     1. trimmed_mean if some loss is > outlier_sigma robust-σ above the median
-       (median + MAD, so one huge loss cannot inflate its own threshold);
-       the flagged clients are returned so the SAME clients get excluded.
+       (median + MAD, so one huge loss cannot inflate its own threshold) AND at
+       least `min_gap` nats above it — with only three hospitals the MAD can be
+       ~0, and honest non-IID hospitals differ by a few hundredths. The flagged
+       clients are returned so the SAME clients get excluded.
     2. fedprox if the losses are spread out (std > tau) — or, unmasked only,
        the update norms vary wildly.
     3. fedavg otherwise.
@@ -103,7 +105,8 @@ def select_strategy(losses, deltas=None, tau: float = 0.1, outlier_sigma: float 
 
     med = float(np.median(losses))
     scale = max(MAD_TO_SIGMA * float(np.median(np.abs(losses - med))), 1e-3)
-    flagged = tuple(int(i) for i in np.flatnonzero(losses > med + outlier_sigma * scale))
+    threshold = med + max(outlier_sigma * scale, min_gap)
+    flagged = tuple(int(i) for i in np.flatnonzero(losses > threshold))
     if flagged and len(flagged) < len(losses):
         who = ", ".join(f"{names[i]} loss {losses[i]:.3f}" for i in flagged)
         return Decision("trimmed_mean",
@@ -121,7 +124,7 @@ def select_strategy(losses, deltas=None, tau: float = 0.1, outlier_sigma: float 
         spread = float(norms.std() / (norms.mean() + 1e-9))
         if spread > 0.5:
             return Decision("fedprox", f"update-norm spread {spread:.2f} > 0.5 → FedProx", ())
-    return Decision("fedavg", f"loss std {sd:.3f} ≤ τ={tau:g}, updates agree → FedAvg", ())
+    return Decision("fedavg", f"loss std {sd:.3f} ≤ τ={tau:g}, hospitals agree → FedAvg", ())
 
 
 def aggregate(deltas, ns, strategy: str, drop=None):
