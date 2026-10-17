@@ -21,12 +21,13 @@ from . import errors, paths
 from .context import Hub, Settings
 from .db import Database
 from .enums import API_VERSION
-from .routes import auth, companies, meta
+from .nodes import NodeRegistry
+from .routes import auth, companies, groups, meta
 from .seed import seed
 
 log = logging.getLogger("hub.server")
 
-ROUTERS = [meta.router, auth.router, companies.router]
+ROUTERS = [meta.router, auth.router, companies.router, groups.router]
 
 
 class WebFiles(StaticFiles):
@@ -56,6 +57,7 @@ def create_app(db_path=None, *, federation=None, seed_mode=None, settings=None) 
     db = Database(db_path or os.environ.get("HUB_DB") or paths.DEFAULT_DB)
     seed(db, seed_mode or os.environ.get("HUB_SEED", "dev"), settings.available_model_types)
     hub = Hub(db=db, federation=federation, settings=settings)
+    hub.nodes = NodeRegistry()
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):

@@ -5,7 +5,10 @@ from __future__ import annotations
 import copy
 import unittest
 
+from hubtest import GORI, RUSTAVI, TBILISI, err, login, make_client
+
 from hub.server import taskspec
+from hub.server.db import now_iso
 from hub.server.errors import ApiError
 from hub.server.seed import DIABETES_SPEC
 
@@ -98,6 +101,80 @@ class TaskSpecTest(unittest.TestCase):
     def test_unknown_fields(self):
         self.bad(spec(colour="red"), "task_spec.colour")
         self.bad(spec(training={"epochs": 3}), "task_spec.training.epochs")
+
+
+class GroupRoutesTest(unittest.TestCase):
+    def setUp(self):
+        self.c = make_client()
+        self.admin = login(self.c)
+        self.tbilisi = login(self.c, TBILISI)
+        groups = self.c.get("/api/v1/groups", headers=self.admin).json()["items"]
+        self.diabetes = next(g for g in groups if g["status"] == "open")
+        self.draft = next(g for g in groups if g["status"] == "draft")
+
+    def test_company_sees_public_and_own_groups_only(self):
+        ids = [g["id"] for g in self.c.get("/api/v1/groups", headers=self.tbilisi).json()["items"]]
+        self.assertEqual(ids, [self.diabetes["id"]])
+        r = self.c.get(f"/api/v1/groups/{self.draft['id']}", headers=self.tbilisi)
+        self.assertEqual(r.status_code, 404)  # a draft does not leak
+
+    def test_group_detail_members(self):
+        admin_view = self.c.get(f"/api/v1/groups/{self.diabetes['id']}", headers=self.admin).json()
+        self.assertEqual(len(admin_view["members"]), 3)
+        self.assertEqual(admin_view["member_count"], 3)
+        own = self.c.get(f"/api/v1/groups/{self.diabetes['id']}", headers=self.tbilisi).json()
+        self.assertEqual([m["company_name"] for m in own["members"]], ["Tbilisi Central Hospital"])
+        gori = login(self.c, GORI)
+        outsider = self.c.get(f"/api/v1/groups/{self.diabetes['id']}", headers=gori).json()
+        self.assertEqual((outsider["members"], outsider["versions"]), ([], []))
+
+    def test_a_pending_join_request_does_not_reveal_versions(self):
+        gid, hub = self.diabetes["id"], self.c.app.state.hub
+        with hub.db.tx() as c:
+            c.execute("INSERT INTO model_versions (id, group_id, version, job_id, model_type, features, norm, "
+                      "weights, metrics, contributors, sha256, created_at) VALUES "
+                      "('mv_t', ?, 1, 'job_t', 'logistic', '[]', '{}', '[]', '{}', '[]', 'x', ?)", (gid, now_iso()))
+            company = c.execute("SELECT company_id FROM users WHERE email = ?", (RUSTAVI,)).fetchone()[0]
+            c.execute("INSERT INTO memberships (id, company_id, group_id, status, requested_at, updated_at) "
+                      "VALUES ('mem_t', ?, ?, 'requested', ?, ?)", (company, gid, now_iso(), now_iso()))
+        rustavi = login(self.c, RUSTAVI)
+        self.assertEqual(self.c.get(f"/api/v1/groups/{gid}", headers=rustavi).json()["versions"], [])
+        hub.db.execute("UPDATE memberships SET status = 'approved' WHERE id = 'mem_t'")
+        versions = self.c.get(f"/api/v1/groups/{gid}", headers=rustavi).json()["versions"]
+        self.assertEqual([v["id"] for v in versions], ["mv_t"])
+
+    def test_create_publish_archive(self):
+        r = self.c.post("/api/v1/groups", headers=self.admin,
+                        json={"name": "Diabetes v2", "task_spec": DIABETES_SPEC,
+                              "pricing": {"enrollment_fee": 0.5, "revenue_share": "by_rows"}})
+        self.assertEqual(r.status_code, 201, r.text)
+        g = r.json()
+        self.assertEqual((g["status"], g["pricing"]["currency"]), ("draft", "SOL"))
+        gid = g["id"]
+        r = self.c.patch(f"/api/v1/groups/{gid}", headers=self.admin, json={"task_spec": spec(question="Diabetic?")})
+        self.assertEqual(r.json()["task_spec"]["question"], "Diabetic?")
+        self.assertEqual(self.c.post(f"/api/v1/groups/{gid}/publish", headers=self.admin).json()["status"], "open")
+        r = self.c.patch(f"/api/v1/groups/{gid}", headers=self.admin, json={"task_spec": DIABETES_SPEC})
+        self.assertEqual((r.status_code, err(r)["code"]), (409, "invalid_transition"))
+        self.assertEqual(self.c.patch(f"/api/v1/groups/{gid}", headers=self.admin,
+                                      json={"name": "Renamed"}).json()["name"], "Renamed")
+        self.assertEqual(self.c.post(f"/api/v1/groups/{gid}/publish", headers=self.admin).status_code, 409)
+        self.assertEqual(self.c.post(f"/api/v1/groups/{gid}/archive", headers=self.admin).json()["status"],
+                         "archived")
+        self.assertEqual(self.c.patch(f"/api/v1/groups/{gid}", headers=self.admin,
+                                      json={"name": "x2"}).status_code, 409)
+        self.assertEqual(self.c.post(f"/api/v1/groups/{gid}/archive", headers=self.admin).status_code, 409)
+
+    def test_admin_only_and_validation(self):
+        r = self.c.post("/api/v1/groups", headers=self.tbilisi, json={"name": "x", "task_spec": DIABETES_SPEC})
+        self.assertEqual(r.status_code, 403)
+        r = self.c.post("/api/v1/groups", headers=self.admin, json={"name": "Ok name", "task_spec": {}})
+        self.assertEqual((r.status_code, err(r)["field"]), (422, "task_spec.question"))
+        r = self.c.patch(f"/api/v1/groups/{self.draft['id']}", headers=self.admin, json={"status": "open"})
+        self.assertEqual((r.status_code, err(r)["field"]), (422, "status"))
+        r = self.c.post("/api/v1/groups", headers=self.admin,
+                        json={"name": "Ok name", "task_spec": DIABETES_SPEC, "pricing": {"per_prediction": -1}})
+        self.assertEqual((r.status_code, err(r)["field"]), (422, "pricing.per_prediction"))
 
 
 if __name__ == "__main__":
