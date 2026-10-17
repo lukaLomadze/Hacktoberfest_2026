@@ -124,7 +124,7 @@ def select_strategy(losses, deltas=None, tau: float = 0.1, outlier_sigma: float 
         spread = float(norms.std() / (norms.mean() + 1e-9))
         if spread > 0.5:
             return Decision("fedprox", f"update-norm spread {spread:.2f} > 0.5 → FedProx", ())
-    return Decision("fedavg", f"loss std {sd:.3f} ≤ τ={tau:g}, updates agree → FedAvg", ())
+    return Decision("fedavg", f"loss std {sd:.3f} ≤ τ={tau:g}, hospitals agree → FedAvg", ())
 
 
 def aggregate(deltas, ns, strategy: str, drop=None):
