@@ -164,21 +164,21 @@ def run(seed: int = SEED, out_path=None, private: bool = True, use_llm: bool = F
         raise RuntimeError("coordinator did not finish all rounds")
 
     # --- baselines on the same holdout, over the negotiated feature set ---------------------
-    feat_idx = [CANONICAL.index(f) for f in coord.features]
-    n_w = len(feat_idx) + 1
+    # each hospital's _X is already in the negotiated feature order, so no re-slicing here;
+    # the holdout is sliced by name inside evaluate().
+    n_w = len(coord.features) + 1
     solo = {}
     for h in hospitals:
-        Xh = h._X[:, feat_idx]
-        w = logistic.train(np.zeros(n_w), Xh, h._labels, epochs=SOLO_EPOCHS, lr=LR)
+        w = logistic.train(np.zeros(n_w), h._X, h._labels, epochs=SOLO_EPOCHS, lr=LR)
         solo[h.id] = round(evaluate(w, coord.features), 4)
-    X_all = np.vstack([h._X[:, feat_idx] for h in hospitals])
+    X_all = np.vstack([h._X for h in hospitals])
     y_all = np.concatenate([h._labels for h in hospitals])
     auc_central = round(evaluate(
         logistic.train(np.zeros(n_w), X_all, y_all, epochs=SOLO_EPOCHS, lr=LR), coord.features), 4)
     auc_fed = round(coord.auc_series[-1], 4)
 
     # --- gradient inversion on a real patient row of Hospital A ------------------------------
-    attack = run_attack(np.zeros(n_w), hospitals[0]._X[0, feat_idx], hospitals[0]._labels[0], client_id=0,
+    attack = run_attack(np.zeros(n_w), hospitals[0]._X[0], hospitals[0]._labels[0], client_id=0,
                         participants=(0, 1, 2), round_=1, secrets=secrets, C=10.0, sigma=sigma, seed=seed)
 
     # --- every hospital ends with the same model ---------------------------------------------

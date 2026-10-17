@@ -95,37 +95,45 @@ class CoordinatorAgent(Agent):
         missing = [h for h in self.hospitals if h not in self.schemas]
         if missing:
             raise RuntimeError(f"schema negotiation: no schema from {missing}")
-        proposals = {h: {"features": [c["canonical"] for c in s["columns"]]}
+        # each hospital described its columns as {source, semantic, unit, factor}
+        proposals = {h: {"label": s["label"], "columns": s["columns"]}
                      for h, s in self.schemas.items()}
 
         def _rule():
-            # generic fallback: a feature is usable only if every hospital proposed it
-            common = set(proposals[self.hospitals[0]]["features"])
-            for h in self.hospitals[1:]:
-                common &= set(proposals[h]["features"])
-            return {"features": [f for f in CANONICAL if f in common], "model": "logistic",
-                    "reasoning": f"every hospital can provide {sorted(common)}"}
+            # offline fallback: a feature is the set of columns sharing a semantic name
+            # across every hospital; the factor is whatever each hospital reported.
+            by_sem = {}
+            for h in self.hospitals:
+                for c in proposals[h]["columns"]:
+                    by_sem.setdefault(c["semantic"], {})[h] = {"source": c["source"], "factor": c["factor"]}
+            common = [s for s, owners in by_sem.items() if set(owners) == set(self.hospitals)]
+            # order canonically first (stable numbers), then any novel features for arbitrary data
+            feats = [c for c in CANONICAL if c in common] + [s for s in common if s not in CANONICAL]
+            columns = {h: {f: by_sem[f][h] for f in feats} for h in self.hospitals}
+            return {"features": feats, "model": "logistic", "columns": columns,
+                    "reasoning": f"every hospital provides {feats}"}
 
         d = self.decider.contract(proposals, _rule)
         self.features = [str(f) for f in d["features"]]
         self.model = str(d["model"])
         self.contract_reasoning = d.get("reasoning", "")
         self.n_weights = len(self.features) + 1
-        # the normalisation statistics must follow the negotiated feature order
-        idx = [CANONICAL.index(f) for f in self.features]
+        self.columns = d["columns"]  # {hospital: {feature: {source, factor}}}
+        # normalisation statistics must follow the negotiated feature NAMES, whatever order
+        # the contract was agreed in
+        stat_index = {name: i for i, name in enumerate(CANONICAL)}
+        idx = [stat_index[f] for f in self.features]
         self.feature_mean = [self.feature_mean[i] for i in idx]
         self.feature_std = [self.feature_std[i] for i in idx]
         self.w = (np.zeros(self.n_weights) if self._w0 is None
                   else np.asarray(self._w0, dtype=float).copy())
         if len(self.w) != self.n_weights:
             raise ValueError(f"initial w has {len(self.w)} weights; the contract needs {self.n_weights}")
-        sources = {h: {c["canonical"]: {"source": c["source"], "unit": c["unit"],
-                                        "transform": c["transform"]}
-                       for c in s["columns"] if c["canonical"] in self.features}
-                   for h, s in self.schemas.items()}
         self.schema_report = {"features": self.features, "model": self.model,
-                              "per_hospital": sources}
-        return {"features": self.features, "model": self.model,
+                              "per_hospital": {h: {f: {"source": self.columns[h][f]["source"]}
+                                                   for f in self.features}
+                                               for h in self.hospitals}}
+        return {"features": self.features, "model": self.model, "columns": self.columns,
                 "feature_mean": self.feature_mean, "feature_std": self.feature_std}
 
     def _start_round(self):

@@ -49,20 +49,17 @@ SYSTEM_STRATEGY = (
     'keys "strategy" (one of fedavg, fedprox, trimmed_mean), "excluded" (hospital labels to '
     'exclude, only for trimmed_mean) and "reasoning" (one sentence).'
 )
-SYSTEM_SCHEMA = (
-    "You are the Schema agent of one hospital in a federated learning federation. You see only "
-    "this hospital's local column NAMES and SUMMARY STATISTICS, never patient values. Map them "
-    "to the federation's canonical schema. Reply with a single JSON object with keys "
-    '"label" (the outcome column name) and "mapping" (for every canonical feature: '
-    '{"source": [column names], "factor": number to multiply local values by to reach the '
-    'canonical unit, "unit": string, "transform": short description}) and "reasoning" '
-    "(one sentence). "
-    "You receive local_column_profile: min/p05/median/mean/p95/max per column. Use that "
-    "distribution to decide the unit: compare its magnitude with what the canonical unit "
-    "implies for this measurement, using your own knowledge of plausible physical values. "
-    "When the local values are in a different unit, convert with the standard factor for "
-    "that unit. BMI kg/m^2 may be derived from weight_kg and height_m (factor null, source "
-    "[weight, height]). Anything already in the canonical unit gets factor 1.0."
+SYSTEM_DESCRIBE = (
+    "You are the Schema agent of one hospital in a federated learning federation. You see this "
+    "hospital's local column names and, for each, summary statistics (min/p05/median/mean/p95/max). "
+    "Never see or return patient values. For every column give: a semantic name that captures what "
+    "it measures (a common, normalised name such as 'age', 'income', 'blood_pressure'), the unit "
+    "the values are in, and a factor that converts the local values to a standard unit (or null if "
+    "the value is derived, e.g. BMI from weight and height). Use the statistics to disambiguate "
+    "units (a value around 1.7 is metres, around 70 is inches). Reply with a single JSON object "
+    'with keys "label" (the outcome/target column name) and "columns" (a list of '
+    '{"source": [names], "semantic": name, "unit": unit, "factor": number-or-null}) and '
+    '"reasoning" (one sentence).'
 )
 SYSTEM_PLAN = (
     "You are the Planner agent of one hospital in a federated learning run. You see the round, "
@@ -74,12 +71,13 @@ SYSTEM_PLAN = (
 )
 SUPPORTED_MODELS = ("logistic",)
 SYSTEM_CONTRACT = (
-    "You are the Coordinator agent of a federation. Each hospital has proposed a mapping from its "
-    "local columns to semantic feature names. Agree the contract for the federation: the feature "
-    "set that EVERY hospital can provide (a feature is usable only if all hospitals proposed it) "
-    "and the model type. Reply with a single JSON object with keys "
-    '"features" (list of feature names), "model" (one of the supported models) and "reasoning" '
-    "(one sentence)."
+    "You are the Coordinator agent of a federation. Each hospital described its local columns with "
+    "a semantic name, unit and conversion factor. Reconcile them into one shared schema: group "
+    "columns that measure the same thing across hospitals (their names and units differ) into "
+    "features, and keep only the feature set EVERY hospital can provide. For each hospital, map each "
+    "feature to its local source column(s) and the factor that converts them to the shared unit. "
+    'Reply with a single JSON object: {"features": [names], "model": a supported model, "columns": '
+    '{hospital: {feature: {"source": [names], "factor": number-or-null}}}, "reasoning": one sentence}.'
 )
 
 
@@ -88,10 +86,8 @@ class RuleDecider:
 
     made_by = "rule"
 
-    def schema(self, columns, fallback, profile=None):
-        mapping, label = fallback()
-        return {"mapping": mapping, "label": label,
-                "reasoning": "matched the known column aliases", "made_by": "rule"}
+    def describe(self, columns, fallback, profile=None):
+        return fallback()
 
     def plan(self, context, fallback):
         d = fallback()
@@ -195,34 +191,33 @@ class LLMDecider:
             return {"strategy": d.strategy, "flagged": list(d.flagged),
                     "reasoning": d.reason, "made_by": "rule"}
 
-    def schema(self, columns, fallback, profile=None):
+    def describe(self, columns, fallback, profile=None):
         try:
-            ctx = {"local_columns": list(columns), "canonical": CANONICAL_UNITS,
-                   "local_column_profile": profile,
-                   "note": "local values may need a unit conversion; BMI may be weight/height^2"}
-            out = self._ask(SYSTEM_SCHEMA, json.dumps(ctx))
-            mapping = {}
-            for c in CANONICAL:
-                e = out["mapping"][c]
-                source = e["source"] if isinstance(e["source"], list) else [e["source"]]
-                if not source or any(s not in columns for s in source):
-                    raise ValueError(f"{c}: source {source} not among {list(columns)}")
-                factor = e.get("factor")
-                if factor is not None:
-                    factor = float(factor)
-                mapping[c] = {"canonical": c, "source": [str(s) for s in source],
-                              "unit": str(e.get("unit", CANONICAL_UNITS[c])),
-                              "transform": str(e.get("transform", "rename")), "factor": factor}
+            out = self._ask(SYSTEM_DESCRIBE, json.dumps(
+                {"local_columns": list(columns), "profile": profile}))
             label = str(out["label"])
             if label not in columns:
                 raise ValueError(f"label {label!r} not among {list(columns)}")
+            cols = []
+            for e in out["columns"]:
+                source = e["source"] if isinstance(e["source"], list) else [e["source"]]
+                if not source or any(s not in columns for s in source):
+                    raise ValueError(f"source {source} not among {list(columns)}")
+                factor = e.get("factor")
+                if factor is not None:
+                    factor = float(factor)
+                cols.append({"source": [str(s) for s in source],
+                             "semantic": str(e["semantic"]),
+                             "unit": str(e.get("unit", "")), "factor": factor})
+            if not cols:
+                raise ValueError("no columns described")
             self.calls += 1
-            return {"mapping": mapping, "label": label,
+            return {"label": label, "columns": cols,
                     "reasoning": str(out.get("reasoning", "")).strip(), "made_by": "llm"}
         except Exception as exc:  # noqa: BLE001
-            mapping, label = self._fallback(exc, fallback)
-            return {"mapping": mapping, "label": label,
-                    "reasoning": "matched the known column aliases", "made_by": "rule"}
+            d = self._fallback(exc, fallback)
+            d["made_by"] = "rule"
+            return d
 
     def plan(self, context, fallback):
         try:
@@ -251,17 +246,21 @@ class LLMDecider:
                 {"hospitals": proposals, "supported_models": list(SUPPORTED_MODELS)}))
             feats = [str(f) for f in out["features"]]
             model = str(out.get("model", "logistic"))
-            common = set.intersection(*(set(p["features"]) for p in proposals.values())) if proposals else set()
-            if not feats or not set(feats) <= common:
-                raise ValueError("features must be a non-empty subset every hospital can provide")
             if model not in SUPPORTED_MODELS:
                 raise ValueError(f"unsupported model {model!r}")
+            cols = out["columns"]
+            if not isinstance(cols, dict) or set(cols) != set(proposals):
+                raise ValueError("columns must map every hospital")
+            for h, m in cols.items():
+                if not set(feats) <= set(m):
+                    raise ValueError(f"hospital {h} is missing a feature")
             self.calls += 1
-            return {"features": feats, "model": model,
+            return {"features": feats, "model": model, "columns": cols,
                     "reasoning": str(out.get("reasoning", "")).strip(), "made_by": "llm"}
         except Exception as exc:  # noqa: BLE001
             d = self._fallback(exc, fallback)
-            return {**d, "made_by": "rule"}
+            d["made_by"] = "rule"
+            return d
 
     def info(self):
         return {"provider": "deepseek", "model": self.model,
