@@ -100,28 +100,32 @@ class CoordinatorAgent(Agent):
         proposals = {h: {"label": s["label"], "columns": s["columns"]}
                      for h, s in self.schemas.items()}
 
+        def _key(s):
+            return "".join(ch for ch in str(s).lower() if ch.isalnum())
+
         def _rule():
-            # offline fallback: a feature is the set of columns sharing a semantic name
-            # across every hospital; the factor is whatever each hospital reported.
+            # Deterministic fallback grounded in the dataset's canonical feature names:
+            # a feature is usable only if every hospital proposed it, and the agreed name
+            # is ALWAYS the canonical one (never a name an LLM invented), so the
+            # normalisation statistics can be looked up by name without fail.
             by_sem = {}
             for h in self.hospitals:
                 for c in proposals[h]["columns"]:
-                    by_sem.setdefault(c["semantic"], {})[h] = {"source": c["source"], "factor": c["factor"]}
-            common = [s for s, owners in by_sem.items() if set(owners) == set(self.hospitals)]
-            # order by the dataset's own feature names first (stable numbers), then any novel feature
-            feats = [c for c in self.feature_names if c in common] + [s for s in common if s not in self.feature_names]
-            columns = {h: {f: by_sem[f][h] for f in feats} for h in self.hospitals}
+                    entry = {"source": c["source"], "factor": c["factor"]}
+                    if c.get("derive") is not None:
+                        entry["derive"] = c["derive"]
+                    by_sem.setdefault(_key(c["semantic"]), {})[h] = entry
+            feats = [f for f in self.feature_names
+                     if set(by_sem.get(_key(f), {})) == set(self.hospitals)]
+            columns = {h: {f: by_sem[_key(f)][h] for f in feats} for h in self.hospitals}
             return {"features": feats, "model": "logistic", "columns": columns,
                     "reasoning": f"every hospital provides {feats}"}
 
-        d = self.decider.contract(proposals, _rule)
+        d = self.decider.contract(proposals, _rule, feature_names=self.feature_names)
         self.features = [str(f) for f in d["features"]]
         self.model = str(d["model"])
         self.contract_reasoning = d.get("reasoning", "")
         self.columns = d["columns"]
-
-        def _key(s):
-            return "".join(ch for ch in str(s).lower() if ch.isalnum())
 
         stat_index = {_key(name): i for i, name in enumerate(self.feature_names)}
         if not all(_key(f) in stat_index for f in self.features):
@@ -131,6 +135,13 @@ class CoordinatorAgent(Agent):
             self.model = str(d["model"])
             self.contract_reasoning = d.get("reasoning", "")
             self.columns = d["columns"]
+
+        if not self.features:
+            raise ValueError(
+                "schema negotiation agreed no common features. Without an LLM "
+                "(DEEPSEEK_API_KEY) and without a manifest 'schema' mapping, differently "
+                "named columns across clients cannot be reconciled. Run with --llm or add "
+                "a 'schema' map to the manifest.")
 
         self.n_weights = len(self.features) + 1
         # normalisation statistics must follow the negotiated feature NAMES, whatever order

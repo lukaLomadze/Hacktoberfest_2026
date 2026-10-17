@@ -7,10 +7,15 @@ Raise ValueError with a field-specific message on any violation.
 from __future__ import annotations
 
 import math
+import re
 
 ALLOWED_STRATEGIES = {"fedavg", "fedprox", "trimmed_mean"}
-ALLOWED_HOSPITALS = {"h0", "h1", "h2"}
 VERSION = "1.0"
+
+
+def is_hospital_id(value) -> bool:
+    """A participating client id is h<number> (h0, h1, h2, …), whatever the dataset."""
+    return isinstance(value, str) and re.fullmatch(r"h\d+", value) is not None
 
 
 def _fail(path, why):
@@ -46,8 +51,8 @@ def validate_update(msg):
         _fail("update.v", f"must be {VERSION!r}")
     if not isinstance(msg.get("round"), int):
         _fail("update.round", "must be an int")
-    if msg.get("hospital") not in ALLOWED_HOSPITALS:
-        _fail("update.hospital", f"must be one of {sorted(ALLOWED_HOSPITALS)}")
+    if not is_hospital_id(msg.get("hospital")):
+        _fail("update.hospital", "must be a client id like h0, h1, …")
     _vec_min(msg.get("delta_w"), 2, "update.delta_w")
     _num(msg.get("loss"), "update.loss")
     if not isinstance(msg.get("n"), int) or msg["n"] <= 0:
@@ -87,8 +92,8 @@ def validate_trace_update(u):
     """Validate a trace round's summary update (player shape, not the wire message)."""
     if not isinstance(u, dict):
         _fail("trace update", "must be an object")
-    if u.get("hospital") not in ALLOWED_HOSPITALS:
-        _fail("trace update.hospital", f"must be one of {sorted(ALLOWED_HOSPITALS)}")
+    if not is_hospital_id(u.get("hospital")):
+        _fail("trace update.hospital", "must be a client id like h0, h1, …")
     if not isinstance(u.get("n"), int) or u["n"] <= 0:
         _fail("trace update.n", "must be a positive int")
     if not isinstance(u.get("sent"), bool):
@@ -125,8 +130,9 @@ def validate_trace(trace):
     if not isinstance(nodes, list):
         _fail("trace.nodes", "must be a list")
     ids = {n.get("id") for n in nodes}
-    if not ALLOWED_HOSPITALS.issubset(ids) or "coord" not in ids:
-        _fail("trace.nodes", "must include h0,h1,h2 and coord")
+    required = {f"h{i}" for i in range(meta["hospitals"])}
+    if not required.issubset(ids) or "coord" not in ids:
+        _fail("trace.nodes", f"must include {sorted(required)} and coord")
     if any(n.get("role") not in ("hospital", "coordinator") for n in nodes):
         _fail("trace.nodes", "role must be hospital or coordinator")
 
@@ -150,8 +156,8 @@ def validate_trace(trace):
     attack = trace.get("attack")
     if not isinstance(attack, dict):
         _fail("trace.attack", "must be an object")
-    if attack.get("target") not in ALLOWED_HOSPITALS:
-        _fail("trace.attack.target", "must be a hospital id")
+    if not is_hospital_id(attack.get("target")):
+        _fail("trace.attack.target", "must be a client id like h0, h1, …")
     for k in ("without_privacy", "with_privacy"):
         v = attack.get(k)
         if not isinstance(v, dict) or not isinstance(v.get("recovered"), bool):

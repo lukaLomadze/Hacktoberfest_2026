@@ -73,13 +73,37 @@ HONESTY = ("Real Pima Indians Diabetes records (360 of 768) split into three SIM
            "agents' decisions and every number are real outputs of the code. DP accounting is a "
            "stated-ε demonstration (analytic Gaussian, basic composition), not an audited accountant.")
 
+# Display colours for an arbitrary number of clients; the player colours by its CSS tokens,
+# so this only needs to be a stable, distinct palette for other consumers of the trace.
+_NODE_PALETTE = ["#4d8bff", "#3fcf8e", "#ff6b6b", "#f5b94d", "#9d7bff", "#2ec4b6"]
 
-def load_holdout(manifest):
-    with open(ROOT / "data" / "holdout" / "test.csv", newline="", encoding="utf-8") as fh:
+
+def _nodes(manifest):
+    """Trace nodes from the manifest's `node_labels`, else the legacy Pima nodes."""
+    labels = manifest.get("node_labels")
+    if not labels:
+        return NODES
+    nodes = [{"id": f"h{i}", "label": labels.get(f"h{i}", f"h{i}"),
+              "color": _NODE_PALETTE[i % len(_NODE_PALETTE)], "role": "hospital"}
+             for i in range(manifest["n_hospitals"])]
+    nodes.append({"id": "coord", "label": "Coordinator", "color": "#f5b94d", "role": "coordinator"})
+    return nodes
+
+
+def load_holdout(manifest, data_dir=None):
+    data_dir = pathlib.Path(data_dir) if data_dir is not None else ROOT / "data"
+    holdout = manifest.get("holdout", {})
+    with open(data_dir / holdout.get("file", "holdout/test.csv"), newline="", encoding="utf-8") as fh:
         rows = list(csv.DictReader(fh))
-    order = ["Pregnancies", "Glucose", "BloodPressure", "BMI", "Insulin", "Age"]
+    # A generic manifest names its holdout feature columns and label explicitly.
+    order = holdout.get("feature_columns")
+    label = holdout.get("label", manifest.get("label", {}).get("holdout"))
+    if not order:
+        # legacy Pima manifest: the holdout is in canonical (TitleCase) order
+        order = ["Pregnancies", "Glucose", "BloodPressure", "BMI", "Insulin", "Age"]
+        label = label or "Outcome"
     X = np.array([[float(r[c]) for c in order] for r in rows])
-    y = np.array([int(r["Outcome"]) for r in rows], dtype=float)
+    y = np.array([int(r[label]) for r in rows], dtype=float)
     return (X - np.array(manifest["feature_mean"])) / np.array(manifest["feature_std"]), y
 
 
@@ -101,28 +125,40 @@ def model_hash(w) -> str:
     return hashlib.sha256(json.dumps([round(float(v), 12) for v in w]).encode()).hexdigest()
 
 
-def run(seed: int = SEED, out_path=None, private: bool = True, use_llm: bool = False, decider=None) -> dict:
+def run(seed: int = SEED, out_path=None, private: bool = True, use_llm: bool = False, decider=None,
+        manifest=None, data_dir=None, rounds: int = None) -> dict:
     """The full run. private=False replays the same scenario with masking and DP off
     (plain training, unprotected updates) to measure what privacy costs.
     use_llm=True lets the Schema / Planner / Coordinator agents make their decisions
-    with DeepSeek (needs DEEPSEEK_API_KEY); every decision is recorded in the trace."""
+    with DeepSeek (needs DEEPSEEK_API_KEY); every decision is recorded in the trace.
+
+    Everything dataset-specific (feature order, label, normalisation statistics, the
+    local→canonical schema mapping, node labels, faults, the honesty note) is read from
+    `manifest`; pass `manifest` + `data_dir` to run a different dataset (e.g. the banks)."""
     t0 = time.perf_counter()
-    manifest = io.load_json(ROOT / "data" / "hospitals" / "manifest.json")
-    Xt, yt = load_holdout(manifest)
+    data_dir = pathlib.Path(data_dir) if data_dir is not None else ROOT / "data"
+    if manifest is None:
+        manifest = io.load_json(data_dir / "hospitals" / "manifest.json")
+    hospital_ids = [f"h{i}" for i in range(manifest["n_hospitals"])]
+    nodes = _nodes(manifest)
+    faults = manifest["faults"] if manifest.get("faults") else FAULTS
+    if rounds is None:
+        rounds = manifest.get("rounds", ROUNDS)
+    Xt, yt = load_holdout(manifest, data_dir)
 
     def evaluate(w, features=None):
         names = manifest["canonical_features"]
-        X = Xt if not features else Xt[:, [names.index(f) for f in features]]
+        X = Xt if features is None else Xt[:, [names.index(f) for f in features]]
         return float(logistic.auc(yt, logistic.predict_proba(np.asarray(w), X)))
 
     # --- privacy stack: patient-level DP + pairwise masking --------------------------------
     n = manifest["n_per_hospital"]
     sensitivity = record_sensitivity(n, LR, EPOCHS, EXAMPLE_CLIP)
     sigma = sigma_for_epsilon(EPS_PER_ROUND, sensitivity, DP_DELTA)
-    secrets = make_pair_secrets([0, 1, 2], seed=f"handshake-{seed}")  # hospital-to-hospital only
+    secrets = make_pair_secrets(list(range(len(hospital_ids))), seed=f"handshake-{seed}")  # client-to-client only
 
-    if len(set(manifest["per_hospital_class_balance"][h]["n"] for h in HOSPITALS)) != 1:
-        raise ValueError("the protector assumes equal n per hospital (weight = 1/participants)")
+    if len(set(manifest["per_hospital_class_balance"][h]["n"] for h in hospital_ids)) != 1:
+        raise ValueError("the protector assumes equal n per client (weight = 1/participants)")
 
     def protector_for(idx):
         own = {k: v for k, v in secrets.items() if idx in k}  # each hospital holds only its pairs
@@ -143,16 +179,17 @@ def run(seed: int = SEED, out_path=None, private: bool = True, use_llm: bool = F
 
     decider = decider or build_decider(use_llm)
 
+    schema = manifest.get("schema") or {}
     hospitals = [
-        HospitalAgent.from_csv(h, ROOT / "data" / "hospitals" / f"hospital_{i}.csv",
+        HospitalAgent.from_csv(h, data_dir / manifest["files"][h],
                                protector=protector_for(i) if private else no_protection,
-                               train_fn=dp_train if private else logistic.train, faults=FAULTS.get(h),
-                               decider=decider)
-        for i, h in enumerate(HOSPITALS)
+                               train_fn=dp_train if private else logistic.train, faults=faults.get(h),
+                               decider=decider, schema_map=schema.get(h))
+        for i, h in enumerate(hospital_ids)
     ]
-    names = {nd["id"]: nd["label"] for nd in NODES}
-    coord = CoordinatorAgent(HOSPITALS, evaluate, manifest["feature_mean"], manifest["feature_std"],
-                             rounds=ROUNDS, names=names, decider=decider,
+    names = {nd["id"]: nd["label"] for nd in nodes}
+    coord = CoordinatorAgent(hospital_ids, evaluate, manifest["feature_mean"], manifest["feature_std"],
+                             rounds=rounds, names=names, decider=decider,
                              feature_names=manifest["canonical_features"])
 
     bus = MessageBus()
@@ -179,30 +216,32 @@ def run(seed: int = SEED, out_path=None, private: bool = True, use_llm: bool = F
 
     # --- gradient inversion on a real patient row of Hospital A ------------------------------
     attack = run_attack(np.zeros(n_w), hospitals[0]._X[0], hospitals[0]._labels[0], client_id=0,
-                        participants=(0, 1, 2), round_=1, secrets=secrets, C=10.0, sigma=sigma, seed=seed)
+                        participants=tuple(range(len(hospital_ids))), round_=1, secrets=secrets,
+                        C=10.0, sigma=sigma, seed=seed)
 
     # --- every hospital ends with the same model ---------------------------------------------
     hashes = {h.id: model_hash(h.w_global) for h in hospitals}
 
     # loss_series[0]: the starting model's mean local loss, from the round-1 probes
     first_probe_loss = float(np.mean(list(coord.history[0]["probe_losses"].values())))
-    rounds = [dict(r, auc_before=round(r["auc_before"], 4), auc_after=round(r["auc_after"], 4),
-                   probe_losses={h: round(v, 4) for h, v in r["probe_losses"].items()})
-              for r in coord.history]
+    round_rows = [dict(r, auc_before=round(r["auc_before"], 4), auc_after=round(r["auc_after"], 4),
+                       probe_losses={h: round(v, 4) for h, v in r["probe_losses"].items()})
+                  for r in coord.history]
 
     trace = {
         "v": "1.0",
         "meta": {
-            "dataset": "Pima Indians Diabetes (NIDDK)",
-            "hospitals": 3, "rows_per_hospital": n,
-            "features": coord.features, "weights": coord.n_weights, "rounds": ROUNDS,
+            "dataset": manifest["dataset"],
+            "hospitals": len(hospital_ids), "rows_per_hospital": n,
+            "features": coord.features, "weights": coord.n_weights, "rounds": rounds,
             "auc_solo": max(solo.values()),
             "auc_solo_by_hospital": solo,
             "auc_federated": auc_fed,
             "auc_centralized": auc_central,
             # same scenario with masking + DP switched off: the measured cost of privacy
             "auc_federated_no_privacy": (run(seed, None, private=False, use_llm=False,
-                                            decider=decider)["meta"]["auc_federated"]
+                                            decider=decider, manifest=manifest,
+                                            data_dir=data_dir, rounds=rounds)["meta"]["auc_federated"]
                                          if private else auc_fed),
             "eps_per_round": EPS_PER_ROUND, "dp_delta": DP_DELTA,
             "dp_sensitivity": sensitivity, "dp_sigma": sigma, "example_clip": EXAMPLE_CLIP,
@@ -216,11 +255,11 @@ def run(seed: int = SEED, out_path=None, private: bool = True, use_llm: bool = F
                           "(min/p05/median/p95/max) and aggregate losses, never a patient row; "
                           "gradients, aggregation, masking and DP are deterministic code",
             },
-            "honesty": HONESTY,
+            "honesty": manifest.get("honesty", HONESTY),
         },
-        "nodes": NODES,
+        "nodes": nodes,
         "schema": coord.schema_report,
-        "rounds": rounds,
+        "rounds": round_rows,
         "metrics": {"auc_series": [round(v, 4) for v in coord.auc_series],
                     "loss_series": [round(first_probe_loss, 4)] + [round(v, 4) for v in coord.loss_series]},
         "attack": attack,

@@ -1,9 +1,11 @@
-"""One command: reproduce the run, then replay it in the browser.
+"""One command: reproduce the run (with the LLM), then replay it in the browser.
 
-    python demo.py            # rebuild data + trace.json, serve, open the player
+    python demo.py            # rebuild the hospital data + LLM trace, serve, open the player
+    python demo.py --banks    # same, but the bank dataset (data/banks)
     python demo.py --no-run   # just serve and replay the committed trace.json
 
-Needs only Python 3.9+ and numpy.
+Regeneration runs with --llm (needs DEEPSEEK_API_KEY); --no-run replays the committed
+trace without a key. Needs only Python 3.9+ and numpy.
 """
 
 from __future__ import annotations
@@ -27,17 +29,30 @@ def main(argv=None):
     ap.add_argument("--port", type=int, default=8000)
     ap.add_argument("--no-run", action="store_true", help="skip regeneration; replay the committed trace")
     ap.add_argument("--no-browser", action="store_true")
+    ap.add_argument("--banks", action="store_true",
+                    help="run and replay the bank dataset (data/banks) instead of the hospitals")
     args = ap.parse_args(argv)
 
+    if args.banks:
+        steps = [("src/pipeline/prep_banks.py", ()), ("src/pipeline/run_banks.py", ("--llm",))]
+        trace_rel = "data/banks/trace.json"
+    else:
+        steps = [("src/pipeline/prep_data.py", ()), ("src/pipeline/run_loop.py", ("--llm",))]
+        trace_rel = "trace.json"
+
     if not args.no_run:
-        for script in ("src/pipeline/prep_data.py", "src/pipeline/run_loop.py"):
-            print(f"$ python {script}")
-            subprocess.run([sys.executable, str(ROOT / script)], check=True, cwd=ROOT)
+        for script, extra in steps:
+            cmd = [sys.executable, str(ROOT / script), *extra]
+            print(f"$ python {script} {' '.join(extra)}".rstrip())
+            subprocess.run(cmd, check=True, cwd=ROOT)
 
     handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(ROOT))
     server = http.server.ThreadingHTTPServer(("127.0.0.1", args.port), handler)
     url = f"http://localhost:{args.port}/web/index.html"
-    print(f"\nreplaying trace.json at {url}  (Ctrl+C to stop)")
+    if args.banks:
+        # the player loads ../trace.json by default; point it at the bank trace instead
+        url += f"?trace=../{trace_rel}"
+    print(f"\nreplaying {trace_rel} at {url}  (Ctrl+C to stop)")
     if not args.no_browser:
         threading.Timer(0.5, webbrowser.open, args=(url,)).start()
     try:

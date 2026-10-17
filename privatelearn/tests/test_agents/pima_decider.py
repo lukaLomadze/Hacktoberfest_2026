@@ -52,5 +52,5 @@ class PimaDecider(RuleDecider):
             label = columns[-1]
         return {"label": label, "columns": cols, "reasoning": "test fixture", "made_by": "rule"}
 
-    def contract(self, proposals, fallback):
+    def contract(self, proposals, fallback, feature_names=None):
         return fallback()

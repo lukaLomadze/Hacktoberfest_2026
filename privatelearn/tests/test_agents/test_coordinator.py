@@ -222,7 +222,7 @@ class TestSchemaNegotiation(unittest.TestCase):
         # the LLM picks a semantic name the dataset's statistics are not keyed by; the
         # coordinator must not crash (KeyError) — it falls back to the deterministic rule.
         class WeirdDecider(RuleDecider):
-            def contract(self, proposals, fallback):
+            def contract(self, proposals, fallback, feature_names=None):
                 return {"features": ["bp"], "model": "logistic",
                         "columns": {h: {"bp": {"source": ["x"], "factor": 1.0}} for h in proposals},
                         "reasoning": "used bp", "made_by": "llm"}
