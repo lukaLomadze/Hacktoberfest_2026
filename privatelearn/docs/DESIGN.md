@@ -116,6 +116,13 @@ The whole page fits a 16:9 recording frame at 1280×720 without scrolling.
 - Background: `--panel`, with a faint 32px dot grid in `--bg-raise`.
 - **Hospitals:** filled disc in the hospital color, a short label, and a small "4 agents"
   tag beneath in `--text-faint` at 10px (the full role list lives in the stage caption).
+- **Agent chips:** under each hospital, four small chips **S P T C** (Schema · Planner · Trainer ·
+  Challenger). A chip is filled in the hospital's color when that agent acted in the shown round
+  (`trace.agents`; round 0 = schema negotiation), outlined otherwise — e.g. an excluded hospital
+  shows P and C lit but not T: its Challenger measured, its Planner stood down, nothing trained.
+- **Agent ticker:** the stage caption narrates one hospital's agent actions at a time while a round
+  plays; when paused it lists each Challenger's AUC of the new model on its own patients.
+  Traces without `agents` keep the static caption and no chips.
 - **Coordinator:** a rounded square (not a circle) in `--coord`, label "Coordinator".
 - **Edges:** 1px `--border` lines from each hospital to the coordinator.
 - **Packets:** in the source hospital's color, moving along the edge with an ease-in-out

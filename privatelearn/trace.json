@@ -716,16 +716,6 @@
         "action": "offline this round"
       },
       {
-        "round": 2,
-        "agent": "planner",
-        "action": "not a participant this round"
-      },
-      {
-        "round": 2,
-        "agent": "challenger",
-        "action": "new global model: local AUC 0.751"
-      },
-      {
         "round": 3,
         "agent": "challenger",
         "action": "global model on local data: loss 2.488, AUC 0.524"

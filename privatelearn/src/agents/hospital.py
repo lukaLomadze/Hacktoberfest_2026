@@ -276,7 +276,9 @@ class HospitalAgent(Agent):
     def _on_train(self, msg):
         p = msg.payload
         r = p["round"]
-        if self.id not in p["participants"] or self.faults.get(r) == "offline":
+        if self.faults.get(r) == "offline":
+            return []  # an offline hospital never sees the train message (already logged at probe)
+        if self.id not in p["participants"]:
             self._log(r, "planner", "not a participant this round")
             return []
         X, labels = self._data(r)
@@ -295,6 +297,8 @@ class HospitalAgent(Agent):
 
     def _on_broadcast(self, msg):
         p = msg.payload
+        if self.faults.get(p["round"]) == "offline":
+            return []  # offline: misses this broadcast, catches up from the next one
         self.w_global = list(p["w"])
         if self._X is not None:
             s = self.challenger.score(p["w"], self._X, self._labels)

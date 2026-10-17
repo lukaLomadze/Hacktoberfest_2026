@@ -156,6 +156,15 @@ class TestHospitalRound(unittest.TestCase):
         again = agreed(hospital(2, faults={3: "age_in_months"})).step([msg("probe", {"round": 4, "w": list(w)}, to="h2")])[0]
         self.assertAlmostEqual(again.payload["loss"], honest.payload["loss"], places=12)
 
+    def test_offline_hospital_misses_the_round_entirely(self):
+        h = agreed(hospital(2, faults={2: "offline"}))
+        b = {"v": "1.0", "round": 2, "w": [0.1] * 7, "strategy": "fedavg", "eps_total": 0.0,
+             "auc": 0.8, "losses": [0.6], "converged": False}
+        self.assertEqual(h.step([msg("train", train_msg(2, np.zeros(7), participants=("h0", "h1")), to="h2")]), [])
+        self.assertEqual(h.step([msg("broadcast", b, to="h2")]), [])
+        self.assertIsNone(h.w_global)
+        self.assertEqual([a["action"] for a in h.activity if a["round"] == 2], [])
+
     def test_broadcast_updates_global_model(self):
         h = agreed(hospital(0))
         b = {"v": "1.0", "round": 1, "w": [0.1] * 7, "strategy": "fedavg", "eps_total": 0.0,
