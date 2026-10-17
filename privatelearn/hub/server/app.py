@@ -22,12 +22,12 @@ from .context import Hub, Settings
 from .db import Database
 from .enums import API_VERSION
 from .nodes import NodeRegistry
-from .routes import auth, companies, groups, meta
+from .routes import auth, companies, groups, memberships, meta
 from .seed import seed
 
 log = logging.getLogger("hub.server")
 
-ROUTERS = [meta.router, auth.router, companies.router, groups.router]
+ROUTERS = [meta.router, auth.router, companies.router, groups.router, memberships.router]
 
 
 class WebFiles(StaticFiles):

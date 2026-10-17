@@ -176,6 +176,16 @@ class GroupRoutesTest(unittest.TestCase):
                         json={"name": "Ok name", "task_spec": DIABETES_SPEC, "pricing": {"per_prediction": -1}})
         self.assertEqual((r.status_code, err(r)["field"]), (422, "pricing.per_prediction"))
 
+    def test_archive_rejects_open_requests(self):
+        rustavi = login(self.c, "it@rustavi-family.example")
+        mem = self.c.post(f"/api/v1/groups/{self.diabetes['id']}/join", headers=rustavi).json()
+        self.c.post(f"/api/v1/groups/{self.diabetes['id']}/archive", headers=self.admin)
+        after = self.c.get(f"/api/v1/memberships/{mem['id']}", headers=rustavi).json()
+        self.assertEqual((after["status"], after["status_reason"]), ("rejected", "group archived"))
+        # still visible to its members (they had a membership), but no longer joinable
+        r = self.c.post(f"/api/v1/groups/{self.diabetes['id']}/join", headers=rustavi)
+        self.assertEqual(r.status_code, 409)
+
 
 if __name__ == "__main__":
     unittest.main()
