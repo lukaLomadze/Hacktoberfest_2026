@@ -84,7 +84,7 @@ over canonical `x ∈ R⁶`.
 |---|---|---|
 | `v` | string | `"1.0"` |
 | `round` | int | current round |
-| `hospital` | string | `"h0" | "h1" | "h2"` |
+| `hospital` | string | participant id — 1–64 chars `[A-Za-z0-9][A-Za-z0-9_.-]*`, not `coord` (`shared.schemas.PARTICIPANT_ID`) |
 | `delta_w` | number[7] | masked delta if `privacy.masked` |
 | `loss` | number | local mean BCE |
 | `n` | int | local row count |
@@ -99,6 +99,10 @@ over canonical `x ∈ R⁶`.
  "loss":0.512,"n":120,
  "privacy":{"masked":true,"mask_seed":"b3f8…","dp_eps":1.5,"dp_mechanism":"gaussian","dp_sigma":0.008}}
 ```
+
+The coordinator's `schema_agreed` message also carries `participants` — the sorted list of
+every participant id — whose positions in that list are the mask indices used for pairwise
+masking.
 
 ### 3.2 Broadcast (coordinator → hospitals)
 
@@ -159,9 +163,9 @@ the player needs are `rounds[i].excluded` and `updates[j].sent/rejected/reason`.
     {"round":1,"strategy":"fedavg","eps_total":1.5,"auc_before":0.78,"auc_after":0.81,
      "decision":"loss variance < τ → FedAvg","excluded":[],
      "updates":[
-       {"hospital":"h0","loss":0.51,"n":120,"sent":true,"masked":true,"dp_eps":1.5},
-       {"hospital":"h1","loss":0.53,"n":120,"sent":true,"masked":true,"dp_eps":1.5},
-       {"hospital":"h2","loss":0.49,"n":120,"sent":true,"masked":true,"dp_eps":1.5}],
+       {"hospital":"h0","loss":0.51,"n":120,"sent":true,"masked":true,"dp_eps":1.5,"dp_sigma":0.008},
+       {"hospital":"h1","loss":0.53,"n":120,"sent":true,"masked":true,"dp_eps":1.5,"dp_sigma":0.008},
+       {"hospital":"h2","loss":0.49,"n":120,"sent":true,"masked":true,"dp_eps":1.5,"dp_sigma":0.008}],
      "broadcast":{"v":"1.0","round":1,"w":[0.40,0.85,-0.11,1.00,0.30,-0.03,0.05],
        "strategy":"fedavg","eps_total":1.5,"auc":0.81,"losses":[0.51,0.53,0.49],"converged":false}}
   ],
@@ -174,7 +178,9 @@ the player needs are `rounds[i].excluded` and `updates[j].sent/rejected/reason`.
 ```
 
 Per-round `decision` is a human-readable string for the decision log. `excluded` lists
-hospitals whose update was rejected or absent this round.
+hospitals whose update was rejected or absent this round. Each `updates[]` row also carries
+`dp_sigma`, the σ actually added to that update (calibrated to the plan it was trained with;
+`0.0` when nothing was noised).
 
 ---
 
