@@ -43,8 +43,8 @@ def main(argv=None):
         trace_rel = "trace.json"
 
     if not args.no_run and not os.environ.get("DEEPSEEK_API_KEY"):
-        # regeneration needs the LLM to reconcile differently-named columns; without the
-        # key it would fall back to an empty contract, so replay the committed trace instead.
+        # without the key every decision would come from the rule fallback (the manifest's
+        # schema map), not the agents, so replay the committed LLM trace instead.
         print("DEEPSEEK_API_KEY is not set — replaying the committed trace instead of regenerating.")
         print('Set $env:DEEPSEEK_API_KEY = "sk-..." and rerun to regenerate (or pass --no-run).')
     elif not args.no_run:

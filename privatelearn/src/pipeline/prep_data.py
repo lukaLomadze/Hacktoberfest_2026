@@ -125,6 +125,38 @@ def local_rows(hospital: int, clean: dict[str, np.ndarray], idx: np.ndarray, see
     return header, rows
 
 
+def _col(source, unit, factor=1.0, derive=None):
+    return {"source": list(source), "unit": unit, "factor": factor, "derive": derive}
+
+
+def local_schema() -> dict:
+    """Each hospital's local→canonical mapping, exactly as local_rows() wrote its file.
+
+    This is the Schema agent's offline fallback (manifest 'schema', the same shape the
+    banks manifest uses): without it, a run with no LLM — or a single failed LLM call —
+    leaves that hospital with raw column names and the federation agrees no features.
+    With an LLM the agent still derives the mapping itself; this is only the fallback.
+    """
+    return {
+        "h0": {"label": "Outcome", "columns": {
+            "pregnancies": _col(["Pregnancies"], "count"), "glucose": _col(["Glucose"], "mg/dL"),
+            "blood_pressure": _col(["BloodPressure"], "mmHg"), "bmi": _col(["BMI"], "kg/m^2"),
+            "insulin": _col(["Insulin"], "uU/mL"), "age": _col(["Age"], "years")}},
+        "h1": {"label": "outcome", "columns": {
+            "pregnancies": _col(["pregnancies"], "count"),
+            "glucose": _col(["glucose_mmol_l"], "mmol/L", MGDL_PER_MMOLL),
+            "blood_pressure": _col(["bp_kpa"], "kPa", MMHG_PER_KPA),
+            "bmi": _col(["weight_kg", "height_m"], "kg, m", None, "bmi"),
+            "insulin": _col(["insulin_pmol_l"], "pmol/L", 1.0 / PMOLL_PER_UUML),
+            "age": _col(["age_months"], "months", 1.0 / MONTHS_PER_YEAR)}},
+        "h2": {"label": "outcome", "columns": {
+            "pregnancies": _col(["num_pregnancies"], "count"), "glucose": _col(["glucose"], "mg/dL"),
+            "blood_pressure": _col(["bp_sys"], "mmHg"), "bmi": _col(["bmi"], "kg/m^2"),
+            "insulin": _col(["insulin_pmol_l"], "pmol/L", 1.0 / PMOLL_PER_UUML),
+            "age": _col(["age"], "years")}},
+    }
+
+
 def _write_csv(path: pathlib.Path, header, rows) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", newline="", encoding="utf-8") as fh:
@@ -177,8 +209,9 @@ def prepare(raw_path, out_dir, seed: int = SEED) -> dict:
         "holdout": {"file": "holdout/test.csv", "fraction": HOLDOUT_FRACTION,
                     "balance": balance(holdout), "row_ids": [int(i) for i in holdout]},
         "files": {f"h{h}": f"hospitals/hospital_{h}.csv" for h in range(N_HOSPITALS)},
-        "note": "Values are median-imputed, NOT z-scored. Map local→canonical (Schema agent), "
-                "then z-score with feature_mean/feature_std in canonical_features order.",
+        "schema": local_schema(),
+        "note": "Values are median-imputed, NOT z-scored. Map local→canonical (Schema agent; "
+                "manifest 'schema' is its offline fallback), then z-score with feature_mean/feature_std in canonical_features order.",
     }
     io.save_json(out_dir / "hospitals" / "manifest.json", manifest)
     return manifest

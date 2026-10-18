@@ -87,6 +87,11 @@ class CoordinatorAgent(Agent):
     def _names(self, ids):
         return ", ".join(self.names[h] for h in ids)
 
+    @property
+    def waiting(self) -> bool:
+        """Still running: the bus must keep ticking to the reply deadline even if nobody answers."""
+        return not self.done
+
     def _eps_total(self):
         return round(max(self.eps_spent.values()), 6) if self.eps_spent else 0.0
 
@@ -191,6 +196,11 @@ class CoordinatorAgent(Agent):
             return select_strategy(losses, tau=self.tau, outlier_sigma=self.outlier_sigma, names=names)
 
         d = self.decider.strategy(losses, names, _rule, round=self.round)
+        if len(set(d["flagged"])) >= len(responders):
+            # nobody would train and the round could never complete: decide by the rule instead
+            rule = _rule()
+            d = {"strategy": rule.strategy, "flagged": list(rule.flagged), "made_by": "rule",
+                 "reasoning": f"{rule.reason} (the proposed decision excluded every hospital)"}
         flagged = [responders[i] for i in d["flagged"]]
         participants = [h for h in responders if h not in flagged]
         total_n = sum(probes[h]["n"] for h in participants)
