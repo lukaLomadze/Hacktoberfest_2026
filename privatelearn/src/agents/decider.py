@@ -49,7 +49,10 @@ SYSTEM_DESCRIBE = (
     "when the values are already in the standard unit or are only renamed; use null ONLY when the "
     "value is derived from two or more source columns (e.g. BMI from weight and height), never for "
     "a single column. Use the statistics to disambiguate units (a value around 1.7 is metres, "
-    "around 70 is inches). Reply with a single JSON object "
+    "around 70 is inches). "
+    'When the input includes "shared_features", those are the shared schema\'s canonical feature '
+    "names: assign every local column the matching canonical name (a column may be a rename, a "
+    "unit conversion, or a direct match of one of those names). Reply with a single JSON object "
     'with keys "label" (the outcome/target column name) and "columns" (a list of '
     '{"source": [names], "semantic": name, "unit": unit, "factor": number-or-null}) and '
     '"reasoning" (one sentence).'
@@ -84,7 +87,7 @@ class RuleDecider:
 
     made_by = "rule"
 
-    def describe(self, columns, fallback, profile=None):
+    def describe(self, columns, fallback, profile=None, feature_names=None):
         return fallback()
 
     def plan(self, context, fallback):
@@ -189,10 +192,12 @@ class LLMDecider:
             return {"strategy": d.strategy, "flagged": list(d.flagged),
                     "reasoning": d.reason, "made_by": "rule"}
 
-    def describe(self, columns, fallback, profile=None):
+    def describe(self, columns, fallback, profile=None, feature_names=None):
         try:
-            out = self._ask(SYSTEM_DESCRIBE, json.dumps(
-                {"local_columns": list(columns), "profile": profile}))
+            payload = {"local_columns": list(columns), "profile": profile}
+            if feature_names:
+                payload["shared_features"] = list(feature_names)
+            out = self._ask(SYSTEM_DESCRIBE, json.dumps(payload))
             label = str(out["label"])
             if label not in columns:
                 raise ValueError(f"label {label!r} not among {list(columns)}")

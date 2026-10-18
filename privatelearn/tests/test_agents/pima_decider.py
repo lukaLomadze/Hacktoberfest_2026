@@ -33,7 +33,7 @@ class PimaDecider(RuleDecider):
         "agemonths": ("age", "months", 1.0 / 12.0),
     }
 
-    def describe(self, columns, fallback, profile=None):
+    def describe(self, columns, fallback, profile=None, feature_names=None):
         label = None
         cols = []
         by_norm = {_norm(c): c for c in columns}

@@ -17,9 +17,10 @@ The demo scenario (fixed, so the replay is reproducible):
            → its probe loss is an outlier → excluded before masking
   round 4  all three hospitals train
 
-Baselines measured on the same holdout (data/holdout/test.csv, never trained on):
-  solo         each hospital alone, trained to convergence on its own 120 rows
-  centralized  all 360 rows pooled (the illegal upper bound), trained to convergence
+Baselines measured on the same holdout (data/holdout/test.csv, never trained on). Solo and
+centralized are trained to the SAME extent as the federation (`rounds × EPOCHS` epochs):
+  solo         each hospital alone on its own rows
+  centralized  all rows pooled (the illegal upper bound)
   federated    this run's final global model
 
     python src/pipeline/run_loop.py            # writes trace.json
@@ -64,7 +65,6 @@ EPOCHS = 4
 LR = 0.1
 EXAMPLE_CLIP = 1.0
 EPS_PER_ROUND = 1.5
-SOLO_EPOCHS = 400  # "trained to convergence" for the solo / centralized baselines
 FAULTS = {"h2": {2: "offline", 3: "age_in_months"}}
 
 NODES = [
@@ -230,14 +230,18 @@ def run(seed: int = SEED, out_path=None, private: bool = True, use_llm: bool = F
     # each hospital's _X is already in the negotiated feature order, so no re-slicing here;
     # the holdout is sliced by name inside evaluate().
     n_w = len(coord.features) + 1
+    # Baselines are trained to the SAME extent as the federation: `rounds` rounds of
+    # `EPOCHS` local epochs each. (Training them to convergence at 400 epochs made the
+    # "individuals" look stronger than the federated model purely by training budget.)
+    baseline_epochs = rounds * EPOCHS
     solo = {}
     for h in hospitals:
-        w = logistic.train(np.zeros(n_w), h._X, h._labels, epochs=SOLO_EPOCHS, lr=LR)
+        w = logistic.train(np.zeros(n_w), h._X, h._labels, epochs=baseline_epochs, lr=LR)
         solo[h.id] = round(evaluate(w, coord.features), 4)
     X_all = np.vstack([h._X for h in hospitals])
     y_all = np.concatenate([h._labels for h in hospitals])
     auc_central = round(evaluate(
-        logistic.train(np.zeros(n_w), X_all, y_all, epochs=SOLO_EPOCHS, lr=LR), coord.features), 4)
+        logistic.train(np.zeros(n_w), X_all, y_all, epochs=baseline_epochs, lr=LR), coord.features), 4)
     auc_fed = round(coord.auc_series[-1], 4)
 
     # --- gradient inversion on a real patient row of Hospital A ------------------------------

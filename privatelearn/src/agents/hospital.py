@@ -104,13 +104,57 @@ class SchemaAgent:
         self.decider = decider
         self.profile = profile or {}
         self.schema_map = schema_map  # local→canonical mapping from the manifest (offline fallback)
-        d = decider.describe(self.columns, self._infer, self.profile) if decider is not None else None
+        feature_names = list(schema_map["columns"]) if schema_map else None
+        d = (decider.describe(self.columns, self._infer, self.profile, feature_names=feature_names)
+             if decider is not None else None)
         if d is None:
             d = self._infer()
+        d = self._ground_in_schema_map(d)
         self.label = d["label"]
         self.described = d["columns"]
         self.reasoning = d.get("reasoning", "")
         self.made_by = d.get("made_by", "rule")
+
+    def _ground_in_schema_map(self, d):
+        """Correct a decider's describe against the manifest's recorded local→canonical mapping.
+
+        The manifest knows the exact source→factor relationship (a unit conversion such as
+        USD→TWD is a fixed, recorded number). An LLM may mis-infer that factor even when it
+        names the column correctly, so whenever a single-source description's source matches
+        the manifest, adopt the manifest's factor/semantic/unit and note the correction.
+        """
+        if self.schema_map is None:
+            return d
+        by_source = {}
+        for fname, m in self.schema_map["columns"].items():
+            for s in m.get("source", []):
+                by_source[s] = {"semantic": fname, "factor": m.get("factor"),
+                                "unit": m.get("unit")}
+        corrected = 0
+        cols = []
+        for c in d.get("columns", []):
+            src = list(c.get("source", []))
+            if len(src) == 1 and src[0] in by_source:
+                ground = by_source[src[0]]
+                gf = ground["factor"]
+                if gf is not None:
+                    changed = False
+                    if c.get("semantic") != ground["semantic"]:
+                        c = {**c, "semantic": ground["semantic"]}
+                        changed = True
+                    if c.get("factor") is None or abs(float(c.get("factor")) - gf) > 1e-6:
+                        c = {**c, "factor": gf}
+                        changed = True
+                    if ground["unit"] and c.get("unit") != ground["unit"]:
+                        c = {**c, "unit": ground["unit"]}
+                        changed = True
+                    if changed:
+                        corrected += 1
+            cols.append(c)
+        if corrected:
+            d = {**d, "columns": cols,
+                 "reasoning": f"{d.get('reasoning', '')} [grounded {corrected} mapping(s) in the manifest]".strip()}
+        return d
 
     def _infer(self):
         """Offline fallback: no domain knowledge. When the manifest supplies this client's
