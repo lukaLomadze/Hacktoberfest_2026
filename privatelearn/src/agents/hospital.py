@@ -104,7 +104,9 @@ class SchemaAgent:
         self.decider = decider
         self.profile = profile or {}
         self.schema_map = schema_map  # local→canonical mapping from the manifest (offline fallback)
-        d = decider.describe(self.columns, self._infer, self.profile) if decider is not None else None
+        feature_names = list(schema_map["columns"]) if schema_map else None
+        d = (decider.describe(self.columns, self._infer, self.profile, feature_names=feature_names)
+             if decider is not None else None)
         if d is None:
             d = self._infer()
         self.label = d["label"]
