@@ -1,0 +1,1332 @@
+{
+  "v": "1.0",
+  "meta": {
+    "dataset": "Default of Credit Card Clients (UCI)",
+    "hospitals": 3,
+    "rows_per_hospital": 400,
+    "features": [
+      "age",
+      "credit_limit",
+      "sex",
+      "education",
+      "marriage",
+      "pay_status",
+      "bill_amount",
+      "pay_amount"
+    ],
+    "weights": 9,
+    "rounds": 8,
+    "auc_solo": 0.6956,
+    "auc_solo_by_hospital": {
+      "h0": 0.6856,
+      "h1": 0.6956,
+      "h2": 0.6829
+    },
+    "auc_federated": 0.6894,
+    "auc_centralized": 0.7003,
+    "auc_federated_no_privacy": 0.7056,
+    "eps_per_round": 1.5,
+    "dp_delta": 1e-05,
+    "dp_sensitivity": 0.002,
+    "dp_sigma": 0.0051651274,
+    "example_clip": 1.0,
+    "local_epochs": 4,
+    "lr": 0.1,
+    "seed": 42,
+    "model_hashes": {
+      "h0": "cbc543c73d79df0cdc5e0040ae7929dd8b250413278ee8537518ab39388a9237",
+      "h1": "cbc543c73d79df0cdc5e0040ae7929dd8b250413278ee8537518ab39388a9237",
+      "h2": "cbc543c73d79df0cdc5e0040ae7929dd8b250413278ee8537518ab39388a9237"
+    },
+    "decision_maker": {
+      "provider": "rule",
+      "model": "deterministic",
+      "llm_calls": 0,
+      "fallbacks": 0,
+      "schema": {
+        "h0": {
+          "made_by": "rule",
+          "reasoning": "manifest-provided local schema"
+        },
+        "h1": {
+          "made_by": "rule",
+          "reasoning": "manifest-provided local schema"
+        },
+        "h2": {
+          "made_by": "rule",
+          "reasoning": "manifest-provided local schema"
+        }
+      },
+      "policy": "the LLM only sees column names, local column statistics (min/p05/median/p95/max) and aggregate losses, never a patient row; gradients, aggregation, masking and DP are deterministic code"
+    },
+    "honesty": "Real default-of-credit-card-clients records (1200 of 30000) split into three SIMULATED banks; the player replays this recorded run, not live networking. Masking, DP noise, the agents' decisions and every number are real outputs of the code. DP accounting is a stated-ε demonstration, not an audited accountant."
+  },
+  "nodes": [
+    {
+      "id": "h0",
+      "label": "Bank A",
+      "color": "#4d8bff",
+      "role": "hospital"
+    },
+    {
+      "id": "h1",
+      "label": "Bank B",
+      "color": "#3fcf8e",
+      "role": "hospital"
+    },
+    {
+      "id": "h2",
+      "label": "Bank C",
+      "color": "#ff6b6b",
+      "role": "hospital"
+    },
+    {
+      "id": "coord",
+      "label": "Coordinator",
+      "color": "#f5b94d",
+      "role": "coordinator"
+    }
+  ],
+  "schema": {
+    "features": [
+      "age",
+      "credit_limit",
+      "sex",
+      "education",
+      "marriage",
+      "pay_status",
+      "bill_amount",
+      "pay_amount"
+    ],
+    "model": "logistic",
+    "per_hospital": {
+      "h0": {
+        "age": {
+          "source": [
+            "age_years"
+          ]
+        },
+        "credit_limit": {
+          "source": [
+            "credit_limit_twd"
+          ]
+        },
+        "sex": {
+          "source": [
+            "gender"
+          ]
+        },
+        "education": {
+          "source": [
+            "education"
+          ]
+        },
+        "marriage": {
+          "source": [
+            "marital_status"
+          ]
+        },
+        "pay_status": {
+          "source": [
+            "pay_status_sep"
+          ]
+        },
+        "bill_amount": {
+          "source": [
+            "bill_amt_twd"
+          ]
+        },
+        "pay_amount": {
+          "source": [
+            "pay_amt_twd"
+          ]
+        }
+      },
+      "h1": {
+        "age": {
+          "source": [
+            "age_months"
+          ]
+        },
+        "credit_limit": {
+          "source": [
+            "credit_limit_usd"
+          ]
+        },
+        "sex": {
+          "source": [
+            "gender"
+          ]
+        },
+        "education": {
+          "source": [
+            "education"
+          ]
+        },
+        "marriage": {
+          "source": [
+            "marital_status"
+          ]
+        },
+        "pay_status": {
+          "source": [
+            "pay_status"
+          ]
+        },
+        "bill_amount": {
+          "source": [
+            "bill_amt_usd"
+          ]
+        },
+        "pay_amount": {
+          "source": [
+            "pay_amt_usd"
+          ]
+        }
+      },
+      "h2": {
+        "age": {
+          "source": [
+            "age"
+          ]
+        },
+        "credit_limit": {
+          "source": [
+            "credit_limit_k"
+          ]
+        },
+        "sex": {
+          "source": [
+            "sex"
+          ]
+        },
+        "education": {
+          "source": [
+            "education"
+          ]
+        },
+        "marriage": {
+          "source": [
+            "marriage"
+          ]
+        },
+        "pay_status": {
+          "source": [
+            "pay_status"
+          ]
+        },
+        "bill_amount": {
+          "source": [
+            "bill_amt_k"
+          ]
+        },
+        "pay_amount": {
+          "source": [
+            "pay_amt_k"
+          ]
+        }
+      }
+    }
+  },
+  "rounds": [
+    {
+      "round": 1,
+      "strategy": "fedavg",
+      "eps_total": 1.5,
+      "auc_before": 0.5,
+      "auc_after": 0.6782,
+      "decision": "loss std 0.000 ≤ τ=0.1, hospitals agree → FedAvg",
+      "reasoning": "loss std 0.000 ≤ τ=0.1, hospitals agree → FedAvg",
+      "decided_by": "rule",
+      "probe_losses": {
+        "h0": 0.6931,
+        "h1": 0.6931,
+        "h2": 0.6931
+      },
+      "applied": true,
+      "excluded": [],
+      "updates": [
+        {
+          "hospital": "h0",
+          "loss": 0.6349431319,
+          "n": 400,
+          "sent": true,
+          "masked": true,
+          "dp_eps": 1.5,
+          "dp_sigma": 0.0017217091
+        },
+        {
+          "hospital": "h1",
+          "loss": 0.6527643046,
+          "n": 400,
+          "sent": true,
+          "masked": true,
+          "dp_eps": 1.5,
+          "dp_sigma": 0.0017217091
+        },
+        {
+          "hospital": "h2",
+          "loss": 0.6365373208,
+          "n": 400,
+          "sent": true,
+          "masked": true,
+          "dp_eps": 1.5,
+          "dp_sigma": 0.0017217091
+        }
+      ],
+      "broadcast": {
+        "v": "1.0",
+        "round": 1,
+        "w": [
+          -0.0865398292,
+          0.0023163859,
+          0.0008909036,
+          -0.0153315542,
+          0.0085077618,
+          -0.0024030868,
+          0.0362778262,
+          8.8624e-05,
+          0.0034536305
+        ],
+        "strategy": "fedavg",
+        "eps_total": 1.5,
+        "auc": 0.6782457598,
+        "losses": [
+          0.6349431319,
+          0.6527643046,
+          0.6365373208
+        ],
+        "converged": false
+      }
+    },
+    {
+      "round": 2,
+      "strategy": "fedavg",
+      "eps_total": 3.0,
+      "auc_before": 0.6782,
+      "auc_after": 0.6603,
+      "decision": "Bank C offline; loss std 0.001 ≤ τ=0.1, hospitals agree → FedAvg",
+      "reasoning": "loss std 0.001 ≤ τ=0.1, hospitals agree → FedAvg",
+      "decided_by": "rule",
+      "probe_losses": {
+        "h0": 0.6631,
+        "h1": 0.6616
+      },
+      "applied": true,
+      "excluded": [
+        "h2"
+      ],
+      "updates": [
+        {
+          "hospital": "h0",
+          "loss": 0.6106954712,
+          "n": 400,
+          "sent": true,
+          "masked": true,
+          "dp_eps": 1.5,
+          "dp_sigma": 0.0025825637
+        },
+        {
+          "hospital": "h1",
+          "loss": 0.6249481284,
+          "n": 400,
+          "sent": true,
+          "masked": true,
+          "dp_eps": 1.5,
+          "dp_sigma": 0.0025825637
+        },
+        {
+          "hospital": "h2",
+          "loss": null,
+          "n": 400,
+          "sent": false,
+          "masked": false,
+          "dp_eps": 0.0,
+          "reason": "offline",
+          "dp_sigma": 0.0
+        }
+      ],
+      "broadcast": {
+        "v": "1.0",
+        "round": 2,
+        "w": [
+          -0.1756638294,
+          0.0462115057,
+          -0.0077897905,
+          -0.0402997105,
+          0.0309387679,
+          -0.0262394517,
+          0.0838002563,
+          0.0044777836,
+          0.0069671358
+        ],
+        "strategy": "fedavg",
+        "eps_total": 3.0,
+        "auc": 0.6603181214,
+        "losses": [
+          0.6106954712,
+          0.6249481284
+        ],
+        "converged": false
+      }
+    },
+    {
+      "round": 3,
+      "strategy": "trimmed_mean",
+      "eps_total": 4.5,
+      "auc_before": 0.6603,
+      "auc_after": 0.6473,
+      "decision": "Bank C loss 2.028 is >2σ above median 0.627 → trimmed-mean, excluded",
+      "reasoning": "Bank C loss 2.028 is >2σ above median 0.627 → trimmed-mean, excluded",
+      "decided_by": "rule",
+      "probe_losses": {
+        "h0": 0.6209,
+        "h1": 0.6272,
+        "h2": 2.0275
+      },
+      "applied": true,
+      "excluded": [
+        "h2"
+      ],
+      "updates": [
+        {
+          "hospital": "h0",
+          "loss": 0.578610218,
+          "n": 400,
+          "sent": true,
+          "masked": true,
+          "dp_eps": 1.5,
+          "dp_sigma": 0.0025825637
+        },
+        {
+          "hospital": "h1",
+          "loss": 0.5953205038,
+          "n": 400,
+          "sent": true,
+          "masked": true,
+          "dp_eps": 1.5,
+          "dp_sigma": 0.0025825637
+        },
+        {
+          "hospital": "h2",
+          "loss": 2.0275145654,
+          "n": 400,
+          "sent": true,
+          "rejected": true,
+          "reason": "probe loss 2.028 is an outlier",
+          "masked": false,
+          "dp_eps": 0.0,
+          "dp_sigma": 0.0
+        }
+      ],
+      "broadcast": {
+        "v": "1.0",
+        "round": 3,
+        "w": [
+          -0.2729679734,
+          0.091446697,
+          -0.0156254037,
+          -0.0637945016,
+          0.0457030159,
+          -0.0587712407,
+          0.1244718513,
+          0.0133332981,
+          0.0090202764
+        ],
+        "strategy": "trimmed_mean",
+        "eps_total": 4.5,
+        "auc": 0.6473449703,
+        "losses": [
+          0.578610218,
+          0.5953205038
+        ],
+        "converged": false
+      }
+    },
+    {
+      "round": 4,
+      "strategy": "fedavg",
+      "eps_total": 6.0,
+      "auc_before": 0.6473,
+      "auc_after": 0.6644,
+      "decision": "loss std 0.029 ≤ τ=0.1, hospitals agree → FedAvg",
+      "reasoning": "loss std 0.029 ≤ τ=0.1, hospitals agree → FedAvg",
+      "decided_by": "rule",
+      "probe_losses": {
+        "h0": 0.5834,
+        "h1": 0.5956,
+        "h2": 0.6507
+      },
+      "applied": true,
+      "excluded": [],
+      "updates": [
+        {
+          "hospital": "h0",
+          "loss": 0.5520666584,
+          "n": 400,
+          "sent": true,
+          "masked": true,
+          "dp_eps": 1.5,
+          "dp_sigma": 0.0017217091
+        },
+        {
+          "hospital": "h1",
+          "loss": 0.5688444087,
+          "n": 400,
+          "sent": true,
+          "masked": true,
+          "dp_eps": 1.5,
+          "dp_sigma": 0.0017217091
+        },
+        {
+          "hospital": "h2",
+          "loss": 0.6002493201,
+          "n": 400,
+          "sent": true,
+          "masked": true,
+          "dp_eps": 1.5,
+          "dp_sigma": 0.0017217091
+        }
+      ],
+      "broadcast": {
+        "v": "1.0",
+        "round": 4,
+        "w": [
+          -0.361707481,
+          0.0876965872,
+          -0.026722149,
+          -0.0733862218,
+          0.0517423907,
+          -0.0588546154,
+          0.1596146014,
+          0.0152955239,
+          0.0076386105
+        ],
+        "strategy": "fedavg",
+        "eps_total": 6.0,
+        "auc": 0.6643864957,
+        "losses": [
+          0.5520666584,
+          0.5688444087,
+          0.6002493201
+        ],
+        "converged": false
+      }
+    },
+    {
+      "round": 5,
+      "strategy": "fedavg",
+      "eps_total": 7.5,
+      "auc_before": 0.6644,
+      "auc_after": 0.6751,
+      "decision": "loss std 0.028 ≤ τ=0.1, hospitals agree → FedAvg",
+      "reasoning": "loss std 0.028 ≤ τ=0.1, hospitals agree → FedAvg",
+      "decided_by": "rule",
+      "probe_losses": {
+        "h0": 0.5647,
+        "h1": 0.5713,
+        "h2": 0.6261
+      },
+      "applied": true,
+      "excluded": [],
+      "updates": [
+        {
+          "hospital": "h0",
+          "loss": 0.5384219331,
+          "n": 400,
+          "sent": true,
+          "masked": true,
+          "dp_eps": 1.5,
+          "dp_sigma": 0.0017217091
+        },
+        {
+          "hospital": "h1",
+          "loss": 0.5486486792,
+          "n": 400,
+          "sent": true,
+          "masked": true,
+          "dp_eps": 1.5,
+          "dp_sigma": 0.0017217091
+        },
+        {
+          "hospital": "h2",
+          "loss": 0.5813400713,
+          "n": 400,
+          "sent": true,
+          "masked": true,
+          "dp_eps": 1.5,
+          "dp_sigma": 0.0017217091
+        }
+      ],
+      "broadcast": {
+        "v": "1.0",
+        "round": 5,
+        "w": [
+          -0.4426399782,
+          0.0859715535,
+          -0.0356974108,
+          -0.082828433,
+          0.0619748564,
+          -0.0524788097,
+          0.1963696052,
+          0.0162089253,
+          0.0040715741
+        ],
+        "strategy": "fedavg",
+        "eps_total": 7.5,
+        "auc": 0.6750811159,
+        "losses": [
+          0.5384219331,
+          0.5486486792,
+          0.5813400713
+        ],
+        "converged": false
+      }
+    },
+    {
+      "round": 6,
+      "strategy": "fedavg",
+      "eps_total": 9.0,
+      "auc_before": 0.6751,
+      "auc_after": 0.6803,
+      "decision": "loss std 0.026 ≤ τ=0.1, hospitals agree → FedAvg",
+      "reasoning": "loss std 0.026 ≤ τ=0.1, hospitals agree → FedAvg",
+      "decided_by": "rule",
+      "probe_losses": {
+        "h0": 0.5489,
+        "h1": 0.5509,
+        "h2": 0.6054
+      },
+      "applied": true,
+      "excluded": [],
+      "updates": [
+        {
+          "hospital": "h0",
+          "loss": 0.5267592965,
+          "n": 400,
+          "sent": true,
+          "masked": true,
+          "dp_eps": 1.5,
+          "dp_sigma": 0.0017217091
+        },
+        {
+          "hospital": "h1",
+          "loss": 0.5318651913,
+          "n": 400,
+          "sent": true,
+          "masked": true,
+          "dp_eps": 1.5,
+          "dp_sigma": 0.0017217091
+        },
+        {
+          "hospital": "h2",
+          "loss": 0.5658711824,
+          "n": 400,
+          "sent": true,
+          "masked": true,
+          "dp_eps": 1.5,
+          "dp_sigma": 0.0017217091
+        }
+      ],
+      "broadcast": {
+        "v": "1.0",
+        "round": 6,
+        "w": [
+          -0.5175518382,
+          0.0845702722,
+          -0.0431951795,
+          -0.0942430052,
+          0.0702858537,
+          -0.0509052397,
+          0.2254824225,
+          0.0127940507,
+          0.0024752848
+        ],
+        "strategy": "fedavg",
+        "eps_total": 9.0,
+        "auc": 0.6803266889,
+        "losses": [
+          0.5267592965,
+          0.5318651913,
+          0.5658711824
+        ],
+        "converged": false
+      }
+    },
+    {
+      "round": 7,
+      "strategy": "fedavg",
+      "eps_total": 10.5,
+      "auc_before": 0.6803,
+      "auc_after": 0.6859,
+      "decision": "loss std 0.025 ≤ τ=0.1, hospitals agree → FedAvg",
+      "reasoning": "loss std 0.025 ≤ τ=0.1, hospitals agree → FedAvg",
+      "decided_by": "rule",
+      "probe_losses": {
+        "h0": 0.5356,
+        "h1": 0.5343,
+        "h2": 0.5888
+      },
+      "applied": true,
+      "excluded": [],
+      "updates": [
+        {
+          "hospital": "h0",
+          "loss": 0.5169905292,
+          "n": 400,
+          "sent": true,
+          "masked": true,
+          "dp_eps": 1.5,
+          "dp_sigma": 0.0017217091
+        },
+        {
+          "hospital": "h1",
+          "loss": 0.5183101342,
+          "n": 400,
+          "sent": true,
+          "masked": true,
+          "dp_eps": 1.5,
+          "dp_sigma": 0.0017217091
+        },
+        {
+          "hospital": "h2",
+          "loss": 0.5538098092,
+          "n": 400,
+          "sent": true,
+          "masked": true,
+          "dp_eps": 1.5,
+          "dp_sigma": 0.0017217091
+        }
+      ],
+      "broadcast": {
+        "v": "1.0",
+        "round": 7,
+        "w": [
+          -0.5861325471,
+          0.0825344876,
+          -0.0513649243,
+          -0.100738466,
+          0.0732116214,
+          -0.0446773233,
+          0.2580872524,
+          0.011301765,
+          0.0021421601
+        ],
+        "strategy": "fedavg",
+        "eps_total": 10.5,
+        "auc": 0.6859419121,
+        "losses": [
+          0.5169905292,
+          0.5183101342,
+          0.5538098092
+        ],
+        "converged": false
+      }
+    },
+    {
+      "round": 8,
+      "strategy": "fedavg",
+      "eps_total": 12.0,
+      "auc_before": 0.6859,
+      "auc_after": 0.6894,
+      "decision": "loss std 0.024 ≤ τ=0.1, hospitals agree → FedAvg",
+      "reasoning": "loss std 0.024 ≤ τ=0.1, hospitals agree → FedAvg",
+      "decided_by": "rule",
+      "probe_losses": {
+        "h0": 0.5248,
+        "h1": 0.5203,
+        "h2": 0.5736
+      },
+      "applied": true,
+      "excluded": [],
+      "updates": [
+        {
+          "hospital": "h0",
+          "loss": 0.5088227863,
+          "n": 400,
+          "sent": true,
+          "masked": true,
+          "dp_eps": 1.5,
+          "dp_sigma": 0.0017217091
+        },
+        {
+          "hospital": "h1",
+          "loss": 0.5067547756,
+          "n": 400,
+          "sent": true,
+          "masked": true,
+          "dp_eps": 1.5,
+          "dp_sigma": 0.0017217091
+        },
+        {
+          "hospital": "h2",
+          "loss": 0.5430697105,
+          "n": 400,
+          "sent": true,
+          "masked": true,
+          "dp_eps": 1.5,
+          "dp_sigma": 0.0017217091
+        }
+      ],
+      "broadcast": {
+        "v": "1.0",
+        "round": 8,
+        "w": [
+          -0.6463453078,
+          0.0800913477,
+          -0.0572740138,
+          -0.110044693,
+          0.0683528117,
+          -0.0416865835,
+          0.2837302982,
+          0.0116930134,
+          -0.0024046005
+        ],
+        "strategy": "fedavg",
+        "eps_total": 12.0,
+        "auc": 0.6894389078,
+        "losses": [
+          0.5088227863,
+          0.5067547756,
+          0.5430697105
+        ],
+        "converged": true
+      }
+    }
+  ],
+  "metrics": {
+    "auc_series": [
+      0.5,
+      0.6782,
+      0.6603,
+      0.6473,
+      0.6644,
+      0.6751,
+      0.6803,
+      0.6859,
+      0.6894
+    ],
+    "loss_series": [
+      0.6931,
+      0.6414,
+      0.6178,
+      0.587,
+      0.5737,
+      0.5561,
+      0.5415,
+      0.5297,
+      0.5195
+    ]
+  },
+  "attack": {
+    "target": "h0",
+    "without_privacy": {
+      "recovered": true,
+      "feature_error": 0.0
+    },
+    "with_privacy": {
+      "recovered": false,
+      "feature_error": 1.6482
+    }
+  },
+  "agents": {
+    "h0": [
+      {
+        "round": 0,
+        "agent": "schema",
+        "action": "described 9 local columns"
+      },
+      {
+        "round": 0,
+        "agent": "schema",
+        "action": "mapped to the agreed 8-feature schema"
+      },
+      {
+        "round": 1,
+        "agent": "challenger",
+        "action": "global model on local data: loss 0.693, AUC 0.500"
+      },
+      {
+        "round": 1,
+        "agent": "planner",
+        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+      },
+      {
+        "round": 1,
+        "agent": "trainer",
+        "action": "trained on 400 local rows, loss 0.635; sent masked Δw"
+      },
+      {
+        "round": 1,
+        "agent": "challenger",
+        "action": "new global model: local AUC 0.758"
+      },
+      {
+        "round": 2,
+        "agent": "challenger",
+        "action": "global model on local data: loss 0.663, AUC 0.758"
+      },
+      {
+        "round": 2,
+        "agent": "planner",
+        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+      },
+      {
+        "round": 2,
+        "agent": "trainer",
+        "action": "trained on 400 local rows, loss 0.611; sent masked Δw"
+      },
+      {
+        "round": 2,
+        "agent": "challenger",
+        "action": "new global model: local AUC 0.753"
+      },
+      {
+        "round": 3,
+        "agent": "challenger",
+        "action": "global model on local data: loss 0.621, AUC 0.753"
+      },
+      {
+        "round": 3,
+        "agent": "planner",
+        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+      },
+      {
+        "round": 3,
+        "agent": "trainer",
+        "action": "trained on 400 local rows, loss 0.579; sent masked Δw"
+      },
+      {
+        "round": 3,
+        "agent": "challenger",
+        "action": "new global model: local AUC 0.747"
+      },
+      {
+        "round": 4,
+        "agent": "challenger",
+        "action": "global model on local data: loss 0.583, AUC 0.747"
+      },
+      {
+        "round": 4,
+        "agent": "planner",
+        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+      },
+      {
+        "round": 4,
+        "agent": "trainer",
+        "action": "trained on 400 local rows, loss 0.552; sent masked Δw"
+      },
+      {
+        "round": 4,
+        "agent": "challenger",
+        "action": "new global model: local AUC 0.756"
+      },
+      {
+        "round": 5,
+        "agent": "challenger",
+        "action": "global model on local data: loss 0.565, AUC 0.756"
+      },
+      {
+        "round": 5,
+        "agent": "planner",
+        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+      },
+      {
+        "round": 5,
+        "agent": "trainer",
+        "action": "trained on 400 local rows, loss 0.538; sent masked Δw"
+      },
+      {
+        "round": 5,
+        "agent": "challenger",
+        "action": "new global model: local AUC 0.759"
+      },
+      {
+        "round": 6,
+        "agent": "challenger",
+        "action": "global model on local data: loss 0.549, AUC 0.759"
+      },
+      {
+        "round": 6,
+        "agent": "planner",
+        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+      },
+      {
+        "round": 6,
+        "agent": "trainer",
+        "action": "trained on 400 local rows, loss 0.527; sent masked Δw"
+      },
+      {
+        "round": 6,
+        "agent": "challenger",
+        "action": "new global model: local AUC 0.762"
+      },
+      {
+        "round": 7,
+        "agent": "challenger",
+        "action": "global model on local data: loss 0.536, AUC 0.762"
+      },
+      {
+        "round": 7,
+        "agent": "planner",
+        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+      },
+      {
+        "round": 7,
+        "agent": "trainer",
+        "action": "trained on 400 local rows, loss 0.517; sent masked Δw"
+      },
+      {
+        "round": 7,
+        "agent": "challenger",
+        "action": "new global model: local AUC 0.764"
+      },
+      {
+        "round": 8,
+        "agent": "challenger",
+        "action": "global model on local data: loss 0.525, AUC 0.764"
+      },
+      {
+        "round": 8,
+        "agent": "planner",
+        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+      },
+      {
+        "round": 8,
+        "agent": "trainer",
+        "action": "trained on 400 local rows, loss 0.509; sent masked Δw"
+      },
+      {
+        "round": 8,
+        "agent": "challenger",
+        "action": "new global model: local AUC 0.765"
+      }
+    ],
+    "h1": [
+      {
+        "round": 0,
+        "agent": "schema",
+        "action": "described 9 local columns"
+      },
+      {
+        "round": 0,
+        "agent": "schema",
+        "action": "mapped to the agreed 8-feature schema"
+      },
+      {
+        "round": 1,
+        "agent": "challenger",
+        "action": "global model on local data: loss 0.693, AUC 0.500"
+      },
+      {
+        "round": 1,
+        "agent": "planner",
+        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+      },
+      {
+        "round": 1,
+        "agent": "trainer",
+        "action": "trained on 400 local rows, loss 0.653; sent masked Δw"
+      },
+      {
+        "round": 1,
+        "agent": "challenger",
+        "action": "new global model: local AUC 0.715"
+      },
+      {
+        "round": 2,
+        "agent": "challenger",
+        "action": "global model on local data: loss 0.662, AUC 0.715"
+      },
+      {
+        "round": 2,
+        "agent": "planner",
+        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+      },
+      {
+        "round": 2,
+        "agent": "trainer",
+        "action": "trained on 400 local rows, loss 0.625; sent masked Δw"
+      },
+      {
+        "round": 2,
+        "agent": "challenger",
+        "action": "new global model: local AUC 0.700"
+      },
+      {
+        "round": 3,
+        "agent": "challenger",
+        "action": "global model on local data: loss 0.627, AUC 0.700"
+      },
+      {
+        "round": 3,
+        "agent": "planner",
+        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+      },
+      {
+        "round": 3,
+        "agent": "trainer",
+        "action": "trained on 400 local rows, loss 0.595; sent masked Δw"
+      },
+      {
+        "round": 3,
+        "agent": "challenger",
+        "action": "new global model: local AUC 0.694"
+      },
+      {
+        "round": 4,
+        "agent": "challenger",
+        "action": "global model on local data: loss 0.596, AUC 0.694"
+      },
+      {
+        "round": 4,
+        "agent": "planner",
+        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+      },
+      {
+        "round": 4,
+        "agent": "trainer",
+        "action": "trained on 400 local rows, loss 0.569; sent masked Δw"
+      },
+      {
+        "round": 4,
+        "agent": "challenger",
+        "action": "new global model: local AUC 0.700"
+      },
+      {
+        "round": 5,
+        "agent": "challenger",
+        "action": "global model on local data: loss 0.571, AUC 0.700"
+      },
+      {
+        "round": 5,
+        "agent": "planner",
+        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+      },
+      {
+        "round": 5,
+        "agent": "trainer",
+        "action": "trained on 400 local rows, loss 0.549; sent masked Δw"
+      },
+      {
+        "round": 5,
+        "agent": "challenger",
+        "action": "new global model: local AUC 0.704"
+      },
+      {
+        "round": 6,
+        "agent": "challenger",
+        "action": "global model on local data: loss 0.551, AUC 0.704"
+      },
+      {
+        "round": 6,
+        "agent": "planner",
+        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+      },
+      {
+        "round": 6,
+        "agent": "trainer",
+        "action": "trained on 400 local rows, loss 0.532; sent masked Δw"
+      },
+      {
+        "round": 6,
+        "agent": "challenger",
+        "action": "new global model: local AUC 0.705"
+      },
+      {
+        "round": 7,
+        "agent": "challenger",
+        "action": "global model on local data: loss 0.534, AUC 0.705"
+      },
+      {
+        "round": 7,
+        "agent": "planner",
+        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+      },
+      {
+        "round": 7,
+        "agent": "trainer",
+        "action": "trained on 400 local rows, loss 0.518; sent masked Δw"
+      },
+      {
+        "round": 7,
+        "agent": "challenger",
+        "action": "new global model: local AUC 0.707"
+      },
+      {
+        "round": 8,
+        "agent": "challenger",
+        "action": "global model on local data: loss 0.520, AUC 0.707"
+      },
+      {
+        "round": 8,
+        "agent": "planner",
+        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+      },
+      {
+        "round": 8,
+        "agent": "trainer",
+        "action": "trained on 400 local rows, loss 0.507; sent masked Δw"
+      },
+      {
+        "round": 8,
+        "agent": "challenger",
+        "action": "new global model: local AUC 0.710"
+      }
+    ],
+    "h2": [
+      {
+        "round": 0,
+        "agent": "schema",
+        "action": "described 9 local columns"
+      },
+      {
+        "round": 0,
+        "agent": "schema",
+        "action": "mapped to the agreed 8-feature schema"
+      },
+      {
+        "round": 1,
+        "agent": "challenger",
+        "action": "global model on local data: loss 0.693, AUC 0.500"
+      },
+      {
+        "round": 1,
+        "agent": "planner",
+        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+      },
+      {
+        "round": 1,
+        "agent": "trainer",
+        "action": "trained on 400 local rows, loss 0.637; sent masked Δw"
+      },
+      {
+        "round": 1,
+        "agent": "challenger",
+        "action": "new global model: local AUC 0.669"
+      },
+      {
+        "round": 2,
+        "agent": "planner",
+        "action": "offline this round"
+      },
+      {
+        "round": 3,
+        "agent": "challenger",
+        "action": "global model on local data: loss 2.028, AUC 0.593"
+      },
+      {
+        "round": 3,
+        "agent": "planner",
+        "action": "not a participant this round"
+      },
+      {
+        "round": 3,
+        "agent": "challenger",
+        "action": "new global model: local AUC 0.646"
+      },
+      {
+        "round": 4,
+        "agent": "challenger",
+        "action": "global model on local data: loss 0.651, AUC 0.646"
+      },
+      {
+        "round": 4,
+        "agent": "planner",
+        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+      },
+      {
+        "round": 4,
+        "agent": "trainer",
+        "action": "trained on 400 local rows, loss 0.600; sent masked Δw"
+      },
+      {
+        "round": 4,
+        "agent": "challenger",
+        "action": "new global model: local AUC 0.656"
+      },
+      {
+        "round": 5,
+        "agent": "challenger",
+        "action": "global model on local data: loss 0.626, AUC 0.656"
+      },
+      {
+        "round": 5,
+        "agent": "planner",
+        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+      },
+      {
+        "round": 5,
+        "agent": "trainer",
+        "action": "trained on 400 local rows, loss 0.581; sent masked Δw"
+      },
+      {
+        "round": 5,
+        "agent": "challenger",
+        "action": "new global model: local AUC 0.664"
+      },
+      {
+        "round": 6,
+        "agent": "challenger",
+        "action": "global model on local data: loss 0.605, AUC 0.664"
+      },
+      {
+        "round": 6,
+        "agent": "planner",
+        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+      },
+      {
+        "round": 6,
+        "agent": "trainer",
+        "action": "trained on 400 local rows, loss 0.566; sent masked Δw"
+      },
+      {
+        "round": 6,
+        "agent": "challenger",
+        "action": "new global model: local AUC 0.668"
+      },
+      {
+        "round": 7,
+        "agent": "challenger",
+        "action": "global model on local data: loss 0.589, AUC 0.668"
+      },
+      {
+        "round": 7,
+        "agent": "planner",
+        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+      },
+      {
+        "round": 7,
+        "agent": "trainer",
+        "action": "trained on 400 local rows, loss 0.554; sent masked Δw"
+      },
+      {
+        "round": 7,
+        "agent": "challenger",
+        "action": "new global model: local AUC 0.674"
+      },
+      {
+        "round": 8,
+        "agent": "challenger",
+        "action": "global model on local data: loss 0.574, AUC 0.674"
+      },
+      {
+        "round": 8,
+        "agent": "planner",
+        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+      },
+      {
+        "round": 8,
+        "agent": "trainer",
+        "action": "trained on 400 local rows, loss 0.543; sent masked Δw"
+      },
+      {
+        "round": 8,
+        "agent": "challenger",
+        "action": "new global model: local AUC 0.677"
+      }
+    ]
+  },
+  "patient_bytes_transferred": 0,
+  "timeline_ms": 60000
+}

@@ -45,9 +45,11 @@ SYSTEM_DESCRIBE = (
     "hospital's local column names and, for each, summary statistics (min/p05/median/mean/p95/max). "
     "Never see or return patient values. For every column give: a semantic name that captures what "
     "it measures (a common, normalised name such as 'age', 'income', 'blood_pressure'), the unit "
-    "the values are in, and a factor that converts the local values to a standard unit (or null if "
-    "the value is derived, e.g. BMI from weight and height). Use the statistics to disambiguate "
-    "units (a value around 1.7 is metres, around 70 is inches). Reply with a single JSON object "
+    "the values are in, and a factor that converts the local values to a standard unit. Use 1.0 "
+    "when the values are already in the standard unit or are only renamed; use null ONLY when the "
+    "value is derived from two or more source columns (e.g. BMI from weight and height), never for "
+    "a single column. Use the statistics to disambiguate units (a value around 1.7 is metres, "
+    "around 70 is inches). Reply with a single JSON object "
     'with keys "label" (the outcome/target column name) and "columns" (a list of '
     '{"source": [names], "semantic": name, "unit": unit, "factor": number-or-null}) and '
     '"reasoning" (one sentence).'
@@ -66,7 +68,12 @@ SYSTEM_CONTRACT = (
     "a semantic name, unit and conversion factor. Reconcile them into one shared schema: group "
     "columns that measure the same thing across hospitals (their names and units differ) into "
     "features, and keep only the feature set EVERY hospital can provide. For each hospital, map each "
-    "feature to its local source column(s) and the factor that converts them to the shared unit. "
+    "feature to its local source column(s) and the factor that converts them to the shared unit "
+    "(use 1.0 for a rename with no unit change; use null only for a feature derived from two or "
+    "more source columns). "
+    'When the input includes "shared_features", those are the dataset\'s canonical feature names: '
+    "use exactly those names for the shared features, mapping each hospital's described columns "
+    "onto the matching canonical name (hospitals may name and unit the same thing differently). "
     'Reply with a single JSON object: {"features": [names], "model": a supported model, "columns": '
     '{hospital: {feature: {"source": [names], "factor": number-or-null}}}, "reasoning": one sentence}.'
 )
@@ -89,7 +96,7 @@ class RuleDecider:
         return {"strategy": d.strategy, "flagged": list(d.flagged),
                 "reasoning": d.reason, "made_by": "rule"}
 
-    def contract(self, proposals, fallback):
+    def contract(self, proposals, fallback, feature_names=None):
         """Agree the federation contract from every hospital's proposed feature names."""
         return fallback()
 
@@ -197,6 +204,9 @@ class LLMDecider:
                 factor = e.get("factor")
                 if factor is not None:
                     factor = float(factor)
+                elif len(source) == 1:
+                    # a null factor on a single source means "rename-only / no conversion"
+                    factor = 1.0
                 cols.append({"source": [str(s) for s in source],
                              "semantic": str(e["semantic"]),
                              "unit": str(e.get("unit", "")), "factor": factor})
@@ -231,10 +241,12 @@ class LLMDecider:
             d = self._fallback(exc, fallback)
             return {**d, "made_by": "rule"}
 
-    def contract(self, proposals, fallback):
+    def contract(self, proposals, fallback, feature_names=None):
         try:
-            out = self._ask(SYSTEM_CONTRACT, json.dumps(
-                {"hospitals": proposals, "supported_models": list(SUPPORTED_MODELS)}))
+            payload = {"hospitals": proposals, "supported_models": list(SUPPORTED_MODELS)}
+            if feature_names:
+                payload["shared_features"] = list(feature_names)
+            out = self._ask(SYSTEM_CONTRACT, json.dumps(payload))
             feats = [str(f) for f in out["features"]]
             model = str(out.get("model", "logistic"))
             if model not in SUPPORTED_MODELS:

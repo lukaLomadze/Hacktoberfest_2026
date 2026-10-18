@@ -95,13 +95,15 @@ class SchemaAgent:
     With an LLM, every column gets a *semantic* name, its unit and a factor to a
     standard unit — decided from the column name and its summary statistics, so it
     works for any table (medical, financial, …), not just the demo's six columns.
-    Without an LLM it falls back to the offline alias table.
+    Without an LLM it uses the manifest-provided local→canonical mapping when one is
+    supplied (data-driven, works for any dataset), else normalised names only.
     """
 
-    def __init__(self, columns, decider=None, profile=None):
+    def __init__(self, columns, decider=None, profile=None, schema_map=None):
         self.columns = list(columns)
         self.decider = decider
         self.profile = profile or {}
+        self.schema_map = schema_map  # local→canonical mapping from the manifest (offline fallback)
         d = decider.describe(self.columns, self._infer, self.profile) if decider is not None else None
         if d is None:
             d = self._infer()
@@ -111,8 +113,22 @@ class SchemaAgent:
         self.made_by = d.get("made_by", "rule")
 
     def _infer(self):
-        """Offline fallback: no domain knowledge. Each column keeps its normalised name; the
-        LLM path is what actually infers semantics, units and conversions."""
+        """Offline fallback: no domain knowledge. When the manifest supplies this client's
+        local→canonical mapping, use it (data-driven, works for any dataset); otherwise each
+        column keeps its normalised name and the LLM path is what actually infers semantics,
+        units and conversions."""
+        if self.schema_map is not None:
+            sm = self.schema_map
+            cols = []
+            for f, m in sm["columns"].items():
+                entry = {"source": list(m["source"]), "semantic": f,
+                         "unit": m.get("unit", "unknown"), "factor": m.get("factor", 1.0)}
+                if m.get("derive") is not None:
+                    entry["derive"] = m["derive"]
+                cols.append(entry)
+            return {"label": sm["label"], "columns": cols,
+                    "reasoning": "manifest-provided local schema", "made_by": "rule"}
+
         label = None
         cols = []
         for c in self.columns:
@@ -130,13 +146,35 @@ class SchemaAgent:
         return {"hospital": hospital, "label": self.label, "columns": self.described}
 
     def to_canonical(self, rows, mapping, order):
-        """Local rows → (X in the agreed `order`, labels) using the agreed per-hospital mapping."""
+        """Local rows → (X in the agreed `order`, labels) using the agreed per-hospital mapping.
+
+        A mapping entry with `factor is None` is either a derived feature (two or more
+        source columns; `derive` names the derivation, default "bmi" = a/b²) or — when an
+        LLM used null to mean "no conversion / rename-only" — a single source column used
+        as-is. A single source cannot be derived, so treat it as a direct copy (factor 1).
+        """
         X = np.empty((len(rows), len(order)))
         for j, f in enumerate(order):
             m = mapping[f]
-            if m.get("factor") is None:  # derived feature, e.g. BMI from weight/height
-                w, h = m["source"]
-                X[:, j] = [r[w] / r[h] ** 2 for r in rows]
+            if m.get("factor") is None:
+                src = list(m["source"])
+                if len(src) == 1:  # null factor, single source → rename-only, no conversion
+                    X[:, j] = [r[src[0]] for r in rows]
+                    continue
+                derive = m.get("derive", "bmi")
+                if derive == "bmi":
+                    w, h = src
+                    X[:, j] = [r[w] / r[h] ** 2 for r in rows]
+                elif derive == "ratio":
+                    a, b = src
+                    X[:, j] = [r[a] / r[b] for r in rows]
+                elif derive == "product":
+                    a, b = src
+                    X[:, j] = [r[a] * r[b] for r in rows]
+                elif derive == "sum":
+                    X[:, j] = [sum(r[s] for s in src) for r in rows]
+                else:
+                    raise ValueError(f"unknown derive {derive!r} for feature {f!r}")
             else:
                 X[:, j] = [r[m["source"][0]] * m["factor"] for r in rows]
         labels = np.array([r[self.label] for r in rows], dtype=float)
@@ -194,16 +232,19 @@ class HospitalAgent(Agent):
     """A hospital on the bus. Raw rows are private attributes and never sent."""
 
     def __init__(self, hospital_id: str, columns, rows, feature_mean=None, feature_std=None,
-                 protector=None, train_fn=None, faults=None, planner=None, decider=None):
+                 protector=None, train_fn=None, faults=None, planner=None, decider=None,
+                 schema_map=None):
         super().__init__(hospital_id)
         self.roster = None  # every participant id of this federation, sorted (from schema_agreed)
         self._rows = rows  # local patient rows: never put on the bus
-        self.schema = SchemaAgent(columns, decider, column_profile(columns, rows))
+        self.schema = SchemaAgent(columns, decider, column_profile(columns, rows), schema_map=schema_map)
         self.planner = planner or PlannerAgent(decider=decider)
         self.trainer = TrainerAgent(train_fn)
         self.challenger = ChallengerAgent()
         self.protector = protector or no_protection
-        self.faults = dict(faults or {})  # {round: "offline" | "flip_labels" | "age_in_months"}
+        # {round: "offline" | "flip_labels" | "age_in_months" | {"unit_swap": {feature, factor}}}
+        # Round keys arrive as strings when faults are read from the manifest JSON.
+        self.faults = {int(k): v for k, v in (faults or {}).items()}
         self._mean = None if feature_mean is None else np.asarray(feature_mean, dtype=float)
         self._std = None if feature_std is None else np.asarray(feature_std, dtype=float)
         self._X = None
@@ -246,12 +287,23 @@ class HospitalAgent(Agent):
         if fault == "flip_labels":
             labels = 1.0 - labels
         elif fault == "age_in_months":
-            # the export silently switches the age column to months, same column name
-            j = self._order.index("age")
-            X = X.copy()
-            X[:, j] = (X[:, j] * self._std[j] + self._mean[j]) * 12.0
-            X[:, j] = (X[:, j] - self._mean[j]) / self._std[j]
+            # legacy alias: the export silently switches the age column to months, same column name
+            X = self._unit_swap(X, "age", 12.0)
+        elif isinstance(fault, dict) and "unit_swap" in fault:
+            us = fault["unit_swap"]
+            X = self._unit_swap(X, us["feature"], float(us["factor"]))
         return X, labels
+
+    def _unit_swap(self, X, feature: str, factor: float):
+        """A silent unit change: the export reports `feature` scaled by `factor`, same name.
+
+        Returns a copy — the fault must affect only this round, never the hospital's stored rows.
+        """
+        j = self._order.index(feature)
+        out = X.copy()
+        out[:, j] = (out[:, j] * self._std[j] + self._mean[j]) * factor
+        out[:, j] = (out[:, j] - self._mean[j]) / self._std[j]
+        return out
 
     # ---- message handlers -------------------------------------------------------
 
