@@ -712,58 +712,10 @@
    "company_name": "Rustavi Family Clinic",
    "group_id": "grp_1",
    "group_name": "Diabetes risk",
-   "status": "schema_proposed",
-   "node": {
-    "id": "node_4",
-    "status": "online",
-    "last_seen": "2026-10-18T14:03:20Z",
-    "agent": {
-     "provider": "deepseek",
-     "model": "deepseek-chat"
-    },
-    "connector": {
-     "kind": "sqlite",
-     "display": "patients.db / table visits"
-    },
-    "node_version": "0.1"
-   },
-   "data": {
-    "row_count": 120,
-    "columns": [
-     "glu_mmol",
-     "bmi",
-     "age_y",
-     "outcome"
-    ],
-    "profile": {
-     "glu_mmol": {
-      "min": 3.1,
-      "p05": 4.0,
-      "median": 6.2,
-      "mean": 6.6,
-      "p95": 10.9,
-      "max": 13.4,
-      "missing": 0
-     }
-    }
-   },
-   "schema": {
-    "label": "outcome",
-    "made_by": "llm",
-    "reasoning": "glu_mmol has a median of 6.2, which is mmol/L; converted to mg/dL",
-    "mapping": [
-     {
-      "feature": "glucose",
-      "source": [
-       "glu_mmol"
-      ],
-      "unit": "mmol/L",
-      "factor": 18.0182,
-      "transform": "x * 18.0182"
-     }
-    ],
-    "confirmed": false
-   },
+   "status": "approved",
+   "node": null,
+   "data": null,
+   "schema": null,
    "validation": null,
    "contribution": {
     "rows": 0,
@@ -771,7 +723,7 @@
    },
    "requested_at": "2026-10-18T11:00:00Z",
    "status_reason": null,
-   "has_node_token": true,
+   "has_node_token": false,
    "activated_at": null,
    "updated_at": "2026-10-18T11:00:00Z"
   },

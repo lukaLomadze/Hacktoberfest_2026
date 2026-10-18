@@ -200,6 +200,17 @@ function decisionControls({ label, act, canApprove }) {
   return { cell, update };
 }
 
+// Every group with a link to its page (E8), so the admin can reach training and versions.
+function groupsSection() {
+  const list = h("div.row", h("span.faint", "Loading…"));
+  api.get("/groups").then(({ items }) => {
+    list.replaceChildren(...(items.length ? items.map((g) => h("a.btn.ghost", { href: `#/groups/${encodeURIComponent(g.id)}` },
+      g.name, " ", statusPill(g.status))) : [h("span.faint", "No groups yet.")]),
+      h("a.btn.primary", { href: "#/groups/new" }, "+ New group"));
+  }, (err) => list.replaceChildren(errorBox(err)));
+  return h("section.panel.stack", h("h2", "Groups"), list);
+}
+
 export async function render({ el }) {
   ensureStyle();
 
@@ -347,7 +358,8 @@ export async function render({ el }) {
     refreshError,
     decisions,
     companies.section,
-    requests.section);
+    requests.section,
+    groupsSection());
 
   const timer = setInterval(() => {
     if (document.hidden) return;

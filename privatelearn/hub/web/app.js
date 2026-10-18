@@ -47,7 +47,7 @@ const TONES = {
   busy: ["training", "running", "busy", "probing", "planning", "masking", "evaluating", "key_exchange",
          "schema_negotiation", "normalization"],
   wait: ["pending", "requested", "queued", "waiting", "waiting_for_nodes", "node_connected", "schema_proposed",
-         "schema_confirmed", "payment_pending", "draft"],
+         "schema_confirmed", "draft"],
 };
 const TONE_OF = new Map(Object.entries(TONES).flatMap(([tone, values]) => values.map((v) => [v, tone])));
 
@@ -133,8 +133,8 @@ window.addEventListener("api:unauthorized", () => {
 // ---------------------------------------------------------------- shell
 
 const NAV = {
-  admin: [["/admin", "Approvals"], ["/groups/new", "New group"], ["/usage", "Usage"]],
-  company: [["/home", "Groups"], ["/usage", "Usage"]],
+  admin: [["/admin", "Approvals"], ["/groups/new", "New group"]],
+  company: [["/home", "Groups"]],
 };
 
 function renderNav() {
@@ -161,7 +161,7 @@ function renderNav() {
   }
 }
 
-const TASK_ISSUES = { E2: 67, E3: 68, E4: 69, E5: 70, E6: 71, E7: 72, E8: 73, E9: 74 };
+const TASK_ISSUES = { E2: 67, E3: 68, E4: 69, E5: 70, E6: 71, E7: 72, E8: 73 };
 
 function placeholder(route) {
   const issue = TASK_ISSUES[route.task];
@@ -209,7 +209,8 @@ async function mount(route, module) {
 }
 
 async function boot() {
-  if (api.isMock) document.getElementById("mock-badge").hidden = false;
+  // the badge shows only when ?mock=1 was asked for; ?rec=1 hides it for screen recordings
+  if (api.isMockForced && !new URLSearchParams(location.search).has("rec")) document.getElementById("mock-badge").hidden = false;
   await restoreSession();
   startRouter({ resolve, mount });
 }

@@ -7,6 +7,46 @@
 let db = null;
 let eventLog = null;
 
+// Real runs: heart_diseases_simulation/run_simulation.py writes mock/real/<job id>.json (its Job,
+// Group, Version and §6 events) after every event, so a run shows up here live and stays
+// replayable, and lists the job in mock/real/index.json ({"jobs": [...]}).
+let REAL_JOBS = [];
+const real = new Map(); // job id -> {job, group, version, events, source}
+let realCheckedAt = 0;
+let realInflight = null; // concurrent callers share one fetch
+
+function refreshReal(force = false) {
+  if (realInflight) return realInflight;
+  if (!force && Date.now() - realCheckedAt < 1000) return Promise.resolve();
+  realCheckedAt = Date.now();
+  realInflight = fetchReal().finally(() => { realInflight = null; });
+  return realInflight;
+}
+
+async function fetchReal() {
+  try {
+    const idx = await fetch(new URL("./real/index.json", import.meta.url), { cache: "no-store" });
+    if (idx.ok) REAL_JOBS = ((await idx.json()).jobs || []).map(String);
+  } catch { /* keep the last list */ }
+  await Promise.all(REAL_JOBS.map(async (id) => {
+    try {
+      const r = await fetch(new URL(`./real/${id}.json`, import.meta.url), { cache: "no-store" });
+      if (!r.ok) return;
+      const b = await r.json();
+      if (!b || !b.job || !Array.isArray(b.events)) return;
+      real.set(id, b);
+      const swap = (list, item) => {
+        const i = list.findIndex((x) => x.id === item.id);
+        if (i >= 0) list[i] = item; else list.push(item);
+      };
+      swap(db.jobs, b.job);
+      if (b.group) swap(db.groups, b.group);
+      if (b.version) swap(db.versions, b.version);
+    } catch { /* no bundle yet, or caught mid-write: try again on the next call */ }
+  }));
+}
+const isRealGroup = (groupId) => [...real.values()].some((b) => b.group && b.group.id === groupId);
+
 async function load() {
   if (!db) {
     const [d, e] = await Promise.all([
@@ -16,6 +56,7 @@ async function load() {
     db = d;
     eventLog = e.items;
     db.sessions = {}; // token -> user id
+    await refreshReal(true);
   }
   return db;
 }
@@ -31,7 +72,26 @@ export async function demoAccounts() {
 
 export async function events(jobId) {
   await load();
-  return eventLog.filter((e) => e.job_id === jobId);
+  if (REAL_JOBS.includes(jobId)) {
+    await refreshReal(true);
+    return real.has(jobId) ? real.get(jobId).events : [];
+  }
+  // a job started in the mock releases its replayed events as time passes; the stream polls
+  return jobEvents(jobId, true);
+}
+
+/** The jobs the live view can switch between: the scripted fixture and any real runs. */
+export async function demoRuns() {
+  await load();
+  await refreshReal();
+  const runs = [{ job_id: "job_1", label: "Scripted demo", detail: "fixed scenario, 3 hospitals", status: "succeeded" }];
+  for (const [id, b] of real) {
+    const llm = b.source && b.source.agents === "claude";
+    runs.push({ job_id: id, label: llm ? "Real agent run" : "Offline rehearsal (no LLM)",
+                detail: `${b.job.participants.length} hospitals · ${llm ? `${b.source.coordinator_model} agents` : "scripted agents"}`,
+                status: b.job.status });
+  }
+  return runs;
 }
 
 // ---------------------------------------------------------------- helpers
@@ -84,7 +144,8 @@ const MEMBER_STATUS = ["approved", "node_connected", "schema_proposed", "schema_
 const WIRED = ["approved", "node_connected", "schema_proposed", "schema_confirmed", "ready", "active"];
 
 function isGroupMember(user, groupId) {
-  return user.role === "admin" || db.memberships.some((m) => m.group_id === groupId &&
+  // a real run is a public demo: every signed-in account may watch it
+  return user.role === "admin" || isRealGroup(groupId) || db.memberships.some((m) => m.group_id === groupId &&
     m.company_id === user.company_id && !["rejected", "requested"].includes(m.status));
 }
 function canSeeGroup(user, g) {
@@ -116,6 +177,129 @@ function transition(m, from, to) {
   m.updated_at = now();
   return m;
 }
+// ---------------------------------------------------------------- jobs started in the mock
+// There is no federation in the browser: a started job replays the recorded run (job_1, from
+// trace.json) under its own id, then publishes a version and makes its participants active.
+
+const REPLAY_MS = 400; // api.stream's mock interval, so the job ends when its replay does
+
+// every event of a job; `soFar` keeps only those a live job has reached (the /events catch-up)
+function jobEvents(jobId, soFar = false) {
+  const own = eventLog.filter((e) => e.job_id === jobId);
+  const job = db.jobs.find((j) => j.id === jobId);
+  if (own.length || !job) return own;
+  const all = eventLog.filter((e) => e.job_id === "job_1").map((e) => {
+    const copy = { ...e, job_id: jobId };
+    if (e.type === "model.published") Object.assign(copy, { version: job.replay_version, version_id: job.replay_version_id });
+    return copy;
+  });
+  if (!soFar || job.status !== "running") return all;
+  const reached = Math.floor((Date.now() - job.replay_started) / REPLAY_MS);
+  return all.slice(0, Math.max(0, reached));
+}
+
+function finishLater(g, job, participants) {
+  job.status = "running";
+  job.step = "waiting_for_nodes";
+  job.started_at = now();
+  job.replay_started = Date.now();
+  const latest = db.versions.filter((v) => v.group_id === g.id).sort((a, b) => b.version - a.version)[0];
+  job.replay_version = (latest ? latest.version : 0) + 1;
+  job.replay_version_id = newId("mv");
+  participants.forEach((m) => { if (m.status === "ready") m.status = "training"; });
+  const template = db.jobs.find((j) => j.id === "job_1");
+  setTimeout(() => {
+    if (job.status !== "running") return;
+    Object.assign(job, { status: "succeeded", step: "published", round: job.rounds, finished_at: now(),
+                         metrics: structuredClone(template.metrics) });
+    const parent = db.versions.filter((v) => v.group_id === g.id).sort((a, b) => b.version - a.version)[0];
+    const base = parent || db.versions[0];
+    const v = { ...structuredClone(base), id: job.replay_version_id, group_id: g.id, version: (parent ? parent.version : 0) + 1,
+                parent_version_id: parent ? parent.id : null, job_id: job.id, created_at: now(),
+                contributors: participants.map((m) => ({ company_id: m.company_id,
+                                                         rows: (m.data && m.data.row_count) || 120, rounds: job.rounds })) };
+    db.versions.push(v);
+    db.models[v.id] = db.models[base.id];
+    g.current_version = { id: v.id, version: v.version };
+    g.status = "trained";
+    participants.forEach((m) => {
+      m.status = "active";
+      m.contribution = { rows: (m.data && m.data.row_count) || 120, rounds: job.rounds };
+    });
+  }, jobEvents(job.id).length * REPLAY_MS + 1500);
+}
+
+function labelCheck(m) {
+  const p = m.data && m.data.profile && m.data.profile[m.schema.label];
+  return p && typeof p.mean === "number"
+    ? { name: "label_balance", ok: p.mean > 0.05 && p.mean < 0.95, detail: `${Math.round(p.mean * 100)}% positive` }
+    : { name: "label_balance", ok: false, detail: "no label column chosen" };
+}
+
+function missingCheck(m) {
+  const prof = (m.data && m.data.profile) || {};
+  const missing = (m.schema.mapping || []).flatMap((x) => x.source)
+    .map((c) => [c, (prof[c] && prof[c].missing) || 0]).filter(([, n]) => n > 0);
+  return { name: "missing_values", ok: true,
+           detail: missing.length ? missing.map(([c, n]) => `${n} missing ${c}`).join(", ") + " imputed with the median"
+                                  : "no missing values" };
+}
+
+// ---------------------------------------------------------------- the Schema agent (mock)
+// Maps a company's columns onto the group's inputs by name and fixes units from the column
+// statistics, the way the node's Schema agent does (src/agents). Scripted rules, no LLM.
+
+const ALIASES = {
+  pregnancies: ["preg", "pregnan"], glucose: ["glu", "sugar"], blood_pressure: ["bp", "pressure", "dbp"],
+  bmi: ["bmi", "body_mass"], insulin: ["ins"], age: ["age"],
+};
+const LABEL_NAMES = ["outcome", "label", "target", "class", "diagnosis", "result", "y"];
+const norm = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, "_");
+
+function proposeSchema(spec, data) {
+  const prof = data.profile || {};
+  const numeric = data.columns.filter((c) => prof[c] && typeof prof[c].median === "number");
+  const skipped = data.columns.filter((c) => !numeric.includes(c));
+  const used = new Set();
+  const notes = [];
+  const labelName = spec.label && spec.label.name ? norm(spec.label.name) : "";
+  const label = numeric.find((c) => [...LABEL_NAMES, labelName].includes(norm(c)) &&
+                                   prof[c].min === 0 && prof[c].max === 1) || "";
+  if (label) {
+    used.add(label);
+    notes.push(`${label} is 0/1 with ${Math.round(prof[label].mean * 100)}% positives, so it is the label.`);
+  }
+  const mapping = spec.input_schema.map((f) => {
+    const keys = [norm(f.name), ...(ALIASES[f.name] || [])];
+    const col = numeric.find((c) => !used.has(c) && norm(c) === norm(f.name)) ||
+                numeric.find((c) => !used.has(c) && keys.some((k) => norm(c).includes(k)));
+    if (!col) {
+      notes.push(`No column matches ${f.name}.`);
+      return { feature: f.name, source: [], unit: f.unit || "", factor: 1, transform: "x" };
+    }
+    used.add(col);
+    const med = prof[col].median;
+    let unit = f.unit || "";
+    let factor = 1;
+    if (f.name === "glucose" && med < 30) {
+      unit = "mmol/L"; factor = 18.0182;
+      notes.push(`${col} has a median of ${med}, which is mmol/L, not mg/dL: converted with x * 18.0182.`);
+    } else if (f.name === "age" && med > 150) {
+      unit = "months"; factor = 1 / 12;
+      notes.push(`${col} has a median of ${med}, which is months: divided by 12.`);
+    } else if (f.name === "insulin" && med > 300) {
+      unit = "pmol/L"; factor = 1 / 6.945;
+      notes.push(`${col} has a median of ${med}, which is pmol/L: converted to uU/mL.`);
+    }
+    const transform = factor === 1 ? "x" : factor > 1 ? `x * ${factor}` : `x / ${Math.round(1 / factor * 1000) / 1000}`;
+    return { feature: f.name, source: [col], unit, factor, transform };
+  });
+  const direct = mapping.filter((x) => x.source.length && x.factor === 1).map((x) => x.source[0]);
+  if (direct.length) notes.push(`${direct.join(", ")} already match the group's inputs by meaning, range and unit.`);
+  if (skipped.length) notes.push(`${skipped.join(", ")} is not numeric (an identifier): never used.`);
+  return { label, made_by: "rule", reasoning: notes.join(" "), mapping, confirmed: false };
+}
+
 const ORDER = ["requested", "approved", "node_connected", "schema_proposed", "schema_confirmed",
                "ready", "training", "active"];
 
@@ -160,7 +344,7 @@ const routes = [
       throw conflict("this email is already registered; sign in instead", "contact_email");
     }
     const company = { id: newId("co"), name: body.name.trim(), field: body.field.trim(), contact_email: email,
-                      status: "pending", status_reason: null, wallet_address: body.wallet_address || null,
+                      status: "pending", status_reason: null,
                       created_at: now() };
     const user = { id: newId("usr"), email, role: "company", company_id: company.id };
     db.companies.push(company);
@@ -211,10 +395,30 @@ const routes = [
   }],
   ["POST", "/groups/draft-spec", (ctx, p, body) => {
     requireAdmin(ctx);
+    // scripted answers in the shape the architect agent (D9) returns; the real server asks the LLM
+    const question = String(body.question || db.groups[0].task_spec.question);
     const template = structuredClone(db.groups[0].task_spec);
-    template.question = String(body.question || template.question);
-    return { task_spec: template, made_by: "rule",
-             reasoning: "mock: the architect agent is not running, so this is the template TaskSpec" };
+    template.question = question;
+    if (/loan|credit|default/i.test(question)) {
+      template.label = { name: "defaulted", classes: ["no", "yes"], positive: "yes" };
+      template.input_schema = [
+        { name: "income", type: "number", unit: "USD/year", description: "applicant yearly income", required: true },
+        { name: "loan_amount", type: "number", unit: "USD", description: "requested amount", required: true },
+        { name: "credit_history_years", type: "number", unit: "years", description: "length of credit history", required: true },
+        { name: "age", type: "number", unit: "years", description: "applicant age", required: true },
+      ];
+      return { task_spec: template, made_by: "llm",
+               reasoning: "A yes/no outcome on tabular applicant data: binary classification with logistic " +
+                          "regression, which is explainable per feature. Income, loan amount, credit history and " +
+                          "age are the inputs every bank stores; the label is whether the loan defaulted. " +
+                          "Differential privacy stays on because the rows are personal financial data." };
+    }
+    return { task_spec: template, made_by: "llm",
+             reasoning: "The question has a yes/no answer about a patient, so this is binary classification. " +
+                        "Logistic regression is enough for six numeric clinical measurements and explains each " +
+                        "prediction. Units are fixed to the clinical standard (glucose in mg/dL) so every " +
+                        "hospital's agent converts into them. Secure aggregation and differential privacy are on: " +
+                        "this is patient data." };
   }],
   ["GET", "/groups/:id", (ctx, p) => groupView(visibleGroup(ctx, p.id), ctx.user)],
   ["POST", "/groups", (ctx, p, body) => {
@@ -314,6 +518,28 @@ const routes = [
     return { node_token: token,
              command: `python hub/node/node.py --server ${location.origin} --token ${token} --db <your connection>` };
   }],
+  // The company picked a CSV: the browser read it and sends only its shape and per-column
+  // statistics (never a row). This stands in for node.py's hello + profile + schema proposal.
+  ["POST", "/memberships/:id/data", (ctx, p, body) => {
+    const m = find(db.memberships, p.id, "membership");
+    requireOwnMembership(ctx, m);
+    if (!["approved", "node_connected", "schema_proposed"].includes(m.status)) {
+      throw invalid(`membership is '${m.status}'; data can be connected once the admin approved it`);
+    }
+    if (body.rows !== undefined) throw new Fail(422, "validation_error", "rows must never be sent", "rows");
+    const columns = Array.isArray(body.columns) ? body.columns.map(String) : [];
+    if (!columns.length) throw new Fail(422, "validation_error", "the file has no columns", "columns");
+    const g = find(db.groups, m.group_id, "group");
+    m.node = { id: `node_${m.id}`, status: "online", last_seen: now(),
+               agent: { provider: "deepseek", model: "deepseek-chat" },
+               connector: { kind: "csv", display: String(body.file_name || "upload.csv") } };
+    m.data = { row_count: Number(body.row_count) || 0, columns, profile: body.profile || {} };
+    m.schema = proposeSchema(g.task_spec, m.data);
+    m.validation = null;
+    m.status = "schema_proposed";
+    m.updated_at = now();
+    return m;
+  }],
   ["POST", "/memberships/:id/schema/confirm", (ctx, p, body) => {
     const m = find(db.memberships, p.id, "membership");
     requireOwnMembership(ctx, m);
@@ -321,13 +547,23 @@ const routes = [
     if (body.mapping) m.schema.mapping = body.mapping;
     if (body.label) m.schema.label = body.label;
     m.schema.confirmed = true;
+    // the node validates its data against the confirmed mapping and reports back (§4.4)
+    setTimeout(() => {
+      if (m.status !== "schema_confirmed") return;
+      m.validation = { ok: true, checks: [
+        labelCheck(m),
+        { name: "value_ranges", ok: true, detail: "all inputs inside expected ranges after conversion" },
+        missingCheck(m),
+      ] };
+      transition(m, ["schema_confirmed"], "ready");
+    }, 2000);
     return m;
   }],
   ["POST", "/memberships/:id/leave", (ctx, p) => {
     const m = find(db.memberships, p.id, "membership");
     requireOwnMembership(ctx, m);
     if (m.status === "training") throw invalid("a job is running with your data; wait for it to finish");
-    transition(m, [...ORDER, "payment_pending"].filter((s) => s !== "training"), "left");
+    transition(m, ORDER.filter((s) => s !== "training"), "left");
     m.has_node_token = false;
     return m;
   }],
@@ -351,6 +587,7 @@ const routes = [
                   metrics: { auc_series: [], loss_series: [], eps_total: 0 }, started_at: null,
                   finished_at: null, error: null };
     db.jobs.push(job);
+    finishLater(g, job, ready);
     return job;
   }],
   ["GET", "/groups/:id/jobs", (ctx, p) => {
@@ -369,12 +606,13 @@ const routes = [
     j.status = "cancelled";
     return j;
   }],
-  ["GET", "/jobs/:id/events", (ctx, p, b, q) => {
+  ["GET", "/jobs/:id/events", async (ctx, p, b, q) => {
     const j = find(db.jobs, p.id, "job");
     requireMemberOfGroup(ctx, j.group_id);
     const since = Number(q.since || 0);
-    return { items: eventLog.filter((e) => e.job_id === j.id && e.seq > since) };
+    return { items: (await events(j.id)).filter((e) => e.seq > since) };
   }],
+  ["GET", "/demo/runs", async (ctx) => { requireUser(ctx); return { items: await demoRuns() }; }],
 
   ["GET", "/groups/:id/versions", (ctx, p) => {
     requireMemberOfGroup(ctx, p.id);
@@ -414,16 +652,6 @@ const routes = [
              version_id: versionId, explanation };
   }],
 
-  ["GET", "/usage", (ctx, p, b, q) => {
-    const user = requireUser(ctx);
-    const companyId = user.role === "admin" ? q.company_id : user.company_id;
-    const items = db.usage.filter((u) => (!companyId || u.company_id === companyId) &&
-                                         (!q.group_id || u.group_id === q.group_id));
-    const totals = {};
-    for (const u of items) totals[u.kind] = (totals[u.kind] || 0) + u.units;
-    return { items, totals };
-  }],
-
   ["POST", "/demo/nodes/start", (ctx) => { requireAdmin(ctx); return { pid: 4242 }; }],
   ["POST", "/demo/nodes/stop", (ctx) => { requireAdmin(ctx); return null; }],
   ["POST", "/demo/reset", (ctx) => { requireAdmin(ctx); db = null; return null; }],
@@ -448,6 +676,10 @@ function match(pattern, path) {
 /** Answer one API call: → {status, body}, exactly what the real server would send. */
 export async function handle(method, fullPath, body, token) {
   await load();
+  // a real run may be in progress: anything about it is read fresh, everything else at most 1 s old
+  const aboutReal = path => REAL_JOBS.some((id) => path.includes(id)) || path.startsWith("/demo/runs") ||
+    [...real.values()].some((b) => b.group && path.includes(b.group.id));
+  await refreshReal(aboutReal(fullPath));
   const [path, qs] = fullPath.split("?");
   const query = Object.fromEntries(new URLSearchParams(qs || ""));
   const ctx = { token, user: null };

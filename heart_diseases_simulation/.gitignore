@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+*.tmp
+.env
+# offline rehearsals; commit the real Claude run you want to show (runs/<id>-claude/)
+runs/*-rule/

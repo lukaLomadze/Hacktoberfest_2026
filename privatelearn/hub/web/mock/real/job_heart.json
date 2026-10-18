@@ -1,0 +1,6388 @@
+{
+ "source": {
+  "run_id": "20261018-080022-rule",
+  "agents": "rule",
+  "coordinator_model": "scripted"
+ },
+ "job": {
+  "id": "job_heart",
+  "group_id": "grp_heart",
+  "kind": "train",
+  "status": "succeeded",
+  "step": "published",
+  "round": 9,
+  "rounds": 9,
+  "parent_version_id": null,
+  "participants": [
+   {
+    "membership_id": "mem_cleveland",
+    "node_id": "node_cleveland",
+    "company_name": "Cleveland Clinic",
+    "state": "waiting",
+    "color": "#4d8bff"
+   },
+   {
+    "membership_id": "mem_hungarian",
+    "node_id": "node_hungarian",
+    "company_name": "Budapest Cardiology",
+    "state": "waiting",
+    "color": "#3fcf8e"
+   },
+   {
+    "membership_id": "mem_switzerland",
+    "node_id": "node_switzerland",
+    "company_name": "Zurich & Basel",
+    "state": "waiting",
+    "color": "#ff6b6b"
+   },
+   {
+    "membership_id": "mem_va",
+    "node_id": "node_va",
+    "company_name": "VA Long Beach",
+    "state": "waiting",
+    "color": "#b48cff"
+   }
+  ],
+  "metrics": {
+   "auc_series": [
+    0.588531,
+    0.784609,
+    0.835932,
+    0.853118,
+    0.862568,
+    0.860973,
+    0.864222,
+    0.856662,
+    0.851819,
+    0.853296
+   ],
+   "loss_series": [
+    0.677621,
+    0.559829,
+    0.501131,
+    0.476066,
+    0.461729,
+    0.471016,
+    0.473336,
+    0.502536,
+    0.510686,
+    0.515172
+   ],
+   "eps_total": 3.5331
+  },
+  "started_at": "2026-10-18T04:00:23Z",
+  "finished_at": "2026-10-18T04:00:27Z",
+  "error": null
+ },
+ "group": {
+  "id": "grp_heart",
+  "status": "trained",
+  "name": "Heart disease (offline rehearsal)",
+  "description": "Four UCI cohorts as four hospitals; every decision made by the agents live",
+  "task_spec": {
+   "question": "Does this patient have angiographic heart disease?",
+   "task_type": "binary_classification",
+   "label": {
+    "name": "heart_disease",
+    "classes": [
+     "no",
+     "yes"
+    ],
+    "positive": "yes"
+   },
+   "input_schema": [
+    {
+     "name": "age",
+     "type": "number",
+     "unit": "years",
+     "description": "age",
+     "required": false
+    },
+    {
+     "name": "sex",
+     "type": "number",
+     "unit": "1 = male, 0 = female",
+     "description": "sex",
+     "required": false
+    },
+    {
+     "name": "cp",
+     "type": "number",
+     "unit": "1 typical angina, 2 atypical angina, 3 non-anginal pain, 4 asymptomatic",
+     "description": "chest pain type",
+     "required": false
+    },
+    {
+     "name": "trestbps",
+     "type": "number",
+     "unit": "mmHg",
+     "description": "resting blood pressure on admission",
+     "required": false
+    },
+    {
+     "name": "chol",
+     "type": "number",
+     "unit": "mg/dl",
+     "description": "serum cholesterol",
+     "required": false
+    },
+    {
+     "name": "fbs",
+     "type": "number",
+     "unit": "1 = true, 0 = false",
+     "description": "fasting blood sugar > 120 mg/dl",
+     "required": false
+    },
+    {
+     "name": "restecg",
+     "type": "number",
+     "unit": "0 normal, 1 ST-T wave abnormality, 2 left ventricular hypertrophy",
+     "description": "resting electrocardiogram",
+     "required": false
+    },
+    {
+     "name": "thalach",
+     "type": "number",
+     "unit": "beats/min",
+     "description": "maximum heart rate achieved (exercise test)",
+     "required": false
+    },
+    {
+     "name": "exang",
+     "type": "number",
+     "unit": "1 = yes, 0 = no",
+     "description": "exercise-induced angina",
+     "required": false
+    },
+    {
+     "name": "oldpeak",
+     "type": "number",
+     "unit": "mm",
+     "description": "ST depression induced by exercise relative to rest",
+     "required": false
+    },
+    {
+     "name": "slope",
+     "type": "number",
+     "unit": "1 upsloping, 2 flat, 3 downsloping",
+     "description": "slope of the peak exercise ST segment",
+     "required": false
+    },
+    {
+     "name": "ca",
+     "type": "number",
+     "unit": "count 0-3",
+     "description": "number of major vessels coloured by fluoroscopy",
+     "required": false
+    },
+    {
+     "name": "thal",
+     "type": "number",
+     "unit": "3 normal, 6 fixed defect, 7 reversible defect",
+     "description": "thallium stress test result",
+     "required": false
+    }
+   ],
+   "model": {
+    "type": "chosen by the coordinator agent"
+   },
+   "training": {
+    "rounds": null,
+    "max_rounds": 40,
+    "min_participants": 2,
+    "aggregation": "chosen per round by the coordinator agent"
+   },
+   "privacy": {
+    "secure_aggregation": true,
+    "dp": {
+     "enabled": true,
+     "epsilon_total": 8.0,
+     "delta": 1e-05
+    }
+   },
+   "metric": "auc"
+  },
+  "pricing": null,
+  "member_count": 4,
+  "current_version": {
+   "id": "mv_heart",
+   "version": 1
+  },
+  "created_at": "2026-10-18T04:00:23Z",
+  "updated_at": "2026-10-18T04:00:27Z"
+ },
+ "version": {
+  "id": "mv_heart",
+  "group_id": "grp_heart",
+  "version": 1,
+  "parent_version_id": null,
+  "job_id": "job_heart",
+  "model_type": "mlp",
+  "features": [
+   "age",
+   "sex",
+   "cp",
+   "trestbps",
+   "chol",
+   "fbs",
+   "restecg",
+   "thalach",
+   "exang",
+   "oldpeak"
+  ],
+  "metrics": {
+   "auc": 0.847153,
+   "auc_by_site": {
+    "switzerland": 0.956522,
+    "va": 0.843333,
+    "hungarian": 0.756892,
+    "cleveland": 0.884199
+   },
+   "auc_centralized": 0.882353
+  },
+  "contributors": [
+   {
+    "company_id": "cleveland",
+    "rows": 181,
+    "rounds": 9
+   },
+   {
+    "company_id": "hungarian",
+    "rows": 176,
+    "rounds": 9
+   },
+   {
+    "company_id": "switzerland",
+    "rows": 73,
+    "rounds": 9
+   },
+   {
+    "company_id": "va",
+    "rows": 120,
+    "rounds": 9
+   }
+  ],
+  "sha256": "d235af4a4136906298534e96b087faee2bef2126a662e774a7884608f46a21e9",
+  "created_at": "2026-10-18T04:00:27Z"
+ },
+ "events": [
+  {
+   "seq": 1,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "job.status",
+   "status": "running",
+   "error": null
+  },
+  {
+   "seq": 2,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "job.step",
+   "step": "waiting_for_nodes"
+  },
+  {
+   "seq": 3,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "participant.state",
+   "membership_id": "mem_cleveland",
+   "node_id": "node_cleveland",
+   "state": "online",
+   "detail": "303 local rows \u00b7 agent scripted"
+  },
+  {
+   "seq": 4,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "participant.state",
+   "membership_id": "mem_hungarian",
+   "node_id": "node_hungarian",
+   "state": "online",
+   "detail": "294 local rows \u00b7 agent scripted"
+  },
+  {
+   "seq": 5,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "participant.state",
+   "membership_id": "mem_switzerland",
+   "node_id": "node_switzerland",
+   "state": "online",
+   "detail": "123 local rows \u00b7 agent scripted"
+  },
+  {
+   "seq": 6,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "participant.state",
+   "membership_id": "mem_va",
+   "node_id": "node_va",
+   "state": "online",
+   "detail": "200 local rows \u00b7 agent scripted"
+  },
+  {
+   "seq": 7,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "job.step",
+   "step": "key_exchange"
+  },
+  {
+   "seq": 8,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "packet",
+   "from": "node_cleveland",
+   "to": "coord",
+   "kind": "key",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 9,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "packet",
+   "from": "node_hungarian",
+   "to": "coord",
+   "kind": "key",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 10,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "packet",
+   "from": "node_switzerland",
+   "to": "coord",
+   "kind": "key",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 11,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "packet",
+   "from": "node_va",
+   "to": "coord",
+   "kind": "key",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 12,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_cleveland",
+   "kind": "key",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 13,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_cleveland",
+    "agent": "schema",
+    "company_name": "Cleveland Clinic"
+   },
+   "to": "coord",
+   "text": "derived 3 pairwise secrets by Diffie-Hellman; the coordinator only relayed public keys",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 14,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_hungarian",
+   "kind": "key",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 15,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_hungarian",
+    "agent": "schema",
+    "company_name": "Budapest Cardiology"
+   },
+   "to": "coord",
+   "text": "derived 3 pairwise secrets by Diffie-Hellman; the coordinator only relayed public keys",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 16,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_switzerland",
+   "kind": "key",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 17,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_switzerland",
+    "agent": "schema",
+    "company_name": "Zurich & Basel"
+   },
+   "to": "coord",
+   "text": "derived 3 pairwise secrets by Diffie-Hellman; the coordinator only relayed public keys",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 18,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_va",
+   "kind": "key",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 19,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_va",
+    "agent": "schema",
+    "company_name": "VA Long Beach"
+   },
+   "to": "coord",
+   "text": "derived 3 pairwise secrets by Diffie-Hellman; the coordinator only relayed public keys",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 20,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "agent.message",
+   "from": {
+    "node_id": "coord",
+    "agent": "coordinator",
+    "company_name": "Coordinator"
+   },
+   "to": "*",
+   "text": "relayed 4 Diffie-Hellman public keys; all 6 hospital pairs derived matching secrets (fingerprints checked). I cannot compute them.",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 21,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "job.step",
+   "step": "schema_negotiation"
+  },
+  {
+   "seq": 22,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "agent.message",
+   "from": {
+    "node_id": "coord",
+    "agent": "coordinator",
+    "company_name": "Coordinator"
+   },
+   "to": "*",
+   "text": "asked every hospital to describe its data: describe columns and broken values",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 23,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_cleveland",
+   "kind": "schema",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 24,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_hungarian",
+   "kind": "schema",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 25,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_switzerland",
+   "kind": "schema",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 26,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_va",
+   "kind": "schema",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 27,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "packet",
+   "from": "node_cleveland",
+   "to": "coord",
+   "kind": "schema",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 28,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_cleveland",
+    "agent": "schema",
+    "company_name": "Cleveland Clinic"
+   },
+   "to": "coord",
+   "text": "181 training rows, disease rate 0.46; rule-based description (no LLM).",
+   "made_by": "rule",
+   "data": {
+    "quality_rules": []
+   }
+  },
+  {
+   "seq": 29,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "packet",
+   "from": "node_hungarian",
+   "to": "coord",
+   "kind": "schema",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 30,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_hungarian",
+    "agent": "schema",
+    "company_name": "Budapest Cardiology"
+   },
+   "to": "coord",
+   "text": "176 training rows, disease rate 0.36; rule-based description (no LLM).",
+   "made_by": "rule",
+   "data": {
+    "quality_rules": []
+   }
+  },
+  {
+   "seq": 31,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "packet",
+   "from": "node_switzerland",
+   "to": "coord",
+   "kind": "schema",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 32,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_switzerland",
+    "agent": "schema",
+    "company_name": "Zurich & Basel"
+   },
+   "to": "coord",
+   "text": "73 training rows, disease rate 0.94; rule-based description (no LLM).",
+   "made_by": "rule",
+   "data": {
+    "quality_rules": [
+     {
+      "column": "chol",
+      "rule": "zero_means_missing"
+     }
+    ]
+   }
+  },
+  {
+   "seq": 33,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "packet",
+   "from": "node_va",
+   "to": "coord",
+   "kind": "schema",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 34,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_va",
+    "agent": "schema",
+    "company_name": "VA Long Beach"
+   },
+   "to": "coord",
+   "text": "120 training rows, disease rate 0.74; rule-based description (no LLM).",
+   "made_by": "rule",
+   "data": {
+    "quality_rules": [
+     {
+      "column": "chol",
+      "rule": "zero_means_missing"
+     }
+    ]
+   }
+  },
+  {
+   "seq": 35,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "agent.message",
+   "from": {
+    "node_id": "coord",
+    "agent": "coordinator",
+    "company_name": "Coordinator"
+   },
+   "to": "*",
+   "text": "proposal 1: 10 features (age, sex, cp, trestbps, chol, fbs, restecg, thalach, exang, oldpeak); 1 quality rules \u2014 rule: columns usable at all but at most one hospital",
+   "made_by": "rule",
+   "data": {
+    "features": [
+     {
+      "name": "age",
+      "encoding": "numeric",
+      "missing": "impute_mean"
+     },
+     {
+      "name": "sex",
+      "encoding": "binary",
+      "missing": "impute_mean"
+     },
+     {
+      "name": "cp",
+      "encoding": "categorical",
+      "missing": "impute_mean"
+     },
+     {
+      "name": "trestbps",
+      "encoding": "numeric",
+      "missing": "impute_mean"
+     },
+     {
+      "name": "chol",
+      "encoding": "numeric",
+      "missing": "impute_mean"
+     },
+     {
+      "name": "fbs",
+      "encoding": "binary",
+      "missing": "impute_mean"
+     },
+     {
+      "name": "restecg",
+      "encoding": "categorical",
+      "missing": "impute_mean"
+     },
+     {
+      "name": "thalach",
+      "encoding": "numeric",
+      "missing": "impute_mean"
+     },
+     {
+      "name": "exang",
+      "encoding": "binary",
+      "missing": "impute_mean"
+     },
+     {
+      "name": "oldpeak",
+      "encoding": "numeric",
+      "missing": "impute_mean"
+     }
+    ],
+    "quality_rules": [
+     {
+      "column": "chol",
+      "rule": "zero_means_missing"
+     }
+    ]
+   }
+  },
+  {
+   "seq": 36,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_cleveland",
+    "agent": "schema",
+    "company_name": "Cleveland Clinic"
+   },
+   "to": "coord",
+   "text": "accepted the contract \u2014 rule: accept every valid contract",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 37,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_hungarian",
+    "agent": "schema",
+    "company_name": "Budapest Cardiology"
+   },
+   "to": "coord",
+   "text": "accepted the contract \u2014 rule: accept every valid contract",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 38,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_switzerland",
+    "agent": "schema",
+    "company_name": "Zurich & Basel"
+   },
+   "to": "coord",
+   "text": "accepted the contract \u2014 rule: accept every valid contract",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 39,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_va",
+    "agent": "schema",
+    "company_name": "VA Long Beach"
+   },
+   "to": "coord",
+   "text": "accepted the contract \u2014 rule: accept every valid contract",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 40,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "job.step",
+   "step": "normalization"
+  },
+  {
+   "seq": 41,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "packet",
+   "from": "node_cleveland",
+   "to": "coord",
+   "kind": "stats",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 42,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_cleveland",
+    "agent": "schema",
+    "company_name": "Cleveland Clinic"
+   },
+   "to": "coord",
+   "text": "sent 39 masked feature sums for the federated mean/std",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 43,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "packet",
+   "from": "node_hungarian",
+   "to": "coord",
+   "kind": "stats",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 44,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_hungarian",
+    "agent": "schema",
+    "company_name": "Budapest Cardiology"
+   },
+   "to": "coord",
+   "text": "sent 39 masked feature sums for the federated mean/std",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 45,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "packet",
+   "from": "node_switzerland",
+   "to": "coord",
+   "kind": "stats",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 46,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_switzerland",
+    "agent": "schema",
+    "company_name": "Zurich & Basel"
+   },
+   "to": "coord",
+   "text": "sent 39 masked feature sums for the federated mean/std",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 47,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "packet",
+   "from": "node_va",
+   "to": "coord",
+   "kind": "stats",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 48,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_va",
+    "agent": "schema",
+    "company_name": "VA Long Beach"
+   },
+   "to": "coord",
+   "text": "sent 39 masked feature sums for the federated mean/std",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 49,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_cleveland",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 50,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_cleveland",
+    "agent": "schema",
+    "company_name": "Cleveland Clinic"
+   },
+   "to": "coord",
+   "text": "encoded local rows to the agreed 15 inputs",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 51,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_hungarian",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 52,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_hungarian",
+    "agent": "schema",
+    "company_name": "Budapest Cardiology"
+   },
+   "to": "coord",
+   "text": "encoded local rows to the agreed 15 inputs",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 53,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_switzerland",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 54,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_switzerland",
+    "agent": "schema",
+    "company_name": "Zurich & Basel"
+   },
+   "to": "coord",
+   "text": "encoded local rows to the agreed 15 inputs",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 55,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_va",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 56,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_va",
+    "agent": "schema",
+    "company_name": "VA Long Beach"
+   },
+   "to": "coord",
+   "text": "encoded local rows to the agreed 15 inputs",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 57,
+   "ts": "2026-10-18T04:00:23Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "agent.message",
+   "from": {
+    "node_id": "coord",
+    "agent": "coordinator",
+    "company_name": "Coordinator"
+   },
+   "to": "*",
+   "text": "contract agreed by 4 hospitals; federated mean/std of 550 training patients computed from masked sums (pooled disease rate 0.55); model input has 15 values",
+   "made_by": "rule",
+   "data": {
+    "features": [
+     "age",
+     "sex",
+     "cp",
+     "trestbps",
+     "chol",
+     "fbs",
+     "restecg",
+     "thalach",
+     "exang",
+     "oldpeak"
+    ]
+   }
+  },
+  {
+   "seq": 58,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_cleveland",
+    "agent": "challenger",
+    "company_name": "Cleveland Clinic"
+   },
+   "to": "coord",
+   "text": "local 5-fold CV: logistic AUC 0.8909, mlp AUC 0.8915",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 59,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_hungarian",
+    "agent": "challenger",
+    "company_name": "Budapest Cardiology"
+   },
+   "to": "coord",
+   "text": "local 5-fold CV: logistic AUC 0.8895, mlp AUC 0.8883",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 60,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_switzerland",
+    "agent": "challenger",
+    "company_name": "Zurich & Basel"
+   },
+   "to": "coord",
+   "text": "local 5-fold CV: logistic AUC 0.3393, mlp AUC 0.4107",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 61,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_va",
+    "agent": "challenger",
+    "company_name": "VA Long Beach"
+   },
+   "to": "coord",
+   "text": "local 5-fold CV: logistic AUC 0.6728, mlp AUC 0.6756",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 62,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "agent.message",
+   "from": {
+    "node_id": "coord",
+    "agent": "coordinator",
+    "company_name": "Coordinator"
+   },
+   "to": "*",
+   "text": "selected mlp (8 hidden units), l2 0.01, 137 parameters \u2014 rule: best weighted CV AUC (ties \u2192 logistic)",
+   "made_by": "rule",
+   "data": {
+    "model": {
+     "type": "mlp",
+     "l2": 0.01,
+     "hidden": 8
+    }
+   }
+  },
+  {
+   "seq": 63,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "job.step",
+   "step": "training"
+  },
+  {
+   "seq": 64,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_cleveland",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 65,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_hungarian",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 66,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_switzerland",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 67,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_va",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 68,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_hungarian",
+    "agent": "challenger",
+    "company_name": "Budapest Cardiology"
+   },
+   "to": "coord",
+   "text": "global model on local validation: loss 0.735, AUC 0.581",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 69,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_switzerland",
+    "agent": "challenger",
+    "company_name": "Zurich & Basel"
+   },
+   "to": "coord",
+   "text": "global model on local validation: loss 0.622, AUC 0.239",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 70,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_cleveland",
+    "agent": "challenger",
+    "company_name": "Cleveland Clinic"
+   },
+   "to": "coord",
+   "text": "global model on local validation: loss 0.660, AUC 0.658",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 71,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 0,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_va",
+    "agent": "challenger",
+    "company_name": "VA Long Beach"
+   },
+   "to": "coord",
+   "text": "global model on local validation: loss 0.655, AUC 0.543",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 72,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 1,
+   "type": "participant.state",
+   "membership_id": "mem_cleveland",
+   "node_id": "node_cleveland",
+   "state": "planning",
+   "detail": "agent choosing its local plan"
+  },
+  {
+   "seq": 73,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 1,
+   "type": "participant.state",
+   "membership_id": "mem_hungarian",
+   "node_id": "node_hungarian",
+   "state": "planning",
+   "detail": "agent choosing its local plan"
+  },
+  {
+   "seq": 74,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 1,
+   "type": "participant.state",
+   "membership_id": "mem_switzerland",
+   "node_id": "node_switzerland",
+   "state": "planning",
+   "detail": "agent choosing its local plan"
+  },
+  {
+   "seq": 75,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 1,
+   "type": "participant.state",
+   "membership_id": "mem_va",
+   "node_id": "node_va",
+   "state": "planning",
+   "detail": "agent choosing its local plan"
+  },
+  {
+   "seq": 76,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 1,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_cleveland",
+    "agent": "planner",
+    "company_name": "Cleveland Clinic"
+   },
+   "to": "coord",
+   "text": "5 ep @ lr 0.5 \u2014 rule: fixed plan, 5 epochs at lr 0.5",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 77,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 1,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_hungarian",
+    "agent": "planner",
+    "company_name": "Budapest Cardiology"
+   },
+   "to": "coord",
+   "text": "5 ep @ lr 0.5 \u2014 rule: fixed plan, 5 epochs at lr 0.5",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 78,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 1,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_switzerland",
+    "agent": "planner",
+    "company_name": "Zurich & Basel"
+   },
+   "to": "coord",
+   "text": "5 ep @ lr 0.5 \u2014 rule: fixed plan, 5 epochs at lr 0.5",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 79,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 1,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_va",
+    "agent": "planner",
+    "company_name": "VA Long Beach"
+   },
+   "to": "coord",
+   "text": "5 ep @ lr 0.5 \u2014 rule: fixed plan, 5 epochs at lr 0.5",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 80,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 1,
+   "type": "round.decision",
+   "strategy": "fedavg",
+   "participants": [
+    "node_cleveland",
+    "node_hungarian",
+    "node_switzerland",
+    "node_va"
+   ],
+   "excluded": [],
+   "offline": [],
+   "declined": [],
+   "reasoning": "rule: always FedAvg",
+   "decided_by": "rule"
+  },
+  {
+   "seq": 81,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 1,
+   "type": "participant.state",
+   "membership_id": "mem_cleveland",
+   "node_id": "node_cleveland",
+   "state": "training",
+   "detail": "5 DP-GD steps @ lr 0.5"
+  },
+  {
+   "seq": 82,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 1,
+   "type": "participant.state",
+   "membership_id": "mem_hungarian",
+   "node_id": "node_hungarian",
+   "state": "training",
+   "detail": "5 DP-GD steps @ lr 0.5"
+  },
+  {
+   "seq": 83,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 1,
+   "type": "participant.state",
+   "membership_id": "mem_switzerland",
+   "node_id": "node_switzerland",
+   "state": "training",
+   "detail": "5 DP-GD steps @ lr 0.5"
+  },
+  {
+   "seq": 84,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 1,
+   "type": "participant.state",
+   "membership_id": "mem_va",
+   "node_id": "node_va",
+   "state": "training",
+   "detail": "5 DP-GD steps @ lr 0.5"
+  },
+  {
+   "seq": 85,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 1,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_cleveland",
+    "agent": "trainer",
+    "company_name": "Cleveland Clinic"
+   },
+   "to": "coord",
+   "text": "trained 5 DP-GD steps on 181 local rows (\u03c3=0.108), loss 0.682\u21920.552; sent masked \u0394w \u00b7 \u03b5 spent 1.13",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 86,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 1,
+   "type": "participant.state",
+   "membership_id": "mem_cleveland",
+   "node_id": "node_cleveland",
+   "state": "sent",
+   "detail": "masked \u0394w sent"
+  },
+  {
+   "seq": 87,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 1,
+   "type": "packet",
+   "from": "node_cleveland",
+   "to": "coord",
+   "kind": "update",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 88,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 1,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_hungarian",
+    "agent": "trainer",
+    "company_name": "Budapest Cardiology"
+   },
+   "to": "coord",
+   "text": "trained 5 DP-GD steps on 176 local rows (\u03c3=0.111), loss 0.709\u21920.491; sent masked \u0394w \u00b7 \u03b5 spent 1.13",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 89,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 1,
+   "type": "participant.state",
+   "membership_id": "mem_hungarian",
+   "node_id": "node_hungarian",
+   "state": "sent",
+   "detail": "masked \u0394w sent"
+  },
+  {
+   "seq": 90,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 1,
+   "type": "packet",
+   "from": "node_hungarian",
+   "to": "coord",
+   "kind": "update",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 91,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 1,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_switzerland",
+    "agent": "trainer",
+    "company_name": "Zurich & Basel"
+   },
+   "to": "coord",
+   "text": "trained 5 DP-GD steps on 73 local rows (\u03c3=0.267), loss 0.586\u21920.266; sent masked \u0394w \u00b7 \u03b5 spent 1.13",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 92,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 1,
+   "type": "participant.state",
+   "membership_id": "mem_switzerland",
+   "node_id": "node_switzerland",
+   "state": "sent",
+   "detail": "masked \u0394w sent"
+  },
+  {
+   "seq": 93,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 1,
+   "type": "packet",
+   "from": "node_switzerland",
+   "to": "coord",
+   "kind": "update",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 94,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 1,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_va",
+    "agent": "trainer",
+    "company_name": "VA Long Beach"
+   },
+   "to": "coord",
+   "text": "trained 5 DP-GD steps on 120 local rows (\u03c3=0.163), loss 0.640\u21920.600; sent masked \u0394w \u00b7 \u03b5 spent 1.13",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 95,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 1,
+   "type": "participant.state",
+   "membership_id": "mem_va",
+   "node_id": "node_va",
+   "state": "sent",
+   "detail": "masked \u0394w sent"
+  },
+  {
+   "seq": 96,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 1,
+   "type": "packet",
+   "from": "node_va",
+   "to": "coord",
+   "kind": "update",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 97,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 1,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_cleveland",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 98,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 1,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_hungarian",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 99,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 1,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_switzerland",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 100,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 1,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_va",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 101,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 1,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_cleveland",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 102,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 1,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_hungarian",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 103,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 1,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_switzerland",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 104,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 1,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_va",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 105,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 1,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_cleveland",
+    "agent": "challenger",
+    "company_name": "Cleveland Clinic"
+   },
+   "to": "coord",
+   "text": "global model on local validation: loss 0.574, AUC 0.766",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 106,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 1,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_hungarian",
+    "agent": "challenger",
+    "company_name": "Budapest Cardiology"
+   },
+   "to": "coord",
+   "text": "global model on local validation: loss 0.529, AUC 0.860",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 107,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 1,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_va",
+    "agent": "challenger",
+    "company_name": "VA Long Beach"
+   },
+   "to": "coord",
+   "text": "global model on local validation: loss 0.537, AUC 0.737",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 108,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 1,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_switzerland",
+    "agent": "challenger",
+    "company_name": "Zurich & Basel"
+   },
+   "to": "coord",
+   "text": "global model on local validation: loss 0.635, AUC 0.370",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 109,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 1,
+   "type": "round.completed",
+   "auc_before": 0.588531,
+   "auc_after": 0.784609,
+   "loss": 0.559829,
+   "eps_total": 1.1253,
+   "applied": true
+  },
+  {
+   "seq": 110,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 1,
+   "type": "participant.state",
+   "membership_id": "mem_cleveland",
+   "node_id": "node_cleveland",
+   "state": "waiting",
+   "detail": ""
+  },
+  {
+   "seq": 111,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 1,
+   "type": "participant.state",
+   "membership_id": "mem_hungarian",
+   "node_id": "node_hungarian",
+   "state": "waiting",
+   "detail": ""
+  },
+  {
+   "seq": 112,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 1,
+   "type": "participant.state",
+   "membership_id": "mem_switzerland",
+   "node_id": "node_switzerland",
+   "state": "waiting",
+   "detail": ""
+  },
+  {
+   "seq": 113,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 1,
+   "type": "participant.state",
+   "membership_id": "mem_va",
+   "node_id": "node_va",
+   "state": "waiting",
+   "detail": ""
+  },
+  {
+   "seq": 114,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 2,
+   "type": "participant.state",
+   "membership_id": "mem_cleveland",
+   "node_id": "node_cleveland",
+   "state": "planning",
+   "detail": "agent choosing its local plan"
+  },
+  {
+   "seq": 115,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 2,
+   "type": "participant.state",
+   "membership_id": "mem_hungarian",
+   "node_id": "node_hungarian",
+   "state": "planning",
+   "detail": "agent choosing its local plan"
+  },
+  {
+   "seq": 116,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 2,
+   "type": "participant.state",
+   "membership_id": "mem_switzerland",
+   "node_id": "node_switzerland",
+   "state": "planning",
+   "detail": "agent choosing its local plan"
+  },
+  {
+   "seq": 117,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 2,
+   "type": "participant.state",
+   "membership_id": "mem_va",
+   "node_id": "node_va",
+   "state": "planning",
+   "detail": "agent choosing its local plan"
+  },
+  {
+   "seq": 118,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 2,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_cleveland",
+    "agent": "planner",
+    "company_name": "Cleveland Clinic"
+   },
+   "to": "coord",
+   "text": "5 ep @ lr 0.5 \u2014 rule: fixed plan, 5 epochs at lr 0.5",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 119,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 2,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_hungarian",
+    "agent": "planner",
+    "company_name": "Budapest Cardiology"
+   },
+   "to": "coord",
+   "text": "5 ep @ lr 0.5 \u2014 rule: fixed plan, 5 epochs at lr 0.5",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 120,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 2,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_switzerland",
+    "agent": "planner",
+    "company_name": "Zurich & Basel"
+   },
+   "to": "coord",
+   "text": "5 ep @ lr 0.5 \u2014 rule: fixed plan, 5 epochs at lr 0.5",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 121,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 2,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_va",
+    "agent": "planner",
+    "company_name": "VA Long Beach"
+   },
+   "to": "coord",
+   "text": "5 ep @ lr 0.5 \u2014 rule: fixed plan, 5 epochs at lr 0.5",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 122,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 2,
+   "type": "round.decision",
+   "strategy": "fedavg",
+   "participants": [
+    "node_cleveland",
+    "node_hungarian",
+    "node_switzerland",
+    "node_va"
+   ],
+   "excluded": [],
+   "offline": [],
+   "declined": [],
+   "reasoning": "rule: always FedAvg",
+   "decided_by": "rule"
+  },
+  {
+   "seq": 123,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 2,
+   "type": "participant.state",
+   "membership_id": "mem_cleveland",
+   "node_id": "node_cleveland",
+   "state": "training",
+   "detail": "5 DP-GD steps @ lr 0.5"
+  },
+  {
+   "seq": 124,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 2,
+   "type": "participant.state",
+   "membership_id": "mem_hungarian",
+   "node_id": "node_hungarian",
+   "state": "training",
+   "detail": "5 DP-GD steps @ lr 0.5"
+  },
+  {
+   "seq": 125,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 2,
+   "type": "participant.state",
+   "membership_id": "mem_switzerland",
+   "node_id": "node_switzerland",
+   "state": "training",
+   "detail": "5 DP-GD steps @ lr 0.5"
+  },
+  {
+   "seq": 126,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 2,
+   "type": "participant.state",
+   "membership_id": "mem_va",
+   "node_id": "node_va",
+   "state": "training",
+   "detail": "5 DP-GD steps @ lr 0.5"
+  },
+  {
+   "seq": 127,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 2,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_cleveland",
+    "agent": "trainer",
+    "company_name": "Cleveland Clinic"
+   },
+   "to": "coord",
+   "text": "trained 5 DP-GD steps on 181 local rows (\u03c3=0.108), loss 0.557\u21920.503; sent masked \u0394w \u00b7 \u03b5 spent 1.61",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 128,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 2,
+   "type": "participant.state",
+   "membership_id": "mem_cleveland",
+   "node_id": "node_cleveland",
+   "state": "sent",
+   "detail": "masked \u0394w sent"
+  },
+  {
+   "seq": 129,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 2,
+   "type": "packet",
+   "from": "node_cleveland",
+   "to": "coord",
+   "kind": "update",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 130,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 2,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_hungarian",
+    "agent": "trainer",
+    "company_name": "Budapest Cardiology"
+   },
+   "to": "coord",
+   "text": "trained 5 DP-GD steps on 176 local rows (\u03c3=0.111), loss 0.554\u21920.443; sent masked \u0394w \u00b7 \u03b5 spent 1.61",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 131,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 2,
+   "type": "participant.state",
+   "membership_id": "mem_hungarian",
+   "node_id": "node_hungarian",
+   "state": "sent",
+   "detail": "masked \u0394w sent"
+  },
+  {
+   "seq": 132,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 2,
+   "type": "packet",
+   "from": "node_hungarian",
+   "to": "coord",
+   "kind": "update",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 133,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 2,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_switzerland",
+    "agent": "trainer",
+    "company_name": "Zurich & Basel"
+   },
+   "to": "coord",
+   "text": "trained 5 DP-GD steps on 73 local rows (\u03c3=0.267), loss 0.527\u21920.224; sent masked \u0394w \u00b7 \u03b5 spent 1.61",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 134,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 2,
+   "type": "participant.state",
+   "membership_id": "mem_switzerland",
+   "node_id": "node_switzerland",
+   "state": "sent",
+   "detail": "masked \u0394w sent"
+  },
+  {
+   "seq": 135,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 2,
+   "type": "packet",
+   "from": "node_switzerland",
+   "to": "coord",
+   "kind": "update",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 136,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 2,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_va",
+    "agent": "trainer",
+    "company_name": "VA Long Beach"
+   },
+   "to": "coord",
+   "text": "trained 5 DP-GD steps on 120 local rows (\u03c3=0.163), loss 0.551\u21920.564; sent masked \u0394w \u00b7 \u03b5 spent 1.61",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 137,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 2,
+   "type": "participant.state",
+   "membership_id": "mem_va",
+   "node_id": "node_va",
+   "state": "sent",
+   "detail": "masked \u0394w sent"
+  },
+  {
+   "seq": 138,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 2,
+   "type": "packet",
+   "from": "node_va",
+   "to": "coord",
+   "kind": "update",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 139,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 2,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_cleveland",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 140,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 2,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_hungarian",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 141,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 2,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_switzerland",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 142,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 2,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_va",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 143,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 2,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_cleveland",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 144,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 2,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_hungarian",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 145,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 2,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_switzerland",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 146,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 2,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_va",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 147,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 2,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_va",
+    "agent": "challenger",
+    "company_name": "VA Long Beach"
+   },
+   "to": "coord",
+   "text": "global model on local validation: loss 0.464, AUC 0.817",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 148,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 2,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_cleveland",
+    "agent": "challenger",
+    "company_name": "Cleveland Clinic"
+   },
+   "to": "coord",
+   "text": "global model on local validation: loss 0.552, AUC 0.788",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 149,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 2,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_switzerland",
+    "agent": "challenger",
+    "company_name": "Zurich & Basel"
+   },
+   "to": "coord",
+   "text": "global model on local validation: loss 0.684, AUC 0.435",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 150,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 2,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_hungarian",
+    "agent": "challenger",
+    "company_name": "Budapest Cardiology"
+   },
+   "to": "coord",
+   "text": "global model on local validation: loss 0.396, AUC 0.919",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 151,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 2,
+   "type": "round.completed",
+   "auc_before": 0.784609,
+   "auc_after": 0.835932,
+   "loss": 0.501131,
+   "eps_total": 1.6067,
+   "applied": true
+  },
+  {
+   "seq": 152,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 2,
+   "type": "participant.state",
+   "membership_id": "mem_cleveland",
+   "node_id": "node_cleveland",
+   "state": "waiting",
+   "detail": ""
+  },
+  {
+   "seq": 153,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 2,
+   "type": "participant.state",
+   "membership_id": "mem_hungarian",
+   "node_id": "node_hungarian",
+   "state": "waiting",
+   "detail": ""
+  },
+  {
+   "seq": 154,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 2,
+   "type": "participant.state",
+   "membership_id": "mem_switzerland",
+   "node_id": "node_switzerland",
+   "state": "waiting",
+   "detail": ""
+  },
+  {
+   "seq": 155,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 2,
+   "type": "participant.state",
+   "membership_id": "mem_va",
+   "node_id": "node_va",
+   "state": "waiting",
+   "detail": ""
+  },
+  {
+   "seq": 156,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 3,
+   "type": "participant.state",
+   "membership_id": "mem_cleveland",
+   "node_id": "node_cleveland",
+   "state": "planning",
+   "detail": "agent choosing its local plan"
+  },
+  {
+   "seq": 157,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 3,
+   "type": "participant.state",
+   "membership_id": "mem_hungarian",
+   "node_id": "node_hungarian",
+   "state": "planning",
+   "detail": "agent choosing its local plan"
+  },
+  {
+   "seq": 158,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 3,
+   "type": "participant.state",
+   "membership_id": "mem_switzerland",
+   "node_id": "node_switzerland",
+   "state": "planning",
+   "detail": "agent choosing its local plan"
+  },
+  {
+   "seq": 159,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 3,
+   "type": "participant.state",
+   "membership_id": "mem_va",
+   "node_id": "node_va",
+   "state": "planning",
+   "detail": "agent choosing its local plan"
+  },
+  {
+   "seq": 160,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 3,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_cleveland",
+    "agent": "planner",
+    "company_name": "Cleveland Clinic"
+   },
+   "to": "coord",
+   "text": "5 ep @ lr 0.5 \u2014 rule: fixed plan, 5 epochs at lr 0.5",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 161,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 3,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_hungarian",
+    "agent": "planner",
+    "company_name": "Budapest Cardiology"
+   },
+   "to": "coord",
+   "text": "5 ep @ lr 0.5 \u2014 rule: fixed plan, 5 epochs at lr 0.5",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 162,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 3,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_switzerland",
+    "agent": "planner",
+    "company_name": "Zurich & Basel"
+   },
+   "to": "coord",
+   "text": "5 ep @ lr 0.5 \u2014 rule: fixed plan, 5 epochs at lr 0.5",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 163,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 3,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_va",
+    "agent": "planner",
+    "company_name": "VA Long Beach"
+   },
+   "to": "coord",
+   "text": "5 ep @ lr 0.5 \u2014 rule: fixed plan, 5 epochs at lr 0.5",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 164,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 3,
+   "type": "round.decision",
+   "strategy": "fedavg",
+   "participants": [
+    "node_cleveland",
+    "node_hungarian",
+    "node_switzerland",
+    "node_va"
+   ],
+   "excluded": [],
+   "offline": [],
+   "declined": [],
+   "reasoning": "rule: always FedAvg",
+   "decided_by": "rule"
+  },
+  {
+   "seq": 165,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 3,
+   "type": "participant.state",
+   "membership_id": "mem_cleveland",
+   "node_id": "node_cleveland",
+   "state": "training",
+   "detail": "5 DP-GD steps @ lr 0.5"
+  },
+  {
+   "seq": 166,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 3,
+   "type": "participant.state",
+   "membership_id": "mem_hungarian",
+   "node_id": "node_hungarian",
+   "state": "training",
+   "detail": "5 DP-GD steps @ lr 0.5"
+  },
+  {
+   "seq": 167,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 3,
+   "type": "participant.state",
+   "membership_id": "mem_switzerland",
+   "node_id": "node_switzerland",
+   "state": "training",
+   "detail": "5 DP-GD steps @ lr 0.5"
+  },
+  {
+   "seq": 168,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 3,
+   "type": "participant.state",
+   "membership_id": "mem_va",
+   "node_id": "node_va",
+   "state": "training",
+   "detail": "5 DP-GD steps @ lr 0.5"
+  },
+  {
+   "seq": 169,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 3,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_cleveland",
+    "agent": "trainer",
+    "company_name": "Cleveland Clinic"
+   },
+   "to": "coord",
+   "text": "trained 5 DP-GD steps on 181 local rows (\u03c3=0.108), loss 0.495\u21920.471; sent masked \u0394w \u00b7 \u03b5 spent 1.98",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 170,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 3,
+   "type": "participant.state",
+   "membership_id": "mem_cleveland",
+   "node_id": "node_cleveland",
+   "state": "sent",
+   "detail": "masked \u0394w sent"
+  },
+  {
+   "seq": 171,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 3,
+   "type": "packet",
+   "from": "node_cleveland",
+   "to": "coord",
+   "kind": "update",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 172,
+   "ts": "2026-10-18T04:00:24Z",
+   "job_id": "job_heart",
+   "round": 3,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_hungarian",
+    "agent": "trainer",
+    "company_name": "Budapest Cardiology"
+   },
+   "to": "coord",
+   "text": "trained 5 DP-GD steps on 176 local rows (\u03c3=0.111), loss 0.461\u21920.430; sent masked \u0394w \u00b7 \u03b5 spent 1.98",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 173,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 3,
+   "type": "participant.state",
+   "membership_id": "mem_hungarian",
+   "node_id": "node_hungarian",
+   "state": "sent",
+   "detail": "masked \u0394w sent"
+  },
+  {
+   "seq": 174,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 3,
+   "type": "packet",
+   "from": "node_hungarian",
+   "to": "coord",
+   "kind": "update",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 175,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 3,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_switzerland",
+    "agent": "trainer",
+    "company_name": "Zurich & Basel"
+   },
+   "to": "coord",
+   "text": "trained 5 DP-GD steps on 73 local rows (\u03c3=0.267), loss 0.517\u21920.265; sent masked \u0394w \u00b7 \u03b5 spent 1.98",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 176,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 3,
+   "type": "participant.state",
+   "membership_id": "mem_switzerland",
+   "node_id": "node_switzerland",
+   "state": "sent",
+   "detail": "masked \u0394w sent"
+  },
+  {
+   "seq": 177,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 3,
+   "type": "packet",
+   "from": "node_switzerland",
+   "to": "coord",
+   "kind": "update",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 178,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 3,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_va",
+    "agent": "trainer",
+    "company_name": "VA Long Beach"
+   },
+   "to": "coord",
+   "text": "trained 5 DP-GD steps on 120 local rows (\u03c3=0.163), loss 0.501\u21920.514; sent masked \u0394w \u00b7 \u03b5 spent 1.98",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 179,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 3,
+   "type": "participant.state",
+   "membership_id": "mem_va",
+   "node_id": "node_va",
+   "state": "sent",
+   "detail": "masked \u0394w sent"
+  },
+  {
+   "seq": 180,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 3,
+   "type": "packet",
+   "from": "node_va",
+   "to": "coord",
+   "kind": "update",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 181,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 3,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_cleveland",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 182,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 3,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_hungarian",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 183,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 3,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_switzerland",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 184,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 3,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_va",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 185,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 3,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_cleveland",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 186,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 3,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_hungarian",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 187,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 3,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_switzerland",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 188,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 3,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_va",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 189,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 3,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_switzerland",
+    "agent": "challenger",
+    "company_name": "Zurich & Basel"
+   },
+   "to": "coord",
+   "text": "global model on local validation: loss 0.656, AUC 0.457",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 190,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 3,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_hungarian",
+    "agent": "challenger",
+    "company_name": "Budapest Cardiology"
+   },
+   "to": "coord",
+   "text": "global model on local validation: loss 0.363, AUC 0.935",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 191,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 3,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_va",
+    "agent": "challenger",
+    "company_name": "VA Long Beach"
+   },
+   "to": "coord",
+   "text": "global model on local validation: loss 0.435, AUC 0.843",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 192,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 3,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_cleveland",
+    "agent": "challenger",
+    "company_name": "Cleveland Clinic"
+   },
+   "to": "coord",
+   "text": "global model on local validation: loss 0.539, AUC 0.801",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 193,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 3,
+   "type": "round.completed",
+   "auc_before": 0.835932,
+   "auc_after": 0.853118,
+   "loss": 0.476066,
+   "eps_total": 1.9823,
+   "applied": true
+  },
+  {
+   "seq": 194,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 3,
+   "type": "participant.state",
+   "membership_id": "mem_cleveland",
+   "node_id": "node_cleveland",
+   "state": "waiting",
+   "detail": ""
+  },
+  {
+   "seq": 195,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 3,
+   "type": "participant.state",
+   "membership_id": "mem_hungarian",
+   "node_id": "node_hungarian",
+   "state": "waiting",
+   "detail": ""
+  },
+  {
+   "seq": 196,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 3,
+   "type": "participant.state",
+   "membership_id": "mem_switzerland",
+   "node_id": "node_switzerland",
+   "state": "waiting",
+   "detail": ""
+  },
+  {
+   "seq": 197,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 3,
+   "type": "participant.state",
+   "membership_id": "mem_va",
+   "node_id": "node_va",
+   "state": "waiting",
+   "detail": ""
+  },
+  {
+   "seq": 198,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 4,
+   "type": "participant.state",
+   "membership_id": "mem_cleveland",
+   "node_id": "node_cleveland",
+   "state": "planning",
+   "detail": "agent choosing its local plan"
+  },
+  {
+   "seq": 199,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 4,
+   "type": "participant.state",
+   "membership_id": "mem_hungarian",
+   "node_id": "node_hungarian",
+   "state": "planning",
+   "detail": "agent choosing its local plan"
+  },
+  {
+   "seq": 200,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 4,
+   "type": "participant.state",
+   "membership_id": "mem_switzerland",
+   "node_id": "node_switzerland",
+   "state": "planning",
+   "detail": "agent choosing its local plan"
+  },
+  {
+   "seq": 201,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 4,
+   "type": "participant.state",
+   "membership_id": "mem_va",
+   "node_id": "node_va",
+   "state": "planning",
+   "detail": "agent choosing its local plan"
+  },
+  {
+   "seq": 202,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 4,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_cleveland",
+    "agent": "planner",
+    "company_name": "Cleveland Clinic"
+   },
+   "to": "coord",
+   "text": "5 ep @ lr 0.5 \u2014 rule: fixed plan, 5 epochs at lr 0.5",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 203,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 4,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_hungarian",
+    "agent": "planner",
+    "company_name": "Budapest Cardiology"
+   },
+   "to": "coord",
+   "text": "5 ep @ lr 0.5 \u2014 rule: fixed plan, 5 epochs at lr 0.5",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 204,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 4,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_switzerland",
+    "agent": "planner",
+    "company_name": "Zurich & Basel"
+   },
+   "to": "coord",
+   "text": "5 ep @ lr 0.5 \u2014 rule: fixed plan, 5 epochs at lr 0.5",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 205,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 4,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_va",
+    "agent": "planner",
+    "company_name": "VA Long Beach"
+   },
+   "to": "coord",
+   "text": "5 ep @ lr 0.5 \u2014 rule: fixed plan, 5 epochs at lr 0.5",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 206,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 4,
+   "type": "round.decision",
+   "strategy": "fedavg",
+   "participants": [
+    "node_cleveland",
+    "node_hungarian",
+    "node_switzerland",
+    "node_va"
+   ],
+   "excluded": [],
+   "offline": [],
+   "declined": [],
+   "reasoning": "rule: always FedAvg",
+   "decided_by": "rule"
+  },
+  {
+   "seq": 207,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 4,
+   "type": "participant.state",
+   "membership_id": "mem_cleveland",
+   "node_id": "node_cleveland",
+   "state": "training",
+   "detail": "5 DP-GD steps @ lr 0.5"
+  },
+  {
+   "seq": 208,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 4,
+   "type": "participant.state",
+   "membership_id": "mem_hungarian",
+   "node_id": "node_hungarian",
+   "state": "training",
+   "detail": "5 DP-GD steps @ lr 0.5"
+  },
+  {
+   "seq": 209,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 4,
+   "type": "participant.state",
+   "membership_id": "mem_switzerland",
+   "node_id": "node_switzerland",
+   "state": "training",
+   "detail": "5 DP-GD steps @ lr 0.5"
+  },
+  {
+   "seq": 210,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 4,
+   "type": "participant.state",
+   "membership_id": "mem_va",
+   "node_id": "node_va",
+   "state": "training",
+   "detail": "5 DP-GD steps @ lr 0.5"
+  },
+  {
+   "seq": 211,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 4,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_cleveland",
+    "agent": "trainer",
+    "company_name": "Cleveland Clinic"
+   },
+   "to": "coord",
+   "text": "trained 5 DP-GD steps on 181 local rows (\u03c3=0.108), loss 0.478\u21920.464; sent masked \u0394w \u00b7 \u03b5 spent 2.30",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 212,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 4,
+   "type": "participant.state",
+   "membership_id": "mem_cleveland",
+   "node_id": "node_cleveland",
+   "state": "sent",
+   "detail": "masked \u0394w sent"
+  },
+  {
+   "seq": 213,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 4,
+   "type": "packet",
+   "from": "node_cleveland",
+   "to": "coord",
+   "kind": "update",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 214,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 4,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_hungarian",
+    "agent": "trainer",
+    "company_name": "Budapest Cardiology"
+   },
+   "to": "coord",
+   "text": "trained 5 DP-GD steps on 176 local rows (\u03c3=0.111), loss 0.438\u21920.432; sent masked \u0394w \u00b7 \u03b5 spent 2.30",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 215,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 4,
+   "type": "participant.state",
+   "membership_id": "mem_hungarian",
+   "node_id": "node_hungarian",
+   "state": "sent",
+   "detail": "masked \u0394w sent"
+  },
+  {
+   "seq": 216,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 4,
+   "type": "packet",
+   "from": "node_hungarian",
+   "to": "coord",
+   "kind": "update",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 217,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 4,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_switzerland",
+    "agent": "trainer",
+    "company_name": "Zurich & Basel"
+   },
+   "to": "coord",
+   "text": "trained 5 DP-GD steps on 73 local rows (\u03c3=0.267), loss 0.499\u21920.274; sent masked \u0394w \u00b7 \u03b5 spent 2.30",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 218,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 4,
+   "type": "participant.state",
+   "membership_id": "mem_switzerland",
+   "node_id": "node_switzerland",
+   "state": "sent",
+   "detail": "masked \u0394w sent"
+  },
+  {
+   "seq": 219,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 4,
+   "type": "packet",
+   "from": "node_switzerland",
+   "to": "coord",
+   "kind": "update",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 220,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 4,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_va",
+    "agent": "trainer",
+    "company_name": "VA Long Beach"
+   },
+   "to": "coord",
+   "text": "trained 5 DP-GD steps on 120 local rows (\u03c3=0.163), loss 0.501\u21920.509; sent masked \u0394w \u00b7 \u03b5 spent 2.30",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 221,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 4,
+   "type": "participant.state",
+   "membership_id": "mem_va",
+   "node_id": "node_va",
+   "state": "sent",
+   "detail": "masked \u0394w sent"
+  },
+  {
+   "seq": 222,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 4,
+   "type": "packet",
+   "from": "node_va",
+   "to": "coord",
+   "kind": "update",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 223,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 4,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_cleveland",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 224,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 4,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_hungarian",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 225,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 4,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_switzerland",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 226,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 4,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_va",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 227,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 4,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_cleveland",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 228,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 4,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_hungarian",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 229,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 4,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_switzerland",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 230,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 4,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_va",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 231,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 4,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_va",
+    "agent": "challenger",
+    "company_name": "VA Long Beach"
+   },
+   "to": "coord",
+   "text": "global model on local validation: loss 0.432, AUC 0.840",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 232,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 4,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_cleveland",
+    "agent": "challenger",
+    "company_name": "Cleveland Clinic"
+   },
+   "to": "coord",
+   "text": "global model on local validation: loss 0.517, AUC 0.824",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 233,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 4,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_hungarian",
+    "agent": "challenger",
+    "company_name": "Budapest Cardiology"
+   },
+   "to": "coord",
+   "text": "global model on local validation: loss 0.357, AUC 0.921",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 234,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 4,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_switzerland",
+    "agent": "challenger",
+    "company_name": "Zurich & Basel"
+   },
+   "to": "coord",
+   "text": "global model on local validation: loss 0.623, AUC 0.457",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 235,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 4,
+   "type": "round.completed",
+   "auc_before": 0.853118,
+   "auc_after": 0.862568,
+   "loss": 0.461729,
+   "eps_total": 2.303,
+   "applied": true
+  },
+  {
+   "seq": 236,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 4,
+   "type": "participant.state",
+   "membership_id": "mem_cleveland",
+   "node_id": "node_cleveland",
+   "state": "waiting",
+   "detail": ""
+  },
+  {
+   "seq": 237,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 4,
+   "type": "participant.state",
+   "membership_id": "mem_hungarian",
+   "node_id": "node_hungarian",
+   "state": "waiting",
+   "detail": ""
+  },
+  {
+   "seq": 238,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 4,
+   "type": "participant.state",
+   "membership_id": "mem_switzerland",
+   "node_id": "node_switzerland",
+   "state": "waiting",
+   "detail": ""
+  },
+  {
+   "seq": 239,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 4,
+   "type": "participant.state",
+   "membership_id": "mem_va",
+   "node_id": "node_va",
+   "state": "waiting",
+   "detail": ""
+  },
+  {
+   "seq": 240,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 5,
+   "type": "participant.state",
+   "membership_id": "mem_cleveland",
+   "node_id": "node_cleveland",
+   "state": "planning",
+   "detail": "agent choosing its local plan"
+  },
+  {
+   "seq": 241,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 5,
+   "type": "participant.state",
+   "membership_id": "mem_hungarian",
+   "node_id": "node_hungarian",
+   "state": "planning",
+   "detail": "agent choosing its local plan"
+  },
+  {
+   "seq": 242,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 5,
+   "type": "participant.state",
+   "membership_id": "mem_switzerland",
+   "node_id": "node_switzerland",
+   "state": "planning",
+   "detail": "agent choosing its local plan"
+  },
+  {
+   "seq": 243,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 5,
+   "type": "participant.state",
+   "membership_id": "mem_va",
+   "node_id": "node_va",
+   "state": "planning",
+   "detail": "agent choosing its local plan"
+  },
+  {
+   "seq": 244,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 5,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_cleveland",
+    "agent": "planner",
+    "company_name": "Cleveland Clinic"
+   },
+   "to": "coord",
+   "text": "5 ep @ lr 0.5 \u2014 rule: fixed plan, 5 epochs at lr 0.5",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 245,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 5,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_hungarian",
+    "agent": "planner",
+    "company_name": "Budapest Cardiology"
+   },
+   "to": "coord",
+   "text": "5 ep @ lr 0.5 \u2014 rule: fixed plan, 5 epochs at lr 0.5",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 246,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 5,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_switzerland",
+    "agent": "planner",
+    "company_name": "Zurich & Basel"
+   },
+   "to": "coord",
+   "text": "5 ep @ lr 0.5 \u2014 rule: fixed plan, 5 epochs at lr 0.5",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 247,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 5,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_va",
+    "agent": "planner",
+    "company_name": "VA Long Beach"
+   },
+   "to": "coord",
+   "text": "5 ep @ lr 0.5 \u2014 rule: fixed plan, 5 epochs at lr 0.5",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 248,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 5,
+   "type": "round.decision",
+   "strategy": "fedavg",
+   "participants": [
+    "node_cleveland",
+    "node_hungarian",
+    "node_switzerland",
+    "node_va"
+   ],
+   "excluded": [],
+   "offline": [],
+   "declined": [],
+   "reasoning": "rule: always FedAvg",
+   "decided_by": "rule"
+  },
+  {
+   "seq": 249,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 5,
+   "type": "participant.state",
+   "membership_id": "mem_cleveland",
+   "node_id": "node_cleveland",
+   "state": "training",
+   "detail": "5 DP-GD steps @ lr 0.5"
+  },
+  {
+   "seq": 250,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 5,
+   "type": "participant.state",
+   "membership_id": "mem_hungarian",
+   "node_id": "node_hungarian",
+   "state": "training",
+   "detail": "5 DP-GD steps @ lr 0.5"
+  },
+  {
+   "seq": 251,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 5,
+   "type": "participant.state",
+   "membership_id": "mem_switzerland",
+   "node_id": "node_switzerland",
+   "state": "training",
+   "detail": "5 DP-GD steps @ lr 0.5"
+  },
+  {
+   "seq": 252,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 5,
+   "type": "participant.state",
+   "membership_id": "mem_va",
+   "node_id": "node_va",
+   "state": "training",
+   "detail": "5 DP-GD steps @ lr 0.5"
+  },
+  {
+   "seq": 253,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 5,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_cleveland",
+    "agent": "trainer",
+    "company_name": "Cleveland Clinic"
+   },
+   "to": "coord",
+   "text": "trained 5 DP-GD steps on 181 local rows (\u03c3=0.108), loss 0.452\u21920.449; sent masked \u0394w \u00b7 \u03b5 spent 2.59",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 254,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 5,
+   "type": "participant.state",
+   "membership_id": "mem_cleveland",
+   "node_id": "node_cleveland",
+   "state": "sent",
+   "detail": "masked \u0394w sent"
+  },
+  {
+   "seq": 255,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 5,
+   "type": "packet",
+   "from": "node_cleveland",
+   "to": "coord",
+   "kind": "update",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 256,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 5,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_hungarian",
+    "agent": "trainer",
+    "company_name": "Budapest Cardiology"
+   },
+   "to": "coord",
+   "text": "trained 5 DP-GD steps on 176 local rows (\u03c3=0.111), loss 0.420\u21920.435; sent masked \u0394w \u00b7 \u03b5 spent 2.59",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 257,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 5,
+   "type": "participant.state",
+   "membership_id": "mem_hungarian",
+   "node_id": "node_hungarian",
+   "state": "sent",
+   "detail": "masked \u0394w sent"
+  },
+  {
+   "seq": 258,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 5,
+   "type": "packet",
+   "from": "node_hungarian",
+   "to": "coord",
+   "kind": "update",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 259,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 5,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_switzerland",
+    "agent": "trainer",
+    "company_name": "Zurich & Basel"
+   },
+   "to": "coord",
+   "text": "trained 5 DP-GD steps on 73 local rows (\u03c3=0.267), loss 0.482\u21920.294; sent masked \u0394w \u00b7 \u03b5 spent 2.59",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 260,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 5,
+   "type": "participant.state",
+   "membership_id": "mem_switzerland",
+   "node_id": "node_switzerland",
+   "state": "sent",
+   "detail": "masked \u0394w sent"
+  },
+  {
+   "seq": 261,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 5,
+   "type": "packet",
+   "from": "node_switzerland",
+   "to": "coord",
+   "kind": "update",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 262,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 5,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_va",
+    "agent": "trainer",
+    "company_name": "VA Long Beach"
+   },
+   "to": "coord",
+   "text": "trained 5 DP-GD steps on 120 local rows (\u03c3=0.163), loss 0.512\u21920.497; sent masked \u0394w \u00b7 \u03b5 spent 2.59",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 263,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 5,
+   "type": "participant.state",
+   "membership_id": "mem_va",
+   "node_id": "node_va",
+   "state": "sent",
+   "detail": "masked \u0394w sent"
+  },
+  {
+   "seq": 264,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 5,
+   "type": "packet",
+   "from": "node_va",
+   "to": "coord",
+   "kind": "update",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 265,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 5,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_cleveland",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 266,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 5,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_hungarian",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 267,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 5,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_switzerland",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 268,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 5,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_va",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 269,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 5,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_cleveland",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 270,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 5,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_hungarian",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 271,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 5,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_switzerland",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 272,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 5,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_va",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 273,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 5,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_va",
+    "agent": "challenger",
+    "company_name": "VA Long Beach"
+   },
+   "to": "coord",
+   "text": "global model on local validation: loss 0.438, AUC 0.820",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 274,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 5,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_cleveland",
+    "agent": "challenger",
+    "company_name": "Cleveland Clinic"
+   },
+   "to": "coord",
+   "text": "global model on local validation: loss 0.539, AUC 0.815",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 275,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 5,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_switzerland",
+    "agent": "challenger",
+    "company_name": "Zurich & Basel"
+   },
+   "to": "coord",
+   "text": "global model on local validation: loss 0.679, AUC 0.413",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 276,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 5,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_hungarian",
+    "agent": "challenger",
+    "company_name": "Budapest Cardiology"
+   },
+   "to": "coord",
+   "text": "global model on local validation: loss 0.335, AUC 0.925",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 277,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 5,
+   "type": "round.completed",
+   "auc_before": 0.862568,
+   "auc_after": 0.860973,
+   "loss": 0.471016,
+   "eps_total": 2.5886,
+   "applied": true
+  },
+  {
+   "seq": 278,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 5,
+   "type": "participant.state",
+   "membership_id": "mem_cleveland",
+   "node_id": "node_cleveland",
+   "state": "waiting",
+   "detail": ""
+  },
+  {
+   "seq": 279,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 5,
+   "type": "participant.state",
+   "membership_id": "mem_hungarian",
+   "node_id": "node_hungarian",
+   "state": "waiting",
+   "detail": ""
+  },
+  {
+   "seq": 280,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 5,
+   "type": "participant.state",
+   "membership_id": "mem_switzerland",
+   "node_id": "node_switzerland",
+   "state": "waiting",
+   "detail": ""
+  },
+  {
+   "seq": 281,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 5,
+   "type": "participant.state",
+   "membership_id": "mem_va",
+   "node_id": "node_va",
+   "state": "waiting",
+   "detail": ""
+  },
+  {
+   "seq": 282,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 6,
+   "type": "participant.state",
+   "membership_id": "mem_cleveland",
+   "node_id": "node_cleveland",
+   "state": "planning",
+   "detail": "agent choosing its local plan"
+  },
+  {
+   "seq": 283,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 6,
+   "type": "participant.state",
+   "membership_id": "mem_hungarian",
+   "node_id": "node_hungarian",
+   "state": "planning",
+   "detail": "agent choosing its local plan"
+  },
+  {
+   "seq": 284,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 6,
+   "type": "participant.state",
+   "membership_id": "mem_switzerland",
+   "node_id": "node_switzerland",
+   "state": "planning",
+   "detail": "agent choosing its local plan"
+  },
+  {
+   "seq": 285,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 6,
+   "type": "participant.state",
+   "membership_id": "mem_va",
+   "node_id": "node_va",
+   "state": "planning",
+   "detail": "agent choosing its local plan"
+  },
+  {
+   "seq": 286,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 6,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_cleveland",
+    "agent": "planner",
+    "company_name": "Cleveland Clinic"
+   },
+   "to": "coord",
+   "text": "5 ep @ lr 0.5 \u2014 rule: fixed plan, 5 epochs at lr 0.5",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 287,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 6,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_hungarian",
+    "agent": "planner",
+    "company_name": "Budapest Cardiology"
+   },
+   "to": "coord",
+   "text": "5 ep @ lr 0.5 \u2014 rule: fixed plan, 5 epochs at lr 0.5",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 288,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 6,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_switzerland",
+    "agent": "planner",
+    "company_name": "Zurich & Basel"
+   },
+   "to": "coord",
+   "text": "5 ep @ lr 0.5 \u2014 rule: fixed plan, 5 epochs at lr 0.5",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 289,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 6,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_va",
+    "agent": "planner",
+    "company_name": "VA Long Beach"
+   },
+   "to": "coord",
+   "text": "5 ep @ lr 0.5 \u2014 rule: fixed plan, 5 epochs at lr 0.5",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 290,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 6,
+   "type": "round.decision",
+   "strategy": "fedavg",
+   "participants": [
+    "node_cleveland",
+    "node_hungarian",
+    "node_switzerland",
+    "node_va"
+   ],
+   "excluded": [],
+   "offline": [],
+   "declined": [],
+   "reasoning": "rule: always FedAvg",
+   "decided_by": "rule"
+  },
+  {
+   "seq": 291,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 6,
+   "type": "participant.state",
+   "membership_id": "mem_cleveland",
+   "node_id": "node_cleveland",
+   "state": "training",
+   "detail": "5 DP-GD steps @ lr 0.5"
+  },
+  {
+   "seq": 292,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 6,
+   "type": "participant.state",
+   "membership_id": "mem_hungarian",
+   "node_id": "node_hungarian",
+   "state": "training",
+   "detail": "5 DP-GD steps @ lr 0.5"
+  },
+  {
+   "seq": 293,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 6,
+   "type": "participant.state",
+   "membership_id": "mem_switzerland",
+   "node_id": "node_switzerland",
+   "state": "training",
+   "detail": "5 DP-GD steps @ lr 0.5"
+  },
+  {
+   "seq": 294,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 6,
+   "type": "participant.state",
+   "membership_id": "mem_va",
+   "node_id": "node_va",
+   "state": "training",
+   "detail": "5 DP-GD steps @ lr 0.5"
+  },
+  {
+   "seq": 295,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 6,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_cleveland",
+    "agent": "trainer",
+    "company_name": "Cleveland Clinic"
+   },
+   "to": "coord",
+   "text": "trained 5 DP-GD steps on 181 local rows (\u03c3=0.108), loss 0.450\u21920.464; sent masked \u0394w \u00b7 \u03b5 spent 2.85",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 296,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 6,
+   "type": "participant.state",
+   "membership_id": "mem_cleveland",
+   "node_id": "node_cleveland",
+   "state": "sent",
+   "detail": "masked \u0394w sent"
+  },
+  {
+   "seq": 297,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 6,
+   "type": "packet",
+   "from": "node_cleveland",
+   "to": "coord",
+   "kind": "update",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 298,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 6,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_hungarian",
+    "agent": "trainer",
+    "company_name": "Budapest Cardiology"
+   },
+   "to": "coord",
+   "text": "trained 5 DP-GD steps on 176 local rows (\u03c3=0.111), loss 0.418\u21920.433; sent masked \u0394w \u00b7 \u03b5 spent 2.85",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 299,
+   "ts": "2026-10-18T04:00:25Z",
+   "job_id": "job_heart",
+   "round": 6,
+   "type": "participant.state",
+   "membership_id": "mem_hungarian",
+   "node_id": "node_hungarian",
+   "state": "sent",
+   "detail": "masked \u0394w sent"
+  },
+  {
+   "seq": 300,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 6,
+   "type": "packet",
+   "from": "node_hungarian",
+   "to": "coord",
+   "kind": "update",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 301,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 6,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_switzerland",
+    "agent": "trainer",
+    "company_name": "Zurich & Basel"
+   },
+   "to": "coord",
+   "text": "trained 5 DP-GD steps on 73 local rows (\u03c3=0.267), loss 0.516\u21920.238; sent masked \u0394w \u00b7 \u03b5 spent 2.85",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 302,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 6,
+   "type": "participant.state",
+   "membership_id": "mem_switzerland",
+   "node_id": "node_switzerland",
+   "state": "sent",
+   "detail": "masked \u0394w sent"
+  },
+  {
+   "seq": 303,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 6,
+   "type": "packet",
+   "from": "node_switzerland",
+   "to": "coord",
+   "kind": "update",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 304,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 6,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_va",
+    "agent": "trainer",
+    "company_name": "VA Long Beach"
+   },
+   "to": "coord",
+   "text": "trained 5 DP-GD steps on 120 local rows (\u03c3=0.163), loss 0.520\u21920.492; sent masked \u0394w \u00b7 \u03b5 spent 2.85",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 305,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 6,
+   "type": "participant.state",
+   "membership_id": "mem_va",
+   "node_id": "node_va",
+   "state": "sent",
+   "detail": "masked \u0394w sent"
+  },
+  {
+   "seq": 306,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 6,
+   "type": "packet",
+   "from": "node_va",
+   "to": "coord",
+   "kind": "update",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 307,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 6,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_cleveland",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 308,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 6,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_hungarian",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 309,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 6,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_switzerland",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 310,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 6,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_va",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 311,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 6,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_cleveland",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 312,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 6,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_hungarian",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 313,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 6,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_switzerland",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 314,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 6,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_va",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 315,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 6,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_cleveland",
+    "agent": "challenger",
+    "company_name": "Cleveland Clinic"
+   },
+   "to": "coord",
+   "text": "global model on local validation: loss 0.539, AUC 0.823",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 316,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 6,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_switzerland",
+    "agent": "challenger",
+    "company_name": "Zurich & Basel"
+   },
+   "to": "coord",
+   "text": "global model on local validation: loss 0.739, AUC 0.413",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 317,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 6,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_va",
+    "agent": "challenger",
+    "company_name": "VA Long Beach"
+   },
+   "to": "coord",
+   "text": "global model on local validation: loss 0.449, AUC 0.813",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 318,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 6,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_hungarian",
+    "agent": "challenger",
+    "company_name": "Budapest Cardiology"
+   },
+   "to": "coord",
+   "text": "global model on local validation: loss 0.309, AUC 0.930",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 319,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 6,
+   "type": "round.completed",
+   "auc_before": 0.860973,
+   "auc_after": 0.864222,
+   "loss": 0.473336,
+   "eps_total": 2.8494,
+   "applied": true
+  },
+  {
+   "seq": 320,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 6,
+   "type": "participant.state",
+   "membership_id": "mem_cleveland",
+   "node_id": "node_cleveland",
+   "state": "waiting",
+   "detail": ""
+  },
+  {
+   "seq": 321,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 6,
+   "type": "participant.state",
+   "membership_id": "mem_hungarian",
+   "node_id": "node_hungarian",
+   "state": "waiting",
+   "detail": ""
+  },
+  {
+   "seq": 322,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 6,
+   "type": "participant.state",
+   "membership_id": "mem_switzerland",
+   "node_id": "node_switzerland",
+   "state": "waiting",
+   "detail": ""
+  },
+  {
+   "seq": 323,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 6,
+   "type": "participant.state",
+   "membership_id": "mem_va",
+   "node_id": "node_va",
+   "state": "waiting",
+   "detail": ""
+  },
+  {
+   "seq": 324,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 7,
+   "type": "participant.state",
+   "membership_id": "mem_cleveland",
+   "node_id": "node_cleveland",
+   "state": "planning",
+   "detail": "agent choosing its local plan"
+  },
+  {
+   "seq": 325,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 7,
+   "type": "participant.state",
+   "membership_id": "mem_hungarian",
+   "node_id": "node_hungarian",
+   "state": "planning",
+   "detail": "agent choosing its local plan"
+  },
+  {
+   "seq": 326,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 7,
+   "type": "participant.state",
+   "membership_id": "mem_switzerland",
+   "node_id": "node_switzerland",
+   "state": "planning",
+   "detail": "agent choosing its local plan"
+  },
+  {
+   "seq": 327,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 7,
+   "type": "participant.state",
+   "membership_id": "mem_va",
+   "node_id": "node_va",
+   "state": "planning",
+   "detail": "agent choosing its local plan"
+  },
+  {
+   "seq": 328,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 7,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_cleveland",
+    "agent": "planner",
+    "company_name": "Cleveland Clinic"
+   },
+   "to": "coord",
+   "text": "5 ep @ lr 0.5 \u2014 rule: fixed plan, 5 epochs at lr 0.5",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 329,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 7,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_hungarian",
+    "agent": "planner",
+    "company_name": "Budapest Cardiology"
+   },
+   "to": "coord",
+   "text": "5 ep @ lr 0.5 \u2014 rule: fixed plan, 5 epochs at lr 0.5",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 330,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 7,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_switzerland",
+    "agent": "planner",
+    "company_name": "Zurich & Basel"
+   },
+   "to": "coord",
+   "text": "5 ep @ lr 0.5 \u2014 rule: fixed plan, 5 epochs at lr 0.5",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 331,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 7,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_va",
+    "agent": "planner",
+    "company_name": "VA Long Beach"
+   },
+   "to": "coord",
+   "text": "5 ep @ lr 0.5 \u2014 rule: fixed plan, 5 epochs at lr 0.5",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 332,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 7,
+   "type": "round.decision",
+   "strategy": "fedavg",
+   "participants": [
+    "node_cleveland",
+    "node_hungarian",
+    "node_switzerland",
+    "node_va"
+   ],
+   "excluded": [],
+   "offline": [],
+   "declined": [],
+   "reasoning": "rule: always FedAvg",
+   "decided_by": "rule"
+  },
+  {
+   "seq": 333,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 7,
+   "type": "participant.state",
+   "membership_id": "mem_cleveland",
+   "node_id": "node_cleveland",
+   "state": "training",
+   "detail": "5 DP-GD steps @ lr 0.5"
+  },
+  {
+   "seq": 334,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 7,
+   "type": "participant.state",
+   "membership_id": "mem_hungarian",
+   "node_id": "node_hungarian",
+   "state": "training",
+   "detail": "5 DP-GD steps @ lr 0.5"
+  },
+  {
+   "seq": 335,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 7,
+   "type": "participant.state",
+   "membership_id": "mem_switzerland",
+   "node_id": "node_switzerland",
+   "state": "training",
+   "detail": "5 DP-GD steps @ lr 0.5"
+  },
+  {
+   "seq": 336,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 7,
+   "type": "participant.state",
+   "membership_id": "mem_va",
+   "node_id": "node_va",
+   "state": "training",
+   "detail": "5 DP-GD steps @ lr 0.5"
+  },
+  {
+   "seq": 337,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 7,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_cleveland",
+    "agent": "trainer",
+    "company_name": "Cleveland Clinic"
+   },
+   "to": "coord",
+   "text": "trained 5 DP-GD steps on 181 local rows (\u03c3=0.108), loss 0.454\u21920.475; sent masked \u0394w \u00b7 \u03b5 spent 3.09",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 338,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 7,
+   "type": "participant.state",
+   "membership_id": "mem_cleveland",
+   "node_id": "node_cleveland",
+   "state": "sent",
+   "detail": "masked \u0394w sent"
+  },
+  {
+   "seq": 339,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 7,
+   "type": "packet",
+   "from": "node_cleveland",
+   "to": "coord",
+   "kind": "update",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 340,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 7,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_hungarian",
+    "agent": "trainer",
+    "company_name": "Budapest Cardiology"
+   },
+   "to": "coord",
+   "text": "trained 5 DP-GD steps on 176 local rows (\u03c3=0.111), loss 0.416\u21920.400; sent masked \u0394w \u00b7 \u03b5 spent 3.09",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 341,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 7,
+   "type": "participant.state",
+   "membership_id": "mem_hungarian",
+   "node_id": "node_hungarian",
+   "state": "sent",
+   "detail": "masked \u0394w sent"
+  },
+  {
+   "seq": 342,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 7,
+   "type": "packet",
+   "from": "node_hungarian",
+   "to": "coord",
+   "kind": "update",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 343,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 7,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_switzerland",
+    "agent": "trainer",
+    "company_name": "Zurich & Basel"
+   },
+   "to": "coord",
+   "text": "trained 5 DP-GD steps on 73 local rows (\u03c3=0.267), loss 0.533\u21920.368; sent masked \u0394w \u00b7 \u03b5 spent 3.09",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 344,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 7,
+   "type": "participant.state",
+   "membership_id": "mem_switzerland",
+   "node_id": "node_switzerland",
+   "state": "sent",
+   "detail": "masked \u0394w sent"
+  },
+  {
+   "seq": 345,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 7,
+   "type": "packet",
+   "from": "node_switzerland",
+   "to": "coord",
+   "kind": "update",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 346,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 7,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_va",
+    "agent": "trainer",
+    "company_name": "VA Long Beach"
+   },
+   "to": "coord",
+   "text": "trained 5 DP-GD steps on 120 local rows (\u03c3=0.163), loss 0.524\u21920.500; sent masked \u0394w \u00b7 \u03b5 spent 3.09",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 347,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 7,
+   "type": "participant.state",
+   "membership_id": "mem_va",
+   "node_id": "node_va",
+   "state": "sent",
+   "detail": "masked \u0394w sent"
+  },
+  {
+   "seq": 348,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 7,
+   "type": "packet",
+   "from": "node_va",
+   "to": "coord",
+   "kind": "update",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 349,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 7,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_cleveland",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 350,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 7,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_hungarian",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 351,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 7,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_switzerland",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 352,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 7,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_va",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 353,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 7,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_cleveland",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 354,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 7,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_hungarian",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 355,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 7,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_switzerland",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 356,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 7,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_va",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 357,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 7,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_cleveland",
+    "agent": "challenger",
+    "company_name": "Cleveland Clinic"
+   },
+   "to": "coord",
+   "text": "global model on local validation: loss 0.569, AUC 0.805",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 358,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 7,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_va",
+    "agent": "challenger",
+    "company_name": "VA Long Beach"
+   },
+   "to": "coord",
+   "text": "global model on local validation: loss 0.450, AUC 0.817",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 359,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 7,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_switzerland",
+    "agent": "challenger",
+    "company_name": "Zurich & Basel"
+   },
+   "to": "coord",
+   "text": "global model on local validation: loss 0.850, AUC 0.413",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 360,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 7,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_hungarian",
+    "agent": "challenger",
+    "company_name": "Budapest Cardiology"
+   },
+   "to": "coord",
+   "text": "global model on local validation: loss 0.322, AUC 0.922",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 361,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 7,
+   "type": "round.completed",
+   "auc_before": 0.864222,
+   "auc_after": 0.856662,
+   "loss": 0.502536,
+   "eps_total": 3.0914,
+   "applied": true
+  },
+  {
+   "seq": 362,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 7,
+   "type": "participant.state",
+   "membership_id": "mem_cleveland",
+   "node_id": "node_cleveland",
+   "state": "waiting",
+   "detail": ""
+  },
+  {
+   "seq": 363,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 7,
+   "type": "participant.state",
+   "membership_id": "mem_hungarian",
+   "node_id": "node_hungarian",
+   "state": "waiting",
+   "detail": ""
+  },
+  {
+   "seq": 364,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 7,
+   "type": "participant.state",
+   "membership_id": "mem_switzerland",
+   "node_id": "node_switzerland",
+   "state": "waiting",
+   "detail": ""
+  },
+  {
+   "seq": 365,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 7,
+   "type": "participant.state",
+   "membership_id": "mem_va",
+   "node_id": "node_va",
+   "state": "waiting",
+   "detail": ""
+  },
+  {
+   "seq": 366,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 8,
+   "type": "participant.state",
+   "membership_id": "mem_cleveland",
+   "node_id": "node_cleveland",
+   "state": "planning",
+   "detail": "agent choosing its local plan"
+  },
+  {
+   "seq": 367,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 8,
+   "type": "participant.state",
+   "membership_id": "mem_hungarian",
+   "node_id": "node_hungarian",
+   "state": "planning",
+   "detail": "agent choosing its local plan"
+  },
+  {
+   "seq": 368,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 8,
+   "type": "participant.state",
+   "membership_id": "mem_switzerland",
+   "node_id": "node_switzerland",
+   "state": "planning",
+   "detail": "agent choosing its local plan"
+  },
+  {
+   "seq": 369,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 8,
+   "type": "participant.state",
+   "membership_id": "mem_va",
+   "node_id": "node_va",
+   "state": "planning",
+   "detail": "agent choosing its local plan"
+  },
+  {
+   "seq": 370,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 8,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_cleveland",
+    "agent": "planner",
+    "company_name": "Cleveland Clinic"
+   },
+   "to": "coord",
+   "text": "5 ep @ lr 0.5 \u2014 rule: fixed plan, 5 epochs at lr 0.5",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 371,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 8,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_hungarian",
+    "agent": "planner",
+    "company_name": "Budapest Cardiology"
+   },
+   "to": "coord",
+   "text": "5 ep @ lr 0.5 \u2014 rule: fixed plan, 5 epochs at lr 0.5",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 372,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 8,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_switzerland",
+    "agent": "planner",
+    "company_name": "Zurich & Basel"
+   },
+   "to": "coord",
+   "text": "5 ep @ lr 0.5 \u2014 rule: fixed plan, 5 epochs at lr 0.5",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 373,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 8,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_va",
+    "agent": "planner",
+    "company_name": "VA Long Beach"
+   },
+   "to": "coord",
+   "text": "5 ep @ lr 0.5 \u2014 rule: fixed plan, 5 epochs at lr 0.5",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 374,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 8,
+   "type": "round.decision",
+   "strategy": "fedavg",
+   "participants": [
+    "node_cleveland",
+    "node_hungarian",
+    "node_switzerland",
+    "node_va"
+   ],
+   "excluded": [],
+   "offline": [],
+   "declined": [],
+   "reasoning": "rule: always FedAvg",
+   "decided_by": "rule"
+  },
+  {
+   "seq": 375,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 8,
+   "type": "participant.state",
+   "membership_id": "mem_cleveland",
+   "node_id": "node_cleveland",
+   "state": "training",
+   "detail": "5 DP-GD steps @ lr 0.5"
+  },
+  {
+   "seq": 376,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 8,
+   "type": "participant.state",
+   "membership_id": "mem_hungarian",
+   "node_id": "node_hungarian",
+   "state": "training",
+   "detail": "5 DP-GD steps @ lr 0.5"
+  },
+  {
+   "seq": 377,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 8,
+   "type": "participant.state",
+   "membership_id": "mem_switzerland",
+   "node_id": "node_switzerland",
+   "state": "training",
+   "detail": "5 DP-GD steps @ lr 0.5"
+  },
+  {
+   "seq": 378,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 8,
+   "type": "participant.state",
+   "membership_id": "mem_va",
+   "node_id": "node_va",
+   "state": "training",
+   "detail": "5 DP-GD steps @ lr 0.5"
+  },
+  {
+   "seq": 379,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 8,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_cleveland",
+    "agent": "trainer",
+    "company_name": "Cleveland Clinic"
+   },
+   "to": "coord",
+   "text": "trained 5 DP-GD steps on 181 local rows (\u03c3=0.108), loss 0.451\u21920.452; sent masked \u0394w \u00b7 \u03b5 spent 3.32",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 380,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 8,
+   "type": "participant.state",
+   "membership_id": "mem_cleveland",
+   "node_id": "node_cleveland",
+   "state": "sent",
+   "detail": "masked \u0394w sent"
+  },
+  {
+   "seq": 381,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 8,
+   "type": "packet",
+   "from": "node_cleveland",
+   "to": "coord",
+   "kind": "update",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 382,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 8,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_hungarian",
+    "agent": "trainer",
+    "company_name": "Budapest Cardiology"
+   },
+   "to": "coord",
+   "text": "trained 5 DP-GD steps on 176 local rows (\u03c3=0.111), loss 0.414\u21920.457; sent masked \u0394w \u00b7 \u03b5 spent 3.32",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 383,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 8,
+   "type": "participant.state",
+   "membership_id": "mem_hungarian",
+   "node_id": "node_hungarian",
+   "state": "sent",
+   "detail": "masked \u0394w sent"
+  },
+  {
+   "seq": 384,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 8,
+   "type": "packet",
+   "from": "node_hungarian",
+   "to": "coord",
+   "kind": "update",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 385,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 8,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_switzerland",
+    "agent": "trainer",
+    "company_name": "Zurich & Basel"
+   },
+   "to": "coord",
+   "text": "trained 5 DP-GD steps on 73 local rows (\u03c3=0.267), loss 0.606\u21920.284; sent masked \u0394w \u00b7 \u03b5 spent 3.32",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 386,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 8,
+   "type": "participant.state",
+   "membership_id": "mem_switzerland",
+   "node_id": "node_switzerland",
+   "state": "sent",
+   "detail": "masked \u0394w sent"
+  },
+  {
+   "seq": 387,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 8,
+   "type": "packet",
+   "from": "node_switzerland",
+   "to": "coord",
+   "kind": "update",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 388,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 8,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_va",
+    "agent": "trainer",
+    "company_name": "VA Long Beach"
+   },
+   "to": "coord",
+   "text": "trained 5 DP-GD steps on 120 local rows (\u03c3=0.163), loss 0.508\u21920.518; sent masked \u0394w \u00b7 \u03b5 spent 3.32",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 389,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 8,
+   "type": "participant.state",
+   "membership_id": "mem_va",
+   "node_id": "node_va",
+   "state": "sent",
+   "detail": "masked \u0394w sent"
+  },
+  {
+   "seq": 390,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 8,
+   "type": "packet",
+   "from": "node_va",
+   "to": "coord",
+   "kind": "update",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 391,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 8,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_cleveland",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 392,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 8,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_hungarian",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 393,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 8,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_switzerland",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 394,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 8,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_va",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 395,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 8,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_cleveland",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 396,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 8,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_hungarian",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 397,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 8,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_switzerland",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 398,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 8,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_va",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 399,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 8,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_switzerland",
+    "agent": "challenger",
+    "company_name": "Zurich & Basel"
+   },
+   "to": "coord",
+   "text": "global model on local validation: loss 0.819, AUC 0.391",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 400,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 8,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_va",
+    "agent": "challenger",
+    "company_name": "VA Long Beach"
+   },
+   "to": "coord",
+   "text": "global model on local validation: loss 0.488, AUC 0.807",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 401,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 8,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_hungarian",
+    "agent": "challenger",
+    "company_name": "Budapest Cardiology"
+   },
+   "to": "coord",
+   "text": "global model on local validation: loss 0.331, AUC 0.911",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 402,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 8,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_cleveland",
+    "agent": "challenger",
+    "company_name": "Cleveland Clinic"
+   },
+   "to": "coord",
+   "text": "global model on local validation: loss 0.573, AUC 0.815",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 403,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 8,
+   "type": "round.completed",
+   "auc_before": 0.856662,
+   "auc_after": 0.851819,
+   "loss": 0.510686,
+   "eps_total": 3.3183,
+   "applied": true
+  },
+  {
+   "seq": 404,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 8,
+   "type": "participant.state",
+   "membership_id": "mem_cleveland",
+   "node_id": "node_cleveland",
+   "state": "waiting",
+   "detail": ""
+  },
+  {
+   "seq": 405,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 8,
+   "type": "participant.state",
+   "membership_id": "mem_hungarian",
+   "node_id": "node_hungarian",
+   "state": "waiting",
+   "detail": ""
+  },
+  {
+   "seq": 406,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 8,
+   "type": "participant.state",
+   "membership_id": "mem_switzerland",
+   "node_id": "node_switzerland",
+   "state": "waiting",
+   "detail": ""
+  },
+  {
+   "seq": 407,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 8,
+   "type": "participant.state",
+   "membership_id": "mem_va",
+   "node_id": "node_va",
+   "state": "waiting",
+   "detail": ""
+  },
+  {
+   "seq": 408,
+   "ts": "2026-10-18T04:00:26Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "participant.state",
+   "membership_id": "mem_cleveland",
+   "node_id": "node_cleveland",
+   "state": "planning",
+   "detail": "agent choosing its local plan"
+  },
+  {
+   "seq": 409,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "participant.state",
+   "membership_id": "mem_hungarian",
+   "node_id": "node_hungarian",
+   "state": "planning",
+   "detail": "agent choosing its local plan"
+  },
+  {
+   "seq": 410,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "participant.state",
+   "membership_id": "mem_switzerland",
+   "node_id": "node_switzerland",
+   "state": "planning",
+   "detail": "agent choosing its local plan"
+  },
+  {
+   "seq": 411,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "participant.state",
+   "membership_id": "mem_va",
+   "node_id": "node_va",
+   "state": "planning",
+   "detail": "agent choosing its local plan"
+  },
+  {
+   "seq": 412,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_cleveland",
+    "agent": "planner",
+    "company_name": "Cleveland Clinic"
+   },
+   "to": "coord",
+   "text": "5 ep @ lr 0.5 \u2014 rule: fixed plan, 5 epochs at lr 0.5",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 413,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_hungarian",
+    "agent": "planner",
+    "company_name": "Budapest Cardiology"
+   },
+   "to": "coord",
+   "text": "5 ep @ lr 0.5 \u2014 rule: fixed plan, 5 epochs at lr 0.5",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 414,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_switzerland",
+    "agent": "planner",
+    "company_name": "Zurich & Basel"
+   },
+   "to": "coord",
+   "text": "5 ep @ lr 0.5 \u2014 rule: fixed plan, 5 epochs at lr 0.5",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 415,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_va",
+    "agent": "planner",
+    "company_name": "VA Long Beach"
+   },
+   "to": "coord",
+   "text": "5 ep @ lr 0.5 \u2014 rule: fixed plan, 5 epochs at lr 0.5",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 416,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "round.decision",
+   "strategy": "fedavg",
+   "participants": [
+    "node_cleveland",
+    "node_hungarian",
+    "node_switzerland",
+    "node_va"
+   ],
+   "excluded": [],
+   "offline": [],
+   "declined": [],
+   "reasoning": "rule: always FedAvg",
+   "decided_by": "rule"
+  },
+  {
+   "seq": 417,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "participant.state",
+   "membership_id": "mem_cleveland",
+   "node_id": "node_cleveland",
+   "state": "training",
+   "detail": "5 DP-GD steps @ lr 0.5"
+  },
+  {
+   "seq": 418,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "participant.state",
+   "membership_id": "mem_hungarian",
+   "node_id": "node_hungarian",
+   "state": "training",
+   "detail": "5 DP-GD steps @ lr 0.5"
+  },
+  {
+   "seq": 419,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "participant.state",
+   "membership_id": "mem_switzerland",
+   "node_id": "node_switzerland",
+   "state": "training",
+   "detail": "5 DP-GD steps @ lr 0.5"
+  },
+  {
+   "seq": 420,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "participant.state",
+   "membership_id": "mem_va",
+   "node_id": "node_va",
+   "state": "training",
+   "detail": "5 DP-GD steps @ lr 0.5"
+  },
+  {
+   "seq": 421,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_cleveland",
+    "agent": "trainer",
+    "company_name": "Cleveland Clinic"
+   },
+   "to": "coord",
+   "text": "trained 5 DP-GD steps on 181 local rows (\u03c3=0.108), loss 0.453\u21920.450; sent masked \u0394w \u00b7 \u03b5 spent 3.53",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 422,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "participant.state",
+   "membership_id": "mem_cleveland",
+   "node_id": "node_cleveland",
+   "state": "sent",
+   "detail": "masked \u0394w sent"
+  },
+  {
+   "seq": 423,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "packet",
+   "from": "node_cleveland",
+   "to": "coord",
+   "kind": "update",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 424,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_hungarian",
+    "agent": "trainer",
+    "company_name": "Budapest Cardiology"
+   },
+   "to": "coord",
+   "text": "trained 5 DP-GD steps on 176 local rows (\u03c3=0.111), loss 0.422\u21920.415; sent masked \u0394w \u00b7 \u03b5 spent 3.53",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 425,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "participant.state",
+   "membership_id": "mem_hungarian",
+   "node_id": "node_hungarian",
+   "state": "sent",
+   "detail": "masked \u0394w sent"
+  },
+  {
+   "seq": 426,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "packet",
+   "from": "node_hungarian",
+   "to": "coord",
+   "kind": "update",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 427,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_switzerland",
+    "agent": "trainer",
+    "company_name": "Zurich & Basel"
+   },
+   "to": "coord",
+   "text": "trained 5 DP-GD steps on 73 local rows (\u03c3=0.267), loss 0.558\u21920.587; sent masked \u0394w \u00b7 \u03b5 spent 3.53",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 428,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "participant.state",
+   "membership_id": "mem_switzerland",
+   "node_id": "node_switzerland",
+   "state": "sent",
+   "detail": "masked \u0394w sent"
+  },
+  {
+   "seq": 429,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "packet",
+   "from": "node_switzerland",
+   "to": "coord",
+   "kind": "update",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 430,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_va",
+    "agent": "trainer",
+    "company_name": "VA Long Beach"
+   },
+   "to": "coord",
+   "text": "trained 5 DP-GD steps on 120 local rows (\u03c3=0.163), loss 0.537\u21920.525; sent masked \u0394w \u00b7 \u03b5 spent 3.53",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 431,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "participant.state",
+   "membership_id": "mem_va",
+   "node_id": "node_va",
+   "state": "sent",
+   "detail": "masked \u0394w sent"
+  },
+  {
+   "seq": 432,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "packet",
+   "from": "node_va",
+   "to": "coord",
+   "kind": "update",
+   "masked": true,
+   "rejected": false
+  },
+  {
+   "seq": 433,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_cleveland",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 434,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_hungarian",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 435,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_switzerland",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 436,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_va",
+   "kind": "broadcast",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 437,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_cleveland",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 438,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_hungarian",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 439,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_switzerland",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 440,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "packet",
+   "from": "coord",
+   "to": "node_va",
+   "kind": "probe",
+   "masked": false,
+   "rejected": false
+  },
+  {
+   "seq": 441,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_switzerland",
+    "agent": "challenger",
+    "company_name": "Zurich & Basel"
+   },
+   "to": "coord",
+   "text": "global model on local validation: loss 0.876, AUC 0.413",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 442,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_hungarian",
+    "agent": "challenger",
+    "company_name": "Budapest Cardiology"
+   },
+   "to": "coord",
+   "text": "global model on local validation: loss 0.319, AUC 0.922",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 443,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_cleveland",
+    "agent": "challenger",
+    "company_name": "Cleveland Clinic"
+   },
+   "to": "coord",
+   "text": "global model on local validation: loss 0.572, AUC 0.821",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 444,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_va",
+    "agent": "challenger",
+    "company_name": "VA Long Beach"
+   },
+   "to": "coord",
+   "text": "global model on local validation: loss 0.493, AUC 0.800",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 445,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "round.completed",
+   "auc_before": 0.851819,
+   "auc_after": 0.853296,
+   "loss": 0.515172,
+   "eps_total": 3.5331,
+   "applied": true
+  },
+  {
+   "seq": 446,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "participant.state",
+   "membership_id": "mem_cleveland",
+   "node_id": "node_cleveland",
+   "state": "waiting",
+   "detail": ""
+  },
+  {
+   "seq": 447,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "participant.state",
+   "membership_id": "mem_hungarian",
+   "node_id": "node_hungarian",
+   "state": "waiting",
+   "detail": ""
+  },
+  {
+   "seq": 448,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "participant.state",
+   "membership_id": "mem_switzerland",
+   "node_id": "node_switzerland",
+   "state": "waiting",
+   "detail": ""
+  },
+  {
+   "seq": 449,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "participant.state",
+   "membership_id": "mem_va",
+   "node_id": "node_va",
+   "state": "waiting",
+   "detail": ""
+  },
+  {
+   "seq": 450,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "agent.message",
+   "from": {
+    "node_id": "coord",
+    "agent": "coordinator",
+    "company_name": "Coordinator"
+   },
+   "to": "*",
+   "text": "training is enough after 9 rounds; publishing the round-4 checkpoint \u2014 rule: no pooled validation-loss improvement for 5 rounds",
+   "made_by": "rule",
+   "data": {
+    "checkpoint_round": 4
+   }
+  },
+  {
+   "seq": 451,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "job.step",
+   "step": "evaluating"
+  },
+  {
+   "seq": 452,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_switzerland",
+    "agent": "challenger",
+    "company_name": "Zurich & Basel"
+   },
+   "to": "coord",
+   "text": "final model on local TEST split: AUC 0.957, accuracy 0.800; stored model d235af4a4136",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 453,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_va",
+    "agent": "challenger",
+    "company_name": "VA Long Beach"
+   },
+   "to": "coord",
+   "text": "final model on local TEST split: AUC 0.843, accuracy 0.750; stored model d235af4a4136",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 454,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_hungarian",
+    "agent": "challenger",
+    "company_name": "Budapest Cardiology"
+   },
+   "to": "coord",
+   "text": "final model on local TEST split: AUC 0.757, accuracy 0.763; stored model d235af4a4136",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 455,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "agent.message",
+   "from": {
+    "node_id": "node_cleveland",
+    "agent": "challenger",
+    "company_name": "Cleveland Clinic"
+   },
+   "to": "coord",
+   "text": "final model on local TEST split: AUC 0.884, accuracy 0.803; stored model d235af4a4136",
+   "made_by": "rule",
+   "data": null
+  },
+  {
+   "seq": 456,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "job.step",
+   "step": "published"
+  },
+  {
+   "seq": 457,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "model.published",
+   "version_id": "mv_heart",
+   "version": 1,
+   "metrics": {
+    "auc": 0.847153,
+    "checkpoint_round": 4,
+    "auc_by_site": {
+     "switzerland": 0.956522,
+     "va": 0.843333,
+     "hungarian": 0.756892,
+     "cleveland": 0.884199
+    },
+    "auc_centralized": 0.882353,
+    "auc_solo_by_company": {
+     "cleveland": 0.863513,
+     "hungarian": 0.850933,
+     "switzerland": 0.796421,
+     "va": 0.831207
+    },
+    "benchmark_note": "experimenter benchmark on the pooled test set; solo and centralized use raw data from every hospital and exist only for comparison"
+   }
+  },
+  {
+   "seq": 458,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "participant.state",
+   "membership_id": "mem_cleveland",
+   "node_id": "node_cleveland",
+   "state": "done",
+   "detail": "holds the published model"
+  },
+  {
+   "seq": 459,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "participant.state",
+   "membership_id": "mem_hungarian",
+   "node_id": "node_hungarian",
+   "state": "done",
+   "detail": "holds the published model"
+  },
+  {
+   "seq": 460,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "participant.state",
+   "membership_id": "mem_switzerland",
+   "node_id": "node_switzerland",
+   "state": "done",
+   "detail": "holds the published model"
+  },
+  {
+   "seq": 461,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "participant.state",
+   "membership_id": "mem_va",
+   "node_id": "node_va",
+   "state": "done",
+   "detail": "holds the published model"
+  },
+  {
+   "seq": 462,
+   "ts": "2026-10-18T04:00:27Z",
+   "job_id": "job_heart",
+   "round": 9,
+   "type": "job.status",
+   "status": "succeeded",
+   "error": null
+  }
+ ]
+}

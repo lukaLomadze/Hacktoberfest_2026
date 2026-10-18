@@ -1,7 +1,8 @@
 // #/jobs/{id} — the live process view (PLATFORM-API §5.5, §6). It is driven only by §6
 // events: GET /jobs/{id}/events to catch up, then the SSE stream while the job runs. A
-// finished job can be replayed from its event history (?replay=1 starts the replay at once),
-// which is also how the view works on the mock event list.
+// finished job can be replayed from its event history with a player bar (play/pause, step one
+// event, jump a round, stop, skip to the end, speed 0.25–8×, a position slider; keys: Space,
+// →, Shift+→). ?replay=1 starts the replay at once; this is also how the mock event list plays.
 
 import { api } from "../api.js";
 import { errorBox, h, meta, session, statusPill } from "../app.js";
@@ -15,6 +16,7 @@ import { createStepper } from "../live/stepper.js";
 const LIVE = new Set(["queued", "running"]);
 // replay pacing per event type, in ms at 1×: packets are quick, agent messages are read
 const PACE = { packet: 160, "agent.message": 420, "round.decision": 700, "round.completed": 700, default: 220 };
+const SPEEDS = [0.25, 0.5, 1, 2, 4, 8];
 
 const STYLE_ID = "page-job-style";
 const STYLE = `
@@ -23,7 +25,11 @@ const STYLE = `
 .page[data-page="job"] .job-facts { display: flex; gap: 16px; flex-wrap: wrap; color: var(--text-dim); }
 .page[data-page="job"] .job-facts b { color: var(--text); font-family: var(--font-data); font-weight: 600; }
 .page[data-page="job"] .zero { color: var(--ok); font-family: var(--font-data); font-weight: 600; }
-.page[data-page="job"] .job-controls { display: flex; align-items: center; gap: 8px; margin-left: auto; flex-wrap: wrap; }
+.page[data-page="job"] .replay-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px 12px; }
+.page[data-page="job"] .replay-bar .btn { min-width: 0; }
+.page[data-page="job"] .replay-bar select { width: auto; min-width: 0; }
+.page[data-page="job"] .replay-bar input[type="range"] { flex: 1 1 160px; min-width: 120px; accent-color: var(--coord); }
+.page[data-page="job"] .replay-pos { font: 12px var(--font-data); color: var(--text-dim); white-space: nowrap; }
 .page[data-page="job"] .live-dot { font: 12px var(--font-data); color: var(--text-dim); border: 1px dashed var(--border-strong); border-radius: 999px; padding: 0 8px; }
 .page[data-page="job"] .published { border-color: var(--ok); color: var(--text); display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 .page[data-page="job"] .published b { color: var(--ok); font-family: var(--font-data); }
@@ -36,15 +42,18 @@ const STYLE = `
 .page[data-page="job"] .live-canvas { display: block; }
 .page[data-page="job"] .stage-caption { padding: 8px 16px; border-top: 1px solid var(--border); color: var(--text-dim); }
 /* stepper */
-.page[data-page="job"] .live-stepper { list-style: none; margin: 0; padding: 0; display: flex; gap: 4px; flex-wrap: wrap; }
-.page[data-page="job"] .live-step { display: flex; align-items: center; gap: 8px; padding: 4px 12px; border: 1px solid var(--border); border-radius: 999px; color: var(--text-faint); font-size: 12px; }
-.page[data-page="job"] .step-dot { width: 8px; height: 8px; border-radius: 999px; border: 1px solid var(--border-strong); }
+.page[data-page="job"] .live-stepper { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; counter-reset: step;
+  grid-template-columns: repeat(auto-fit, minmax(min(120px, 100%), 1fr)); }
+.page[data-page="job"] .live-step { display: flex; align-items: center; gap: 8px; padding: 8px; border: 1px solid var(--border); border-radius: 8px; color: var(--text-faint); font-size: 12px; font-weight: 600; counter-increment: step; }
+.page[data-page="job"] .step-dot { flex: none; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--border-strong); font: 600 12px var(--font-data); }
+.page[data-page="job"] .step-dot::before { content: counter(step); }
 .page[data-page="job"] .step-done { color: var(--text-dim); }
-.page[data-page="job"] .step-done .step-dot { background: var(--ok); border-color: var(--ok); }
-.page[data-page="job"] .step-now { color: var(--text); border-color: var(--border-strong); background: var(--panel); }
-.page[data-page="job"] .step-now .step-dot { background: var(--text); border-color: var(--text); }
+.page[data-page="job"] .step-done .step-dot { background: var(--ok); border-color: var(--ok); color: var(--bg); }
+.page[data-page="job"] .step-done .step-dot::before { content: "✓"; }
+.page[data-page="job"] .step-now { color: var(--text); border-color: var(--coord); background: var(--panel); }
+.page[data-page="job"] .step-now .step-dot { background: var(--coord); border-color: var(--coord); color: var(--bg); }
 .page[data-page="job"] .step-failed { color: var(--danger); border-color: var(--danger); }
-.page[data-page="job"] .step-failed .step-dot { background: var(--danger); border-color: var(--danger); }
+.page[data-page="job"] .step-failed .step-dot { background: var(--danger); border-color: var(--danger); color: var(--bg); }
 /* feed */
 .page[data-page="job"] .live-feed { display: flex; flex-direction: column; }
 .page[data-page="job"] .live-feed-list { list-style: none; margin: 0; padding: 0 4px 0 0; display: flex; flex-direction: column; gap: 8px; max-height: 640px; overflow-y: auto; }
@@ -80,6 +89,12 @@ const STYLE = `
 .page[data-page="job"] .sw.dash { background: none; border-top: 2px dashed; height: 0; }
 .page[data-page="job"] .sw-ok { color: var(--ok); }
 .page[data-page="job"] .sw-bad { color: var(--danger); }
+/* run switch (mock mode): the scripted fixture vs real agent runs */
+.page[data-page="job"] .run-switch { display: flex; gap: 8px; flex-wrap: wrap; }
+.page[data-page="job"] .run-tab { display: flex; flex-direction: column; gap: 2px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel-2); color: var(--text-dim); text-decoration: none; min-width: 0; }
+.page[data-page="job"] .run-tab b { color: var(--text); }
+.page[data-page="job"] .run-tab span { font-size: 12px; overflow-wrap: anywhere; }
+.page[data-page="job"] .run-tab.active { border-color: var(--coord); }
 @media (max-width: 900px) {
   .page[data-page="job"] .job-grid { grid-template-columns: minmax(0, 1fr); }
   .page[data-page="job"] .live-feed-list { max-height: 420px; }
@@ -125,23 +140,34 @@ export async function render({ el, params, query }) {
   const roundSlot = h("b", "0");
   const epsSlot = h("b", "0.0");
   const liveSlot = h("span.live-dot", { hidden: true });
-  const replayBtn = h("button.btn.ghost", { type: "button" }, "Replay");
-  const endBtn = h("button.btn.ghost", { type: "button", hidden: true }, "Skip to end");
+  const btn = (label, title) => h("button.btn.ghost.small", { type: "button", title }, label);
+  const playBtn = h("button.btn.primary.small", { type: "button", title: "Play / pause (Space)" }, "▶ Play");
+  const stepBtn = btn("Step ›", "Show the next event (→)");
+  const roundBtn = btn("Next round »", "Play up to the end of the next round (Shift+→)");
+  const stopBtn = btn("■ Stop", "Stop and go back to the start");
+  const endBtn = btn("Skip to end ⇥", "Show the finished job");
+  const speedSel = h("select", { "aria-label": "Replay speed", title: "Replay speed" },
+    SPEEDS.map((v) => h("option", { value: String(v), selected: v === 1 }, `${v}×`)));
+  const scrub = h("input", { type: "range", min: "0", max: "0", value: "0", step: "1", "aria-label": "Replay position" });
+  const posSlot = h("span.replay-pos");
+  const replayBar = h("div.panel.replay-bar", { hidden: true, role: "toolbar", "aria-label": "Replay controls" },
+    playBtn, stepBtn, roundBtn, stopBtn, endBtn, h("span.faint", "speed"), speedSel, scrub, posSlot);
   const publishedSlot = h("div.panel.published", { hidden: true, role: "status" });
+  const runsSlot = h("nav.run-switch", { hidden: true, "aria-label": "Which run to show" });
   const errorSlot = h("div");
 
   const title = group ? `${group.name}: ${job.kind === "finetune" ? "fine-tune" : "training"}` : `Job ${job.id}`;
   el.replaceChildren(
+    runsSlot,
     h("div.job-head",
-      h("h1", title), statusSlot, liveSlot,
-      h("div.job-controls", replayBtn, endBtn)),
+      h("h1", title), statusSlot, liveSlot),
     h("div.job-facts",
-      h("span", "round ", roundSlot, ` / ${job.rounds ?? "—"}`),
+      h("span", "round ", roundSlot, ` / ${job.rounds ?? "agent decides"}`),
       h("span", "ε spent ", epsSlot),
       h("span", "participants ", h("b", String((job.participants || []).length))),
       h("span", h("span.zero", "0"), " data rows left any company"),
       h("span.faint.mono", job.id)),
-    stepper.el, errorSlot, publishedSlot,
+    replayBar, stepper.el, errorSlot, publishedSlot,
     h("div.job-grid",
       h("div.job-main",
         h("section.panel.stage", h("div.stage-box", canvas.el),
@@ -151,6 +177,19 @@ export async function render({ el, params, query }) {
       h("div.job-rail", feed.el)));
   canvas.mount();
   chart.mount();
+
+  // mock mode: switch between the scripted demo (job_1) and real agent runs (heart_diseases_simulation)
+  if (api.isMock) {
+    api.get("/demo/runs").then((r) => {
+      const runs = (r && r.items) || [];
+      if (runs.length < 2) return;
+      runsSlot.replaceChildren(...runs.map((run) => h("a.run-tab", {
+        href: `#/jobs/${encodeURIComponent(run.job_id)}`, class: run.job_id === job.id ? "active" : null,
+        "aria-current": run.job_id === job.id ? "page" : null,
+      }, h("b", run.label), h("span", `${run.detail} · ${run.status}`))));
+      runsSlot.hidden = false;
+    }).catch(() => { /* an older mock without /demo/runs: no switch */ });
+  }
 
   // ---------------------------------------------------------------- drawing
   let state = initialState(job);
@@ -174,8 +213,9 @@ export async function render({ el, params, query }) {
       if (p) {
         const auc = p.metrics && p.metrics.auc;
         const link = session.user && session.user.role === "admin" ? h("a", { href: `#/groups/${job.group_id}` }, "Open the group") : null;
-        publishedSlot.replaceChildren(h("span", "Published ", h("b", `v${p.version ?? "?"}`)),
-          typeof auc === "number" ? h("span", "AUC ", h("b", auc.toFixed(3))) : null, link);
+        // replaceChildren() prints null as the text "null", so drop the missing parts first
+        publishedSlot.replaceChildren(...[h("span", "Published ", h("b", `v${p.version ?? "?"}`)),
+          typeof auc === "number" ? h("span", "AUC ", h("b", auc.toFixed(3))) : null, link].filter(Boolean));
       }
     }
   }
@@ -204,7 +244,9 @@ export async function render({ el, params, query }) {
       apply(e, true);
       if (!LIVE.has(state.status)) {
         liveSlot.textContent = "finished";
-        replayBtn.hidden = false;
+        cursor = events.length;
+        replayBar.hidden = false;
+        sync();
         // the server ends the stream after the last event; EventSource would reconnect every
         // few seconds for as long as the page is open unless it is closed here
         if (stopStream) stopStream();
@@ -214,53 +256,104 @@ export async function render({ el, params, query }) {
   }
 
   // ---------------------------------------------------------------- replay (finished jobs, mocks)
+  // cursor = how many events the picture shows; it starts at the end (the finished job)
   let timer = null;
-  let cursor = 0;
-  let replaying = false;
+  let cursor = events.length;
+  let playing = false;
+  let speed = 1;
+  const atEnd = () => cursor >= events.length;
 
-  function stopReplay() {
+  function sync() {
+    playBtn.textContent = playing ? "⏸ Pause" : atEnd() ? "↻ Replay" : cursor === 0 ? "▶ Play" : "▶ Resume";
+    scrub.max = String(events.length);
+    scrub.value = String(cursor);
+    posSlot.textContent = `event ${cursor} / ${events.length} · round ${state.round}`;
+  }
+  function restart() { // an empty picture, before the first event
+    state = initialState(job);
+    cursor = 0;
+    draw();
+  }
+  function pause() {
     if (timer) clearTimeout(timer);
     timer = null;
-    replaying = false;
-    replayBtn.textContent = cursor && cursor < events.length ? "Resume" : "Replay";
-    endBtn.hidden = !(cursor && cursor < events.length);
+    playing = false;
+    sync();
   }
-  function step() {
-    if (cursor >= events.length) {
-      cursor = 0;
-      stopReplay();
-      return;
-    }
+  function tick() {
+    timer = null;
+    if (atEnd()) { pause(); return; }
     const e = events[cursor++];
     apply(e, true);
-    timer = setTimeout(step, PACE[e.type] ?? PACE.default);
+    sync();
+    if (atEnd()) { pause(); return; }
+    timer = setTimeout(tick, (PACE[e.type] ?? PACE.default) / speed);
   }
-  replayBtn.addEventListener("click", () => {
-    if (replaying) { stopReplay(); return; }
-    if (cursor === 0) { // start over from an empty picture
-      state = initialState(job);
-      draw();
+  function play() {
+    if (atEnd()) restart();
+    playing = true;
+    sync();
+    tick();
+  }
+  function stepOnce() {
+    pause();
+    if (atEnd()) restart();
+    apply(events[cursor++], true);
+    sync();
+  }
+  function nextRound() { // up to and including the next round.completed (or the job's end)
+    pause();
+    if (atEnd()) restart();
+    while (!atEnd()) {
+      const e = events[cursor++];
+      applyEvent(state, e);
+      if (e.type === "round.completed" || (e.type === "job.status" && !LIVE.has(e.status))) break;
     }
-    replaying = true;
-    replayBtn.textContent = "Pause";
-    endBtn.hidden = false;
-    step();
-  });
-  endBtn.addEventListener("click", () => {
-    if (timer) clearTimeout(timer);
-    while (cursor < events.length) applyEvent(state, events[cursor++]);
     draw();
+    sync();
+  }
+  function seek(k) {
+    pause();
+    state = initialState(job);
     cursor = 0;
-    stopReplay();
-  });
+    while (cursor < Math.min(k, events.length)) applyEvent(state, events[cursor++]);
+    draw();
+    sync();
+  }
 
-  replayBtn.hidden = LIVE.has(state.status) || !events.length;
+  playBtn.addEventListener("click", () => (playing ? pause() : play()));
+  stepBtn.addEventListener("click", stepOnce);
+  roundBtn.addEventListener("click", nextRound);
+  stopBtn.addEventListener("click", () => { pause(); restart(); sync(); });
+  endBtn.addEventListener("click", () => seek(events.length));
+  scrub.addEventListener("input", () => seek(Number(scrub.value)));
+  speedSel.addEventListener("change", () => {
+    speed = Number(speedSel.value) || 1;
+    if (playing && timer) { clearTimeout(timer); timer = setTimeout(tick, 60); } // apply the new speed now
+  });
+  const onKey = (ev) => {
+    const t = ev.target && ev.target.closest ? ev.target : null;
+    if (replayBar.hidden || ev.ctrlKey || ev.metaKey || ev.altKey) return;
+    if (t && t.closest("input, select, textarea, [contenteditable]")) return; // typing, or the slider's own keys
+    if (ev.key === " ") {
+      if (t && t.closest("button, a")) return; // Space already presses a focused button
+      ev.preventDefault();
+      if (playing) pause(); else play();
+    }
+    else if (ev.key === "ArrowRight" && ev.shiftKey) { ev.preventDefault(); nextRound(); }
+    else if (ev.key === "ArrowRight") { ev.preventDefault(); stepOnce(); }
+  };
+  document.addEventListener("keydown", onKey);
+
+  replayBar.hidden = LIVE.has(state.status) || !events.length;
+  sync();
   goLive();
-  if (query.replay === "1" && !replayBtn.hidden) replayBtn.click();
+  if (query.replay === "1" && !replayBar.hidden) { restart(); play(); }
 
   return () => {
     if (stopStream) stopStream();
     if (timer) clearTimeout(timer);
+    document.removeEventListener("keydown", onKey);
     canvas.destroy();
     chart.destroy();
   };
