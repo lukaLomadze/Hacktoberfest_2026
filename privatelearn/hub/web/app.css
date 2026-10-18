@@ -1,0 +1,205 @@
+/* PrivateLearn platform web app. Tokens, type scale and spacing follow docs/DESIGN.md;
+   no raw hex in components. Platform-only status tones reuse --ok/--danger (see .pill). */
+:root {
+  --bg: #0a0e14;
+  --bg-raise: #0e131c;
+  --panel: #111826;
+  --panel-2: #171f30;
+  --border: #222c3d;
+  --border-strong: #2e3a50;
+
+  --text: #e7ecf4;
+  --text-dim: #9aa5b8;
+  --text-faint: #5c6a80;
+
+  --hosp-a: #4d8bff;
+  --hosp-b: #3fcf8e;
+  --hosp-c: #ff6b6b;
+  --coord: #f5b94d;
+
+  --ok: #46d48a;
+  --danger: #ff5c5c;
+
+  --font-data: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+  --font-ui: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+* { box-sizing: border-box; }
+html, body { min-height: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 13px/1.5 var(--font-ui);
+  font-variant-numeric: tabular-nums;
+}
+h1, h2, h3, p { margin: 0; }
+h1 { font-size: 20px; font-weight: 600; }
+h2 { font-size: 14px; font-weight: 600; }
+a { color: var(--text); text-underline-offset: 2px; }
+a:hover { color: var(--text-dim); }
+code, .mono { font-family: var(--font-data); }
+[hidden] { display: none !important; }
+
+/* ---------- topbar ---------- */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  min-height: 56px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-raise);
+  flex-wrap: wrap;
+}
+.brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+.brand-mark {
+  width: 16px; height: 16px; border-radius: 4px;
+  background: var(--coord);
+  box-shadow: 8px 8px 0 -4px var(--hosp-a);
+}
+.brand-text { display: flex; flex-direction: column; }
+.brand-name { font-size: 14px; font-weight: 600; line-height: 1.2; }
+.tagline { font-size: 12px; color: var(--text-faint); }
+
+.nav { display: flex; gap: 4px; flex: 1; flex-wrap: wrap; }
+.nav-link {
+  font-size: 14px;
+  color: var(--text-dim);
+  text-decoration: none;
+  padding: 4px 12px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+}
+.nav-link:hover { color: var(--text); border-color: var(--border); }
+.nav-link[aria-current="page"] { color: var(--text); border-color: var(--border-strong); background: var(--panel); }
+
+.topbar-end { display: flex; align-items: center; gap: 12px; margin-left: auto; }
+.who { display: flex; align-items: center; gap: 8px; }
+.who-name { font-weight: 600; }
+.who-email { font: 12px var(--font-data); color: var(--text-faint); }
+.mock-badge {
+  font: 12px var(--font-data);
+  color: var(--text-dim);
+  border: 1px dashed var(--border-strong);
+  border-radius: 999px;
+  padding: 0 8px;
+}
+
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text-dim);
+}
+
+/* ---------- layout ---------- */
+.main { max-width: 1120px; margin: 0 auto; padding: 24px 16px 32px; }
+.page { display: flex; flex-direction: column; gap: 16px; }
+.loading { color: var(--text-faint); }
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+}
+.placeholder { display: flex; flex-direction: column; gap: 8px; color: var(--text-dim); }
+.placeholder h2 { color: var(--text); }
+.muted { color: var(--text-dim); }
+.faint { color: var(--text-faint); font-size: 12px; }
+
+/* ---------- buttons ---------- */
+.btn {
+  font: 500 14px var(--font-ui);
+  border-radius: 8px;
+  padding: 4px 16px;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  color: var(--text);
+  background: transparent;
+}
+.btn.primary { background: var(--coord); border-color: var(--coord); color: var(--bg); }
+.btn.ghost { background: transparent; }
+.btn.small { font-size: 12px; padding: 0 8px; }
+.btn:hover { border-color: var(--border-strong); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 1px solid var(--border-strong);
+  outline-offset: 2px;
+}
+
+/* ---------- forms ---------- */
+.form { display: flex; flex-direction: column; gap: 12px; }
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field label { font-size: 12px; color: var(--text-dim); }
+.field .hint { font-size: 12px; color: var(--text-faint); }
+input, select, textarea {
+  font: 13px var(--font-ui);
+  color: var(--text);
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  width: 100%;
+}
+input:hover, select:hover, textarea:hover { border-color: var(--border-strong); }
+input[aria-invalid="true"] { border-color: var(--danger); }
+.field-error { font-size: 12px; color: var(--danger); }
+.form-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+.error-box {
+  font: 13px/1.5 var(--font-data);
+  color: var(--danger);
+  border: 1px solid var(--danger);
+  border-radius: 8px;
+  padding: 8px 12px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- auth pages ---------- */
+.auth { max-width: 420px; margin: 32px auto 0; display: flex; flex-direction: column; gap: 16px; }
+.auth h1 { margin-bottom: 4px; }
+.demo-accounts { display: flex; flex-direction: column; gap: 8px; }
+.demo-account {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+  width: 100%;
+  padding: 8px 12px;
+}
+.demo-account .mono { font-size: 12px; color: var(--text-faint); overflow-wrap: anywhere; }
+
+/* ---------- status pill ----------
+   Unknown values (pill-unknown) show their raw text in the neutral style. Success/failure
+   reuse --ok/--danger; in-progress and waiting are neutral hairlines (DESIGN.md: entity and
+   coordinator colors are never generic accents). */
+.pill {
+  display: inline-block;
+  font: 12px/1.6 var(--font-data);
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  color: var(--text-dim);
+  background: var(--panel-2);
+  white-space: nowrap;
+}
+.pill-ok { color: var(--ok); border-color: var(--ok); }
+.pill-bad { color: var(--danger); border-color: var(--danger); }
+.pill-busy { color: var(--text); border-style: dashed; }
+.pill-wait { color: var(--text-dim); }
+.pill-unknown { color: var(--text-faint); border-color: var(--border); }
+
+@media (max-width: 640px) {
+  .topbar { gap: 8px; }
+  .nav { order: 3; flex-basis: 100%; }
+  .who-email { display: none; }
+  .main { padding: 16px; }
+  .auth { margin-top: 16px; }
+}

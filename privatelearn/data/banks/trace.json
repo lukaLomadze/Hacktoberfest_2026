@@ -252,7 +252,8 @@
           "n": 400,
           "sent": true,
           "masked": true,
-          "dp_eps": 1.5
+          "dp_eps": 1.5,
+          "dp_sigma": 0.0017217091
         },
         {
           "hospital": "h1",
@@ -260,7 +261,8 @@
           "n": 400,
           "sent": true,
           "masked": true,
-          "dp_eps": 1.5
+          "dp_eps": 1.5,
+          "dp_sigma": 0.0017217091
         },
         {
           "hospital": "h2",
@@ -268,7 +270,8 @@
           "n": 400,
           "sent": true,
           "masked": true,
-          "dp_eps": 1.5
+          "dp_eps": 1.5,
+          "dp_sigma": 0.0017217091
         }
       ],
       "broadcast": {
@@ -320,7 +323,8 @@
           "n": 400,
           "sent": true,
           "masked": true,
-          "dp_eps": 1.5
+          "dp_eps": 1.5,
+          "dp_sigma": 0.0025825637
         },
         {
           "hospital": "h1",
@@ -328,7 +332,8 @@
           "n": 400,
           "sent": true,
           "masked": true,
-          "dp_eps": 1.5
+          "dp_eps": 1.5,
+          "dp_sigma": 0.0025825637
         },
         {
           "hospital": "h2",
@@ -337,7 +342,8 @@
           "sent": false,
           "masked": false,
           "dp_eps": 0.0,
-          "reason": "offline"
+          "reason": "offline",
+          "dp_sigma": 0.0
         }
       ],
       "broadcast": {
@@ -389,7 +395,8 @@
           "n": 400,
           "sent": true,
           "masked": true,
-          "dp_eps": 1.5
+          "dp_eps": 1.5,
+          "dp_sigma": 0.0025825637
         },
         {
           "hospital": "h1",
@@ -397,7 +404,8 @@
           "n": 400,
           "sent": true,
           "masked": true,
-          "dp_eps": 1.5
+          "dp_eps": 1.5,
+          "dp_sigma": 0.0025825637
         },
         {
           "hospital": "h2",
@@ -407,7 +415,8 @@
           "rejected": true,
           "reason": "probe loss 2.028 is an outlier",
           "masked": false,
-          "dp_eps": 0.0
+          "dp_eps": 0.0,
+          "dp_sigma": 0.0
         }
       ],
       "broadcast": {
@@ -457,7 +466,8 @@
           "n": 400,
           "sent": true,
           "masked": true,
-          "dp_eps": 1.5
+          "dp_eps": 1.5,
+          "dp_sigma": 0.0017217091
         },
         {
           "hospital": "h1",
@@ -465,7 +475,8 @@
           "n": 400,
           "sent": true,
           "masked": true,
-          "dp_eps": 1.5
+          "dp_eps": 1.5,
+          "dp_sigma": 0.0017217091
         },
         {
           "hospital": "h2",
@@ -473,7 +484,8 @@
           "n": 400,
           "sent": true,
           "masked": true,
-          "dp_eps": 1.5
+          "dp_eps": 1.5,
+          "dp_sigma": 0.0017217091
         }
       ],
       "broadcast": {
@@ -524,7 +536,8 @@
           "n": 400,
           "sent": true,
           "masked": true,
-          "dp_eps": 1.5
+          "dp_eps": 1.5,
+          "dp_sigma": 0.0017217091
         },
         {
           "hospital": "h1",
@@ -532,7 +545,8 @@
           "n": 400,
           "sent": true,
           "masked": true,
-          "dp_eps": 1.5
+          "dp_eps": 1.5,
+          "dp_sigma": 0.0017217091
         },
         {
           "hospital": "h2",
@@ -540,7 +554,8 @@
           "n": 400,
           "sent": true,
           "masked": true,
-          "dp_eps": 1.5
+          "dp_eps": 1.5,
+          "dp_sigma": 0.0017217091
         }
       ],
       "broadcast": {
@@ -591,7 +606,8 @@
           "n": 400,
           "sent": true,
           "masked": true,
-          "dp_eps": 1.5
+          "dp_eps": 1.5,
+          "dp_sigma": 0.0017217091
         },
         {
           "hospital": "h1",
@@ -599,7 +615,8 @@
           "n": 400,
           "sent": true,
           "masked": true,
-          "dp_eps": 1.5
+          "dp_eps": 1.5,
+          "dp_sigma": 0.0017217091
         },
         {
           "hospital": "h2",
@@ -607,7 +624,8 @@
           "n": 400,
           "sent": true,
           "masked": true,
-          "dp_eps": 1.5
+          "dp_eps": 1.5,
+          "dp_sigma": 0.0017217091
         }
       ],
       "broadcast": {
@@ -658,7 +676,8 @@
           "n": 400,
           "sent": true,
           "masked": true,
-          "dp_eps": 1.5
+          "dp_eps": 1.5,
+          "dp_sigma": 0.0017217091
         },
         {
           "hospital": "h1",
@@ -666,7 +685,8 @@
           "n": 400,
           "sent": true,
           "masked": true,
-          "dp_eps": 1.5
+          "dp_eps": 1.5,
+          "dp_sigma": 0.0017217091
         },
         {
           "hospital": "h2",
@@ -674,7 +694,8 @@
           "n": 400,
           "sent": true,
           "masked": true,
-          "dp_eps": 1.5
+          "dp_eps": 1.5,
+          "dp_sigma": 0.0017217091
         }
       ],
       "broadcast": {
@@ -725,7 +746,8 @@
           "n": 400,
           "sent": true,
           "masked": true,
-          "dp_eps": 1.5
+          "dp_eps": 1.5,
+          "dp_sigma": 0.0017217091
         },
         {
           "hospital": "h1",
@@ -733,7 +755,8 @@
           "n": 400,
           "sent": true,
           "masked": true,
-          "dp_eps": 1.5
+          "dp_eps": 1.5,
+          "dp_sigma": 0.0017217091
         },
         {
           "hospital": "h2",
@@ -741,7 +764,8 @@
           "n": 400,
           "sent": true,
           "masked": true,
-          "dp_eps": 1.5
+          "dp_eps": 1.5,
+          "dp_sigma": 0.0017217091
         }
       ],
       "broadcast": {

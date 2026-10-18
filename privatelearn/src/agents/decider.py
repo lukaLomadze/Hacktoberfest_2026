@@ -26,6 +26,7 @@ Provider: DeepSeek, OpenAI-compatible chat completions. Set DEEPSEEK_API_KEY.
 from __future__ import annotations
 
 import json
+import math
 import os
 import urllib.error
 import urllib.request
@@ -229,10 +230,10 @@ class LLMDecider:
             # hyperparameters and the trace records them; the machinery does not overrule it.
             if epochs <= 0:
                 raise ValueError(f"epochs {epochs} must be positive")
-            if lr <= 0:
-                raise ValueError(f"lr {lr} must be positive")
-            if mu < 0:
-                raise ValueError(f"mu {mu} negative")
+            if not math.isfinite(lr) or lr <= 0:  # json.loads accepts NaN and Infinity
+                raise ValueError(f"lr {lr} must be a positive number")
+            if not math.isfinite(mu) or mu < 0:
+                raise ValueError(f"mu {mu} must be a non-negative number")
             self.calls += 1
             return {"epochs": epochs, "lr": lr, "mu": mu,
                     "why": str(out.get("reasoning", "")).strip(), "made_by": "llm"}
