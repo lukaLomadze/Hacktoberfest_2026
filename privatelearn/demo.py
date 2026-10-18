@@ -4,8 +4,9 @@
     python demo.py --banks    # same, but the bank dataset (data/banks)
     python demo.py --no-run   # just serve and replay the committed trace.json
 
-Regeneration runs with --llm (needs DEEPSEEK_API_KEY); --no-run replays the committed
-trace without a key. Needs only Python 3.9+ and numpy.
+Regeneration runs with --llm and needs DEEPSEEK_API_KEY; without the key it replays the
+committed trace instead. `--no-run` always replays the committed trace. Needs only
+Python 3.9+ and numpy.
 """
 
 from __future__ import annotations
@@ -13,6 +14,7 @@ from __future__ import annotations
 import argparse
 import functools
 import http.server
+import os
 import pathlib
 import subprocess
 import sys
@@ -40,7 +42,12 @@ def main(argv=None):
         steps = [("src/pipeline/prep_data.py", ()), ("src/pipeline/run_loop.py", ("--llm",))]
         trace_rel = "trace.json"
 
-    if not args.no_run:
+    if not args.no_run and not os.environ.get("DEEPSEEK_API_KEY"):
+        # regeneration needs the LLM to reconcile differently-named columns; without the
+        # key it would fall back to an empty contract, so replay the committed trace instead.
+        print("DEEPSEEK_API_KEY is not set — replaying the committed trace instead of regenerating.")
+        print('Set $env:DEEPSEEK_API_KEY = "sk-..." and rerun to regenerate (or pass --no-run).')
+    elif not args.no_run:
         for script, extra in steps:
             cmd = [sys.executable, str(ROOT / script), *extra]
             print(f"$ python {script} {' '.join(extra)}".rstrip())
