@@ -58,6 +58,10 @@ Semantic rules:
 - **Red (`--danger`) means "exposed".** The attack *recovering* a row is red.
 - Hospital and coordinator colors are used **only** for those entities — never as generic accents.
 
+Status pills (platform UI) reuse the same vocabulary: **success** = `--ok`, **failure** =
+`--danger`, and **in progress / waiting** = a neutral `--border` hairline with `--text-faint`
+text. No new colors — one color per meaning.
+
 ## 4. Typography
 
 Two families, never more:
