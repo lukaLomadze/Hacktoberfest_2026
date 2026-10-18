@@ -179,6 +179,8 @@ class LLMDecider:
             flagged = [names.index(n) for n in excluded if n in names]
             if strat == "trimmed_mean" and not flagged:
                 raise ValueError("trimmed_mean chosen with no excluded hospital")
+            if len(set(flagged)) >= len(names):
+                raise ValueError("cannot exclude every hospital")
             if strat != "trimmed_mean":
                 flagged = []
             self.calls += 1

@@ -622,5 +622,167 @@
     "h1": "hospitals/hospital_1.csv",
     "h2": "hospitals/hospital_2.csv"
   },
-  "note": "Values are median-imputed, NOT z-scored. Map local→canonical (Schema agent), then z-score with feature_mean/feature_std in canonical_features order."
+  "schema": {
+    "h0": {
+      "label": "Outcome",
+      "columns": {
+        "pregnancies": {
+          "source": [
+            "Pregnancies"
+          ],
+          "unit": "count",
+          "factor": 1.0,
+          "derive": null
+        },
+        "glucose": {
+          "source": [
+            "Glucose"
+          ],
+          "unit": "mg/dL",
+          "factor": 1.0,
+          "derive": null
+        },
+        "blood_pressure": {
+          "source": [
+            "BloodPressure"
+          ],
+          "unit": "mmHg",
+          "factor": 1.0,
+          "derive": null
+        },
+        "bmi": {
+          "source": [
+            "BMI"
+          ],
+          "unit": "kg/m^2",
+          "factor": 1.0,
+          "derive": null
+        },
+        "insulin": {
+          "source": [
+            "Insulin"
+          ],
+          "unit": "uU/mL",
+          "factor": 1.0,
+          "derive": null
+        },
+        "age": {
+          "source": [
+            "Age"
+          ],
+          "unit": "years",
+          "factor": 1.0,
+          "derive": null
+        }
+      }
+    },
+    "h1": {
+      "label": "outcome",
+      "columns": {
+        "pregnancies": {
+          "source": [
+            "pregnancies"
+          ],
+          "unit": "count",
+          "factor": 1.0,
+          "derive": null
+        },
+        "glucose": {
+          "source": [
+            "glucose_mmol_l"
+          ],
+          "unit": "mmol/L",
+          "factor": 18.0182,
+          "derive": null
+        },
+        "blood_pressure": {
+          "source": [
+            "bp_kpa"
+          ],
+          "unit": "kPa",
+          "factor": 7.50062,
+          "derive": null
+        },
+        "bmi": {
+          "source": [
+            "weight_kg",
+            "height_m"
+          ],
+          "unit": "kg, m",
+          "factor": null,
+          "derive": "bmi"
+        },
+        "insulin": {
+          "source": [
+            "insulin_pmol_l"
+          ],
+          "unit": "pmol/L",
+          "factor": 0.14398848092152627,
+          "derive": null
+        },
+        "age": {
+          "source": [
+            "age_months"
+          ],
+          "unit": "months",
+          "factor": 0.08333333333333333,
+          "derive": null
+        }
+      }
+    },
+    "h2": {
+      "label": "outcome",
+      "columns": {
+        "pregnancies": {
+          "source": [
+            "num_pregnancies"
+          ],
+          "unit": "count",
+          "factor": 1.0,
+          "derive": null
+        },
+        "glucose": {
+          "source": [
+            "glucose"
+          ],
+          "unit": "mg/dL",
+          "factor": 1.0,
+          "derive": null
+        },
+        "blood_pressure": {
+          "source": [
+            "bp_sys"
+          ],
+          "unit": "mmHg",
+          "factor": 1.0,
+          "derive": null
+        },
+        "bmi": {
+          "source": [
+            "bmi"
+          ],
+          "unit": "kg/m^2",
+          "factor": 1.0,
+          "derive": null
+        },
+        "insulin": {
+          "source": [
+            "insulin_pmol_l"
+          ],
+          "unit": "pmol/L",
+          "factor": 0.14398848092152627,
+          "derive": null
+        },
+        "age": {
+          "source": [
+            "age"
+          ],
+          "unit": "years",
+          "factor": 1.0,
+          "derive": null
+        }
+      }
+    }
+  },
+  "note": "Values are median-imputed, NOT z-scored. Map local→canonical (Schema agent; manifest 'schema' is its offline fallback), then z-score with feature_mean/feature_std in canonical_features order."
 }

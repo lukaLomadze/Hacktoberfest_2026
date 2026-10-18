@@ -10,9 +10,16 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
+from agents.decider import LLMDecider, RuleDecider
+from model.aggregation import select_strategy
 from pima_decider import PimaDecider
 from pipeline import run_loop
-from shared import schemas
+from shared import io, schemas
+
+# Fixed hospital randomness so the runs below repeat; a real run draws it fresh (secret_seed=None).
+# 42 reproduces the masks and noise the run used before they became secret, so the acceptance
+# numbers below are checked on the same draw as before. Other draws move the AUCs by ~0.01.
+TEST_SECRET = 42
 
 
 def without_runtime(t):
@@ -58,8 +65,8 @@ class TestSigmaFollowsThePlan(unittest.TestCase):
                 run_loop.plan_sigma(120, epochs, lr)
 
     def test_a_ten_epoch_plan_records_a_larger_sigma_at_the_same_epsilon(self):
-        default = run_loop.run(decider=PimaDecider())
-        longer = run_loop.run(decider=TenEpochDecider())
+        default = run_loop.run(decider=PimaDecider(), secret_seed=TEST_SECRET)
+        longer = run_loop.run(decider=TenEpochDecider(), secret_seed=TEST_SECRET)
         for a, b in zip(default["rounds"], longer["rounds"]):
             for u, v in zip(a["updates"], b["updates"]):
                 if not (u["sent"] and not u.get("rejected")):
@@ -74,7 +81,7 @@ class TestEndToEnd(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         start = time.perf_counter()
-        cls.trace = run_loop.run(decider=PimaDecider())
+        cls.trace = run_loop.run(decider=PimaDecider(), secret_seed=TEST_SECRET)
         cls.seconds = time.perf_counter() - start
 
     def test_exactly_four_rounds_and_valid_trace(self):
@@ -90,7 +97,7 @@ class TestEndToEnd(unittest.TestCase):
     def test_privacy_cost_is_measured_and_small(self):
         m = self.trace["meta"]
         self.assertLess(abs(m["auc_federated"] - m["auc_federated_no_privacy"]), 0.01)
-        plain = run_loop.run(private=False, decider=PimaDecider())
+        plain = run_loop.run(private=False, decider=PimaDecider(), secret_seed=TEST_SECRET)
         self.assertFalse(any(u["masked"] for r in plain["rounds"] for u in r["updates"]))
 
     def test_weakest_hospital_gains_from_federation(self):
@@ -149,7 +156,7 @@ class TestEndToEnd(unittest.TestCase):
         self.assertEqual(self.trace["patient_bytes_transferred"], 0)
 
     def test_deterministic(self):
-        self.assertEqual(without_runtime(run_loop.run(decider=PimaDecider())), without_runtime(self.trace))
+        self.assertEqual(without_runtime(run_loop.run(decider=PimaDecider(), secret_seed=TEST_SECRET)), without_runtime(self.trace))
 
     def test_committed_trace_matches_a_fresh_run(self):
         committed = ROOT / "trace.json"
@@ -159,6 +166,99 @@ class TestEndToEnd(unittest.TestCase):
         if provider != "rule":
             self.skipTest(f"committed trace was generated with {provider}; LLM choices are not byte-reproducible")
         assert_same_trace(self, saved, without_runtime(self.trace))
+
+
+def _spy_on_protection(test):
+    """Record the pair secrets and noise seeds the hospitals protect their updates with."""
+    seen = []
+    real = run_loop.prepare_update
+
+    def spy(delta, client_id, participants, round_, secrets, noise_seed, **kw):
+        seen.append((tuple(sorted(secrets.items())), noise_seed))
+        return real(delta, client_id, participants, round_, secrets, noise_seed=noise_seed, **kw)
+
+    run_loop.prepare_update = spy
+    test.addCleanup(setattr, run_loop, "prepare_update", real)
+    return seen
+
+
+class TestHospitalSecretsArePrivate(unittest.TestCase):
+    """The masks and DP noise must not be recomputable from anything in the trace."""
+
+    def test_masks_and_noise_do_not_come_from_the_public_seed(self):
+        seen = _spy_on_protection(self)
+        trace = run_loop.run(decider=PimaDecider())
+        public = run_loop.make_pair_secrets([0, 1, 2], seed=f"handshake-{trace['meta']['seed']}")
+        self.assertTrue(seen)
+        for secrets, noise_seed in seen:
+            for pair, value in secrets:
+                self.assertNotEqual(value, public[pair])
+            self.assertNotIn(f"dp-{trace['meta']['seed']}-", noise_seed)
+            self.assertNotIn(noise_seed, json.dumps(trace))
+
+    def test_every_run_draws_fresh_secrets(self):
+        seen = _spy_on_protection(self)
+        run_loop.run(decider=PimaDecider())
+        first = list(seen)
+        seen.clear()
+        run_loop.run(decider=PimaDecider())
+        self.assertNotEqual(first[0], seen[0])
+
+
+class ExcludeEveryone(PimaDecider):
+    def strategy(self, losses, names, fallback, **kw):
+        return {"strategy": "trimmed_mean", "flagged": list(range(len(names))),
+                "reasoning": "exclude all", "made_by": "llm"}
+
+
+class AlwaysFailingLLM(LLMDecider):
+    """An LLM decider whose every call fails (no network, timeout, bad JSON)."""
+
+    def _ask(self, system, user):
+        raise TimeoutError("the model did not answer")
+
+
+class TestRunsNeverStall(unittest.TestCase):
+    def test_a_decision_excluding_every_hospital_falls_back_to_the_rule(self):
+        trace = run_loop.run(decider=ExcludeEveryone(), secret_seed=TEST_SECRET)
+        self.assertEqual(len(trace["rounds"]), 4)
+        for r in trace["rounds"]:
+            self.assertTrue(r["applied"])
+            self.assertEqual(r["decided_by"], "rule")
+
+    def test_the_llm_decider_refuses_to_exclude_every_hospital(self):
+        d = LLMDecider(api_key="test")
+        d._ask = lambda system, user: {"strategy": "trimmed_mean", "excluded": ["A", "B"], "reasoning": "x"}
+        out = d.strategy([0.6, 0.7], ["A", "B"], lambda: select_strategy([0.6, 0.7], names=["A", "B"]))
+        self.assertEqual(out["made_by"], "rule")
+        self.assertEqual(out["flagged"], [])
+        self.assertEqual(d.fallbacks, 1)
+
+    def test_a_round_nobody_answers_is_reported_not_silently_dropped(self):
+        manifest = io.load_json(ROOT / "data" / "hospitals" / "manifest.json")
+        manifest["faults"] = {h: {"2": "offline"} for h in ("h0", "h1", "h2")}
+        with self.assertRaisesRegex(RuntimeError, "round 2: no hospital responded"):
+            run_loop.run(decider=PimaDecider(), manifest=manifest, secret_seed=TEST_SECRET)
+
+
+class TestOfflineFallback(unittest.TestCase):
+    """Without a working LLM the manifest's schema map lets the run finish (made_by=rule)."""
+
+    def check(self, trace):
+        self.assertEqual(len(trace["rounds"]), 4)
+        self.assertEqual(trace["meta"]["features"],
+                         ["pregnancies", "glucose", "blood_pressure", "bmi", "insulin", "age"])
+        for h in trace["meta"]["decision_maker"]["schema"].values():
+            self.assertEqual(h["made_by"], "rule")
+        self.assertGreater(trace["meta"]["auc_federated"], 0.8)
+
+    def test_runs_with_no_llm(self):
+        self.check(run_loop.run(decider=RuleDecider(), secret_seed=TEST_SECRET))
+
+    def test_runs_when_every_llm_call_fails(self):
+        d = AlwaysFailingLLM(api_key="test")
+        self.check(run_loop.run(decider=d, secret_seed=TEST_SECRET))
+        self.assertGreater(d.fallbacks, 0)
 
 
 if __name__ == "__main__":

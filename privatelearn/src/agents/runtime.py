@@ -95,6 +95,12 @@ class Agent:
     def send(self, recipient: str, kind: str, payload: Any) -> Message:
         return Message(sender=self.id, recipient=recipient, kind=kind, payload=payload)
 
+    @property
+    def waiting(self) -> bool:
+        """True while the agent expects to act on a later tick even with an empty inbox
+        (a coordinator waiting out a reply deadline). Keeps `MessageBus.run` going."""
+        return False
+
     def step(self, messages: list[Message]) -> list[Message]:
         """Handle this tick's inbox and return the messages to send. Default: do nothing."""
         return []
@@ -166,10 +172,15 @@ class MessageBus:
         return sent
 
     def run(self, max_ticks: int = 100) -> int:
-        """Run until a tick sends nothing and nothing is pending. Returns ticks run."""
+        """Run until a tick sends nothing, nothing is pending and no agent is waiting.
+
+        Without the `waiting` check a round in which nobody answers (every hospital offline,
+        or every participant silent after masking) would stop the bus before the
+        coordinator reaches its deadline and handles it. Returns ticks run."""
         start = self.tick
         while self.tick - start < max_ticks:
             sent = self.run_tick()
-            if sent == 0 and not self._pending:
+            waiting = any(getattr(a, "waiting", False) for a in self._agents.values())
+            if sent == 0 and not self._pending and not waiting:
                 return self.tick - start
         raise RuntimeError(f"bus did not go quiet within {max_ticks} ticks")

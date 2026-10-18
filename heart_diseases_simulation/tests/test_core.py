@@ -131,6 +131,55 @@ class TestPrivacy(unittest.TestCase):
         self.assertAlmostEqual(5 * privacy.step_rho(180, 1.0, s), rho / 40, places=12)
 
 
+class TestHospitalNeverReusesAMask(unittest.TestCase):
+    """Two answers under one mask purpose would let the coordinator subtract them (the
+    masks cancel) and see one hospital's update, so a hospital answers each purpose once."""
+
+    def setUp(self):
+        import tempfile
+
+        from fedheart import hospital
+        from fedheart.transport import RemoteError
+        self.RemoteError = RemoteError
+        self.tmp = tempfile.TemporaryDirectory()
+        self.h = hospital.Hospital("cleveland", pathlib.Path(self.tmp.name), "rule", config.DEFAULT_MODEL,
+                                   "low", config.SEED, noise_seed=1)
+        _, peer_public = privacy.dh_keypair()
+        self.participants = ["node_cleveland", "node_va"]
+        self.h.roster_({"job_id": "job-test", "privacy": {"epsilon": 8.0, "delta": 1e-5, "max_rounds": 10,
+                                                          "clip": 1.0},
+                        "participants": [{"node_id": "node_cleveland", "dh_public": format(self.h.dh_public, "x")},
+                                         {"node_id": "node_va", "dh_public": format(peer_public, "x")}]})
+        self.contract = features.validate_contract(CONTRACT)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_masked_statistics_are_sent_once(self):
+        req = {"contract": self.contract, "participants": self.participants}
+        self.h.stats(req)
+        with self.assertRaises(self.RemoteError) as e:
+            self.h.stats(req)
+        self.assertEqual(e.exception.status, 409)
+
+    def test_a_round_is_trained_and_sent_once(self):
+        t, y = self.h._split["train"]
+        self.h.norm_({"contract": self.contract,
+                      "norm": features.finalize_norm(self.contract, features.local_stats(t, y, self.contract))})
+        spec = models.validate_spec({"type": "logistic", "l2": 0.01})
+        params = models.make(spec, len(self.h.input_names)).init(0)
+        self.h.plans[1] = {"participate": True, "epochs": 2, "lr": 0.1, "reasoning": "test"}
+        req = {"round": 1, "params": [float(v) for v in params], "model": spec,
+               "participants": self.participants, "weight": 0.5}
+        self.h.train(req)
+        spent = self.h.rho_spent
+        req2 = dict(req, params=[0.1] * len(params))  # a different model: the leak a repeat would allow
+        with self.assertRaises(self.RemoteError) as e:
+            self.h.train(req2)
+        self.assertEqual(e.exception.status, 409)
+        self.assertEqual(self.h.rho_spent, spent)  # refused before any privacy was spent
+
+
 class TestMetrics(unittest.TestCase):
     def test_histogram_auc_matches_exact(self):
         rng = np.random.default_rng(3)

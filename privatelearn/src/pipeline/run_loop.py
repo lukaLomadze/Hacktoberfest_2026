@@ -36,6 +36,7 @@ import math
 import pathlib
 import sys
 import time
+from secrets import token_hex
 
 import numpy as np
 
@@ -146,7 +147,7 @@ def model_hash(w) -> str:
 
 
 def run(seed: int = SEED, out_path=None, private: bool = True, use_llm: bool = False, decider=None,
-        manifest=None, data_dir=None, rounds: int = None) -> dict:
+        manifest=None, data_dir=None, rounds: int = None, secret_seed=None) -> dict:
     """The full run. private=False replays the same scenario with masking and DP off
     (plain training, unprotected updates) to measure what privacy costs.
     use_llm=True lets the Schema / Planner / Coordinator agents make their decisions
@@ -154,7 +155,12 @@ def run(seed: int = SEED, out_path=None, private: bool = True, use_llm: bool = F
 
     Everything dataset-specific (feature order, label, normalisation statistics, the
     local→canonical schema mapping, node labels, faults, the honesty note) is read from
-    `manifest`; pass `manifest` + `data_dir` to run a different dataset (e.g. the banks)."""
+    `manifest`; pass `manifest` + `data_dir` to run a different dataset (e.g. the banks).
+
+    secret_seed is the hospitals' own randomness: the pair secrets behind the masks and the
+    DP noise streams. Leave it None for a real run: it is drawn fresh from the OS and never
+    written anywhere, so nobody holding the trace or `seed` (the coordinator included) can
+    recompute a mask or subtract the noise. Tests pass a fixed value to make runs repeatable."""
     t0 = time.perf_counter()
     data_dir = pathlib.Path(data_dir) if data_dir is not None else ROOT / "data"
     if manifest is None:
@@ -176,7 +182,8 @@ def run(seed: int = SEED, out_path=None, private: bool = True, use_llm: bool = F
     n = manifest["n_per_hospital"]
     sensitivity = record_sensitivity(n, LR, EPOCHS, EXAMPLE_CLIP)
     sigma = plan_sigma(n, EPOCHS, LR)
-    secrets = make_pair_secrets(list(range(len(hospital_ids))), seed=f"handshake-{seed}")  # client-to-client only
+    hospital_secret = secret_seed if secret_seed is not None else token_hex(32)
+    secrets = make_pair_secrets(list(range(len(hospital_ids))), seed=f"handshake-{hospital_secret}")  # client-to-client only
 
     if len(set(manifest["per_hospital_class_balance"][h]["n"] for h in hospital_ids)) != 1:
         raise ValueError("the protector assumes equal n per client (weight = 1/participants)")
@@ -195,7 +202,7 @@ def run(seed: int = SEED, out_path=None, private: bool = True, use_llm: bool = F
             s = plan_sigma(n, int(plan.get("epochs", EPOCHS)), float(plan.get("lr", LR))) / len(participants)
             sigmas[(round_, hospital_ids[idx])] = float(s)
             masked, _ = prepare_update(delta, hospital_index, participants, round_, own,
-                                       noise_seed=f"dp-{seed}-h{idx}", C=10.0, sigma=s, dp_delta=DP_DELTA)
+                                       noise_seed=f"dp-{hospital_secret}-h{idx}", C=10.0, sigma=s, dp_delta=DP_DELTA)
             return masked, {"masked": True, "mask_seed": f"round-{round_}", "dp_eps": EPS_PER_ROUND,
                             "dp_mechanism": "gaussian", "dp_sigma": float(s)}
         return protect
@@ -243,7 +250,7 @@ def run(seed: int = SEED, out_path=None, private: bool = True, use_llm: bool = F
     # --- gradient inversion on a real patient row of Hospital A ------------------------------
     attack = run_attack(np.zeros(n_w), hospitals[0]._X[0], hospitals[0]._labels[0], client_id=0,
                         participants=tuple(range(len(hospital_ids))), round_=1, secrets=secrets,
-                        C=10.0, sigma=sigma, seed=seed)
+                        C=10.0, sigma=sigma, seed=f"attack-{hospital_secret}")
 
     # --- every hospital ends with the same model ---------------------------------------------
     hashes = {h.id: model_hash(h.w_global) for h in hospitals}
@@ -269,7 +276,8 @@ def run(seed: int = SEED, out_path=None, private: bool = True, use_llm: bool = F
             # same scenario with masking + DP switched off: the measured cost of privacy
             "auc_federated_no_privacy": (run(seed, None, private=False, use_llm=False,
                                             decider=decider, manifest=manifest,
-                                            data_dir=data_dir, rounds=rounds)["meta"]["auc_federated"]
+                                            data_dir=data_dir, rounds=rounds,
+                                            secret_seed=hospital_secret)["meta"]["auc_federated"]
                                          if private else auc_fed),
             "eps_per_round": EPS_PER_ROUND, "dp_delta": DP_DELTA,
             "dp_sensitivity": sensitivity, "dp_sigma": sigma, "example_clip": EXAMPLE_CLIP,

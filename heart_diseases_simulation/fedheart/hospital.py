@@ -113,6 +113,10 @@ class Hospital:
         self.rho_round = None
         self.rho_spent = 0.0
         self.plans = {}
+        # mask purposes already used: a second answer under the same purpose would let the
+        # coordinator subtract two masked vectors (the masks cancel) and see an individual
+        # update or partial sum, so every purpose is answered at most once
+        self.used_purposes = set()
         self.history = []  # this hospital's own round history (its agent's memory aid)
         self.last_eval = {}
         self.agent = None
@@ -288,7 +292,11 @@ class Hospital:
         participants = sorted(p.get("participants") or self.roster)
         if self.node_id not in participants or any(x not in self.roster for x in participants):
             raise RemoteError(409, "invalid participant list for the statistics")
-        masked = privacy.mask_vector(vec, self.node_id, participants, self.keys, f"{self.job['job_id']}|stats")
+        purpose = f"{self.job['job_id']}|stats"
+        if purpose in self.used_purposes:
+            raise RemoteError(409, "the masked statistics were already sent for this job")
+        masked = privacy.mask_vector(vec, self.node_id, participants, self.keys, purpose)
+        self.used_purposes.add(purpose)
         return {"site": self.site["id"], "length": len(vec), "masked_stats": privacy.to_wire(masked),
                 "agent_log": [self._msg("schema", f"sent {len(vec)} masked feature sums for the federated "
                                                   "mean/std")]}
@@ -382,6 +390,9 @@ class Hospital:
         participants = sorted(p["participants"])
         if self.node_id not in participants:
             raise RemoteError(409, "not a participant this round")
+        purpose = f"{self.job['job_id']}|round-{r}"
+        if purpose in self.used_purposes:
+            raise RemoteError(409, f"already trained and sent a masked update for round {r}")
         if self.rho_spent + self.rho_round > self.rho_total * (1 + 1e-9):
             raise RemoteError(409, "privacy budget exhausted")
         spec = models.validate_spec(p["model"])
@@ -396,8 +407,8 @@ class Hospital:
         loss_after = m.loss(w1, X, y)
         self.rho_spent += self.rho_round
         weight = float(p["weight"])
-        masked = privacy.mask_vector(weight * (w1 - w0), self.node_id, participants, self.keys,
-                                     f"{self.job['job_id']}|round-{r}")
+        masked = privacy.mask_vector(weight * (w1 - w0), self.node_id, participants, self.keys, purpose)
+        self.used_purposes.add(purpose)
         eps_spent = privacy.epsilon_from_rho(self.rho_spent, self.job["privacy"]["delta"])
         self.history.append({"round": r, "plan": {"epochs": plan["epochs"], "lr": plan["lr"]},
                              "train_loss": [round(loss_before, 4), round(loss_after, 4)],
