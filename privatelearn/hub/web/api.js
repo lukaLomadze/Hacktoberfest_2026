@@ -120,17 +120,25 @@ export const api = {
    * Live job events (§6). Calls onEvent(event) for each event in seq order, catching up from
    * `since` first. Returns a stop() function. Real mode uses EventSource (which cannot send
    * headers, hence ?token=); the browser resends Last-Event-ID on reconnect by itself.
-   * Mock mode replays mock/events.json on a timer.
+   * Mock mode replays mock/events.json on a timer; for a real run that is still being written
+   * (mock/real/*.json) it keeps polling until the job's final job.status arrives.
    */
-  stream(jobId, onEvent, { since = 0, intervalMs = 400 } = {}) {
+  stream(jobId, onEvent, { since = 0, intervalMs = 400, pollMs = 1500 } = {}) {
     if (MOCK) {
       let stopped = false;
       (async () => {
-        const items = (await (await mock()).events(jobId)).filter((e) => e.seq > since);
-        for (const e of items) {
-          if (stopped) return;
-          onEvent(e);
-          await new Promise((r) => setTimeout(r, intervalMs));
+        let last = since;
+        while (!stopped) {
+          const items = (await (await mock()).events(jobId)).filter((e) => e.seq > last);
+          const pace = items.length > 10 ? 40 : intervalMs; // catch up quickly when far behind
+          for (const e of items) {
+            if (stopped) return;
+            last = e.seq;
+            onEvent(e);
+            if (e.type === "job.status" && !["queued", "running"].includes(e.status)) return;
+            await new Promise((r) => setTimeout(r, pace));
+          }
+          if (!items.length) await new Promise((r) => setTimeout(r, pollMs));
         }
       })();
       return () => { stopped = true; };

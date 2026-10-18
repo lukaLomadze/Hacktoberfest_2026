@@ -83,6 +83,12 @@ const STYLE = `
 .page[data-page="job"] .sw.dash { background: none; border-top: 2px dashed; height: 0; }
 .page[data-page="job"] .sw-ok { color: var(--ok); }
 .page[data-page="job"] .sw-bad { color: var(--danger); }
+/* run switch (mock mode): the scripted fixture vs real agent runs */
+.page[data-page="job"] .run-switch { display: flex; gap: 8px; flex-wrap: wrap; }
+.page[data-page="job"] .run-tab { display: flex; flex-direction: column; gap: 2px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel-2); color: var(--text-dim); text-decoration: none; min-width: 0; }
+.page[data-page="job"] .run-tab b { color: var(--text); }
+.page[data-page="job"] .run-tab span { font-size: 12px; overflow-wrap: anywhere; }
+.page[data-page="job"] .run-tab.active { border-color: var(--coord); }
 @media (max-width: 900px) {
   .page[data-page="job"] .job-grid { grid-template-columns: minmax(0, 1fr); }
   .page[data-page="job"] .live-feed-list { max-height: 420px; }
@@ -131,15 +137,17 @@ export async function render({ el, params, query }) {
   const replayBtn = h("button.btn.ghost", { type: "button" }, "Replay");
   const endBtn = h("button.btn.ghost", { type: "button", hidden: true }, "Skip to end");
   const publishedSlot = h("div.panel.published", { hidden: true, role: "status" });
+  const runsSlot = h("nav.run-switch", { hidden: true, "aria-label": "Which run to show" });
   const errorSlot = h("div");
 
   const title = group ? `${group.name}: ${job.kind === "finetune" ? "fine-tune" : "training"}` : `Job ${job.id}`;
   el.replaceChildren(
+    runsSlot,
     h("div.job-head",
       h("h1", title), statusSlot, liveSlot,
       h("div.job-controls", replayBtn, endBtn)),
     h("div.job-facts",
-      h("span", "round ", roundSlot, ` / ${job.rounds ?? "—"}`),
+      h("span", "round ", roundSlot, ` / ${job.rounds ?? "agent decides"}`),
       h("span", "ε spent ", epsSlot),
       h("span", "participants ", h("b", String((job.participants || []).length))),
       h("span", h("span.zero", "0"), " data rows left any company"),
@@ -154,6 +162,19 @@ export async function render({ el, params, query }) {
       h("div.job-rail", feed.el)));
   canvas.mount();
   chart.mount();
+
+  // mock mode: switch between the scripted demo (job_1) and real agent runs (heart_diseases_simulation)
+  if (api.isMock) {
+    api.get("/demo/runs").then((r) => {
+      const runs = (r && r.items) || [];
+      if (runs.length < 2) return;
+      runsSlot.replaceChildren(...runs.map((run) => h("a.run-tab", {
+        href: `#/jobs/${encodeURIComponent(run.job_id)}`, class: run.job_id === job.id ? "active" : null,
+        "aria-current": run.job_id === job.id ? "page" : null,
+      }, h("b", run.label), h("span", `${run.detail} · ${run.status}`))));
+      runsSlot.hidden = false;
+    }).catch(() => { /* an older mock without /demo/runs: no switch */ });
+  }
 
   // ---------------------------------------------------------------- drawing
   let state = initialState(job);

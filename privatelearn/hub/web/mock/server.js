@@ -7,6 +7,46 @@
 let db = null;
 let eventLog = null;
 
+// Real runs: heart_diseases_simulation/run_simulation.py writes mock/real/<job id>.json (its Job,
+// Group, Version and §6 events) after every event, so a run shows up here live and stays
+// replayable, and lists the job in mock/real/index.json ({"jobs": [...]}).
+let REAL_JOBS = [];
+const real = new Map(); // job id -> {job, group, version, events, source}
+let realCheckedAt = 0;
+let realInflight = null; // concurrent callers share one fetch
+
+function refreshReal(force = false) {
+  if (realInflight) return realInflight;
+  if (!force && Date.now() - realCheckedAt < 1000) return Promise.resolve();
+  realCheckedAt = Date.now();
+  realInflight = fetchReal().finally(() => { realInflight = null; });
+  return realInflight;
+}
+
+async function fetchReal() {
+  try {
+    const idx = await fetch(new URL("./real/index.json", import.meta.url), { cache: "no-store" });
+    if (idx.ok) REAL_JOBS = ((await idx.json()).jobs || []).map(String);
+  } catch { /* keep the last list */ }
+  await Promise.all(REAL_JOBS.map(async (id) => {
+    try {
+      const r = await fetch(new URL(`./real/${id}.json`, import.meta.url), { cache: "no-store" });
+      if (!r.ok) return;
+      const b = await r.json();
+      if (!b || !b.job || !Array.isArray(b.events)) return;
+      real.set(id, b);
+      const swap = (list, item) => {
+        const i = list.findIndex((x) => x.id === item.id);
+        if (i >= 0) list[i] = item; else list.push(item);
+      };
+      swap(db.jobs, b.job);
+      if (b.group) swap(db.groups, b.group);
+      if (b.version) swap(db.versions, b.version);
+    } catch { /* no bundle yet, or caught mid-write: try again on the next call */ }
+  }));
+}
+const isRealGroup = (groupId) => [...real.values()].some((b) => b.group && b.group.id === groupId);
+
 async function load() {
   if (!db) {
     const [d, e] = await Promise.all([
@@ -16,6 +56,7 @@ async function load() {
     db = d;
     eventLog = e.items;
     db.sessions = {}; // token -> user id
+    await refreshReal(true);
   }
   return db;
 }
@@ -31,7 +72,26 @@ export async function demoAccounts() {
 
 export async function events(jobId) {
   await load();
-  return jobEvents(jobId);
+  if (REAL_JOBS.includes(jobId)) {
+    await refreshReal(true);
+    return real.has(jobId) ? real.get(jobId).events : [];
+  }
+  // a job started in the mock releases its replayed events as time passes; the stream polls
+  return jobEvents(jobId, true);
+}
+
+/** The jobs the live view can switch between: the scripted fixture and any real runs. */
+export async function demoRuns() {
+  await load();
+  await refreshReal();
+  const runs = [{ job_id: "job_1", label: "Scripted demo", detail: "fixed scenario, 3 hospitals", status: "succeeded" }];
+  for (const [id, b] of real) {
+    const llm = b.source && b.source.agents === "claude";
+    runs.push({ job_id: id, label: llm ? "Real agent run" : "Offline rehearsal (no LLM)",
+                detail: `${b.job.participants.length} hospitals · ${llm ? `${b.source.coordinator_model} agents` : "scripted agents"}`,
+                status: b.job.status });
+  }
+  return runs;
 }
 
 // ---------------------------------------------------------------- helpers
@@ -84,7 +144,8 @@ const MEMBER_STATUS = ["approved", "node_connected", "schema_proposed", "schema_
 const WIRED = ["approved", "node_connected", "schema_proposed", "schema_confirmed", "ready", "active"];
 
 function isGroupMember(user, groupId) {
-  return user.role === "admin" || db.memberships.some((m) => m.group_id === groupId &&
+  // a real run is a public demo: every signed-in account may watch it
+  return user.role === "admin" || isRealGroup(groupId) || db.memberships.some((m) => m.group_id === groupId &&
     m.company_id === user.company_id && !["rejected", "requested"].includes(m.status));
 }
 function canSeeGroup(user, g) {
@@ -545,12 +606,13 @@ const routes = [
     j.status = "cancelled";
     return j;
   }],
-  ["GET", "/jobs/:id/events", (ctx, p, b, q) => {
+  ["GET", "/jobs/:id/events", async (ctx, p, b, q) => {
     const j = find(db.jobs, p.id, "job");
     requireMemberOfGroup(ctx, j.group_id);
     const since = Number(q.since || 0);
-    return { items: jobEvents(j.id, true).filter((e) => e.seq > since) };
+    return { items: (await events(j.id)).filter((e) => e.seq > since) };
   }],
+  ["GET", "/demo/runs", async (ctx) => { requireUser(ctx); return { items: await demoRuns() }; }],
 
   ["GET", "/groups/:id/versions", (ctx, p) => {
     requireMemberOfGroup(ctx, p.id);
@@ -614,6 +676,10 @@ function match(pattern, path) {
 /** Answer one API call: → {status, body}, exactly what the real server would send. */
 export async function handle(method, fullPath, body, token) {
   await load();
+  // a real run may be in progress: anything about it is read fresh, everything else at most 1 s old
+  const aboutReal = path => REAL_JOBS.some((id) => path.includes(id)) || path.startsWith("/demo/runs") ||
+    [...real.values()].some((b) => b.group && path.includes(b.group.id));
+  await refreshReal(aboutReal(fullPath));
   const [path, qs] = fullPath.split("?");
   const query = Object.fromEntries(new URLSearchParams(qs || ""));
   const ctx = { token, user: null };
