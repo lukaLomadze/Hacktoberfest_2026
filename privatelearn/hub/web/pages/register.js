@@ -20,8 +20,6 @@ export async function render({ el, navigate }) {
       "Any field: the platform is not tied to hospitals."),
     field("contact_email", "Contact email", { type: "email", required: true, autocomplete: "email" },
       "You sign in with this email."),
-    field("wallet_address", "Wallet address (optional)", { autocomplete: "off", spellcheck: "false" },
-      "Reserved for payments, which are not live yet. Nothing reads it today."),
     status,
     h("div.form-actions", submit, h("span.muted", "Already registered? ", h("a", { href: "#/login" }, "Sign in"))));
 
@@ -30,7 +28,6 @@ export async function render({ el, navigate }) {
     status.replaceChildren();
     const data = Object.fromEntries(new FormData(form));
     const body = { name: data.name.trim(), field: data.field.trim(), contact_email: data.contact_email.trim() };
-    if (data.wallet_address.trim()) body.wallet_address = data.wallet_address.trim();
     submit.disabled = true;
     try {
       const res = await api.post("/companies/register", body);

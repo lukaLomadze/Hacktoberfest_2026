@@ -8,7 +8,19 @@ const BASE = "/api/v1";
 const TOKEN_KEY = "privatelearn.token";
 
 const params = new URLSearchParams(location.search);
-const MOCK = params.has("mock") && params.get("mock") !== "0";
+// ?mock=1 forces the mock, ?mock=0 forces the server. Without either, the mock takes over when
+// no platform server answers /meta (a plain static server, or the page opened on its own).
+const MOCK = params.has("mock") ? params.get("mock") !== "0" : !(await serverAnswers());
+const MOCK_FORCED = params.has("mock") && MOCK;
+
+async function serverAnswers() {
+  try {
+    const r = await fetch(`${BASE}/meta`, { headers: { Accept: "application/json" } });
+    return r.ok && (await r.json()).version !== undefined;
+  } catch {
+    return false;
+  }
+}
 
 // localStorage can throw (private window, blocked storage): the session then lives in memory.
 let memoryToken = null;
@@ -95,6 +107,7 @@ function query(params) {
 
 export const api = {
   isMock: MOCK,
+  isMockForced: MOCK_FORCED,
   get token() { return readToken(); },
   setToken: writeToken,
 

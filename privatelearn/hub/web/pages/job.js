@@ -36,15 +36,18 @@ const STYLE = `
 .page[data-page="job"] .live-canvas { display: block; }
 .page[data-page="job"] .stage-caption { padding: 8px 16px; border-top: 1px solid var(--border); color: var(--text-dim); }
 /* stepper */
-.page[data-page="job"] .live-stepper { list-style: none; margin: 0; padding: 0; display: flex; gap: 4px; flex-wrap: wrap; }
-.page[data-page="job"] .live-step { display: flex; align-items: center; gap: 8px; padding: 4px 12px; border: 1px solid var(--border); border-radius: 999px; color: var(--text-faint); font-size: 12px; }
-.page[data-page="job"] .step-dot { width: 8px; height: 8px; border-radius: 999px; border: 1px solid var(--border-strong); }
+.page[data-page="job"] .live-stepper { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; counter-reset: step;
+  grid-template-columns: repeat(auto-fit, minmax(min(120px, 100%), 1fr)); }
+.page[data-page="job"] .live-step { display: flex; align-items: center; gap: 8px; padding: 8px; border: 1px solid var(--border); border-radius: 8px; color: var(--text-faint); font-size: 12px; font-weight: 600; counter-increment: step; }
+.page[data-page="job"] .step-dot { flex: none; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--border-strong); font: 600 12px var(--font-data); }
+.page[data-page="job"] .step-dot::before { content: counter(step); }
 .page[data-page="job"] .step-done { color: var(--text-dim); }
-.page[data-page="job"] .step-done .step-dot { background: var(--ok); border-color: var(--ok); }
-.page[data-page="job"] .step-now { color: var(--text); border-color: var(--border-strong); background: var(--panel); }
-.page[data-page="job"] .step-now .step-dot { background: var(--text); border-color: var(--text); }
+.page[data-page="job"] .step-done .step-dot { background: var(--ok); border-color: var(--ok); color: var(--bg); }
+.page[data-page="job"] .step-done .step-dot::before { content: "✓"; }
+.page[data-page="job"] .step-now { color: var(--text); border-color: var(--coord); background: var(--panel); }
+.page[data-page="job"] .step-now .step-dot { background: var(--coord); border-color: var(--coord); color: var(--bg); }
 .page[data-page="job"] .step-failed { color: var(--danger); border-color: var(--danger); }
-.page[data-page="job"] .step-failed .step-dot { background: var(--danger); border-color: var(--danger); }
+.page[data-page="job"] .step-failed .step-dot { background: var(--danger); border-color: var(--danger); color: var(--bg); }
 /* feed */
 .page[data-page="job"] .live-feed { display: flex; flex-direction: column; }
 .page[data-page="job"] .live-feed-list { list-style: none; margin: 0; padding: 0 4px 0 0; display: flex; flex-direction: column; gap: 8px; max-height: 640px; overflow-y: auto; }
@@ -174,8 +177,9 @@ export async function render({ el, params, query }) {
       if (p) {
         const auc = p.metrics && p.metrics.auc;
         const link = session.user && session.user.role === "admin" ? h("a", { href: `#/groups/${job.group_id}` }, "Open the group") : null;
-        publishedSlot.replaceChildren(h("span", "Published ", h("b", `v${p.version ?? "?"}`)),
-          typeof auc === "number" ? h("span", "AUC ", h("b", auc.toFixed(3))) : null, link);
+        // replaceChildren() prints null as the text "null", so drop the missing parts first
+        publishedSlot.replaceChildren(...[h("span", "Published ", h("b", `v${p.version ?? "?"}`)),
+          typeof auc === "number" ? h("span", "AUC ", h("b", auc.toFixed(3))) : null, link].filter(Boolean));
       }
     }
   }

@@ -17,7 +17,6 @@ export const ROUTES = [
   ["/groups/:id",       "group",      "admin",          "E8"],
   ["/memberships/:id",  "membership", "company",        "E5"],
   ["/jobs/:id",         "job",        "any",            "E6"],
-  ["/usage",            "usage",      "any",            "E9"],
 ];
 
 /** The landing route for a role: where sign-in and "#/" go. */
