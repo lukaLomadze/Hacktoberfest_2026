@@ -1,7 +1,7 @@
 # Heart-disease federated simulation — real agents, real data, real processes
 
 Four real hospital cohorts train **one** heart-disease model together without any patient row
-leaving its hospital. Every decision is made live by Claude agents:
+leaving its hospital. Every decision is made live by DeepSeek agents:
 - which features to use and how to repair broken values;
 - which model family to train;
 - how to aggregate in each round;
@@ -14,7 +14,7 @@ processes, not threads in a loop.
 ```
                        ┌──────────────────────────────┐
                        │ coordinator process (no data)│
-                       │  Claude agent: contract,     │
+                       │ DeepSeek agent: contract,    │
                        │  model, strategy, stop       │
                        └──────┬───────────────▲───────┘
          schema/contract/plan │               │ masked + DP-noised updates,
@@ -22,7 +22,7 @@ processes, not threads in a loop.
  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
  │ Cleveland    │ │ Budapest     │ │ Zurich&Basel │ │ VA Long Beach│   4 hospital processes,
  │ 303 patients │ │ 294 patients │ │ 123 patients │ │ 200 patients │   each reads ONLY its file,
- │ Claude agent │ │ Claude agent │ │ Claude agent │ │ Claude agent │   each has its own agent
+ │DeepSeek agent│ │DeepSeek agent│ │DeepSeek agent│ │DeepSeek agent│   each has its own agent
  └──────────────┘ └──────────────┘ └──────────────┘ └──────────────┘
         ▲ ─ ─ ─ pairwise Diffie-Hellman secrets (coordinator only relays public keys) ─ ─ ▲
 ```
@@ -77,7 +77,7 @@ A model trained at one site is weak on the others, and pooling the data is not a
   but are not differentially private. Only the training updates are.
 - The data are four 1980s cohorts, 920 patients in total. This is a demonstration, not a medical
   device.
-- What the hospital agents see goes to the Claude API. That is summary statistics of the
+- What the hospital agents see goes to the DeepSeek API. That is summary statistics of the
   training split, never a row.
 
 ## Run it
@@ -88,22 +88,22 @@ cd heart_diseases_simulation
 python -m pip install -r requirements.txt
 ```
 
-### 2. Your Claude API key
-1. Create a key at **https://platform.claude.com** → *API keys* → *Create key*. Add credit
-   under *Billing*; the API is billed separately from a Claude.ai subscription.
+### 2. Your DeepSeek API key
+1. Create a key at **https://platform.deepseek.com** → *API keys*, and add balance under
+   *Top up* (the API is prepaid).
 2. Put it in the terminal you will run from. Never paste it into code or commit it.
-   - PowerShell, this window only: `$env:ANTHROPIC_API_KEY = "sk-ant-..."`
-   - PowerShell, permanently for your user: `setx ANTHROPIC_API_KEY "sk-ant-..."`, then open a new terminal.
-   - bash: `export ANTHROPIC_API_KEY=sk-ant-...`
-3. The launcher checks the key and your model access with one small call before starting
-   anything. A missing key, a rejected key (401) or a model you cannot use (403/404) stops the
-   run with a clear message, before any money is spent.
-4. Cost: every agent defaults to **Claude Opus 5.5** (`claude-opus-5-5`, $4 / $20 per million
-   input / output tokens). One job is about 40 rounds or fewer. That is roughly 5–15 USD, but
-   this is an estimate, not a measurement. Prompt caching is on, and the exact token usage and
-   estimated cost are printed at the end and saved to `runs/<id>/usage.json`. To cut cost, give
-   the hospitals a cheaper model: `--hospital-model claude-haiku-5-5`, or
-   `--hospital-model claude-sonnet-5-5`.
+   - PowerShell, this window only: `$env:DEEPSEEK_API_KEY = "sk-..."`
+   - PowerShell, permanently for your user: `setx DEEPSEEK_API_KEY "sk-..."`, then open a new terminal.
+   - bash: `export DEEPSEEK_API_KEY=sk-...`
+3. The launcher checks the key and the model with one small call (`GET /models`) before
+   starting anything. A missing key, a rejected key (401), an empty balance (402) or a model
+   your key is not offered stops the run with a clear message, before any money is spent.
+4. Cost: every agent defaults to **`deepseek-v4-pro`** in thinking mode ($1.32 / $3.96 per
+   million input / output tokens at peak hours, half off-peak; cached input $0.044). One job
+   is 40 rounds or fewer; expect roughly 1–3 USD at peak rates, but this is an estimate, not a
+   measurement. DeepSeek caches the repeated conversation prefix automatically, and the exact
+   token usage and estimated cost are printed at the end and saved to `runs/<id>/usage.json`.
+   To cut cost, give the hospitals the cheaper model: `--hospital-model deepseek-flash`.
 
 ### 3. Start the job
 ```bash
@@ -122,7 +122,7 @@ Useful options:
 | `--max-rounds 40 --min-rounds 3` | the hard cap and floor; the agent decides in between |
 | `--epsilon 8` | privacy budget per hospital (`0` = no DP noise; masking stays on) |
 | `--outage "switzerland:4,5;va:9"` | that hospital's process does not answer in those rounds, to show fault handling |
-| `--coordinator-effort high --hospital-effort low` | how hard each agent thinks |
+| `--coordinator-effort high --hospital-effort low` | DeepSeek `reasoning_effort` per agent: `none` (no thinking), `low`, `high`, `max` |
 | `--agents rule` | offline rehearsal with scripted stand-ins: no key, no cost, everything labelled `rule` |
 
 ### 4. Watch it in the platform UI (#/jobs)
@@ -151,7 +151,7 @@ HeartModel.load().predict({"age": 58, "sex": 1, "cp": 4, "chol": None})
 | file | content |
 |---|---|
 | `events.json`, `job.json` | the job's event log in the platform's §6 format (what the UI plays) |
-| `transcripts/<agent>.jsonl` | every Claude request/response per agent, with thinking summaries and tool calls |
+| `transcripts/<agent>.jsonl` | every DeepSeek request/response per agent, with its reasoning and tool calls |
 | `summary.json` | contract, CV results, every round's report, the stop decision, traffic per hospital |
 | `model.json` | the published model (also copied to `models/heart_model.json`) |
 | `benchmark.json` | the offline comparison (solo / pooled / federated) |
@@ -165,10 +165,10 @@ python -m unittest discover -s tests -v
 The suite covers:
 - the numeric core: data, contract, gradient checks, masking, DP accounting, pooled AUC;
 - a full five-process job with the scripted agents, including an outage;
-- a full five-process job where every agent runs the real Claude loop, through the official
-  SDK, against a local fake of the Messages API. It checks the request shape (adaptive
-  thinking, effort, refusal fallback, no forced tool choice) and that every agent's history is
-  append-only.
+- a full five-process job where every agent runs the real DeepSeek loop against a local fake
+  of the chat-completions API. It checks the request shape (model, `reasoning_effort`, tools,
+  no forced tool choice), that every agent's history is append-only, and that each answer's
+  `reasoning_content` is sent back (the fake, like the real API, answers 400 otherwise).
 
 Test runs go to a temporary folder and never touch `runs/` or `models/`.
 
@@ -178,7 +178,7 @@ Test runs go to a temporary folder and never touch `runs/` or `models/`.
 |---|---|
 | `fedheart/hospital.py` | the hospital process: its endpoints, its agent and the agent's 4 tools |
 | `fedheart/coordinator.py` | the coordinator process: its agent and 6 tools (contract, CV, model, round, finish) |
-| `fedheart/llm.py` | the Claude tool-use loop (append-only, caching, adaptive thinking, fallback, transcripts) |
+| `fedheart/llm.py` | the DeepSeek tool-use loop over stdlib HTTP (append-only with reasoning_content, retries, transcripts) |
 | `fedheart/privacy.py` | Diffie-Hellman, fixed-point masking mod 2^64, zCDP accounting |
 | `fedheart/models.py` | logistic regression and MLP as flat vectors, DP-GD |
 | `fedheart/features.py` | the contract, quality rules, federated statistics, encoding |

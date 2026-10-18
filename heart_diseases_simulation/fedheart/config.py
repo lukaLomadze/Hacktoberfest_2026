@@ -69,15 +69,16 @@ DELTA = 1e-5
 CLIP = 1.0  # per-example gradient L2 clip
 HIST_BINS = 50  # predicted-probability histogram bins for pooled metrics
 
-DEFAULT_MODEL = "claude-opus-5-5"
 SUPPORTED_MODELS = ("logistic", "mlp")
 
-# $/1M tokens (input, output) for the usage report; cache reads 10% of input, writes 125%.
+# ---- the agents' LLM: DeepSeek's OpenAI-compatible API (key in $DEEPSEEK_API_KEY)
+DEEPSEEK_BASE_URL = "https://api.deepseek.com"  # $DEEPSEEK_BASE_URL overrides it (tests use a fake)
+DEFAULT_MODEL = "deepseek-v4-pro"
+EFFORTS = ("none", "low", "high", "max")  # DeepSeek reasoning_effort; none turns thinking off
+
+# $/1M tokens (input cache miss, input cache hit, output) at PEAK rates, from DeepSeek's
+# pricing page on 2026-10-18; off-peak is half. Only used for the cost estimate in usage.json.
 PRICES = {
-    "claude-opus-5-5": (4.00, 20.00),
-    "claude-sonnet-5-5": (2.00, 10.00),
-    "claude-haiku-5-5": (0.10, 0.50),
-    "claude-fable-5-1": (10.00, 50.00),
+    "deepseek-v4-pro": (1.32, 0.044, 3.96),
+    "deepseek-flash": (0.30, 0.006, 1.20),
 }
-# server-side refusal fallback ("default" form) is accepted by these models only
-FALLBACK_MODELS = ("claude-opus-5-5", "claude-opus-5", "claude-sonnet-5-5", "claude-fable-5-1")

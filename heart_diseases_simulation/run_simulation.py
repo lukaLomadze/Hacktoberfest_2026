@@ -1,6 +1,6 @@
 """Run the federated heart-disease job: 4 hospital processes + 1 coordinator process.
 
-    python run_simulation.py                  # real Claude agents (needs ANTHROPIC_API_KEY)
+    python run_simulation.py                  # real DeepSeek agents (needs DEEPSEEK_API_KEY)
     python run_simulation.py --agents rule    # offline scripted stand-in, no key, no cost
 
 Each hospital is a separate OS process that reads only its own data file and talks HTTP on
@@ -92,11 +92,13 @@ def main(argv=None):
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--agents", choices=["claude", "rule"], default="claude")
-    ap.add_argument("--model", default=config.DEFAULT_MODEL, help="Claude model for the coordinator")
-    ap.add_argument("--hospital-model", default=None, help="Claude model for the hospitals (default: --model)")
-    ap.add_argument("--coordinator-effort", default="high", choices=["low", "medium", "high", "xhigh", "max"])
-    ap.add_argument("--hospital-effort", default="low", choices=["low", "medium", "high", "xhigh", "max"])
+    ap.add_argument("--agents", choices=["deepseek", "rule"], default="deepseek")
+    ap.add_argument("--model", default=config.DEFAULT_MODEL,
+                    help="DeepSeek model for the coordinator (deepseek-v4-pro or deepseek-flash)")
+    ap.add_argument("--hospital-model", default=None, help="DeepSeek model for the hospitals (default: --model)")
+    ap.add_argument("--coordinator-effort", default="high", choices=config.EFFORTS,
+                    help="DeepSeek reasoning_effort for the coordinator (none = no thinking)")
+    ap.add_argument("--hospital-effort", default="low", choices=config.EFFORTS)
     ap.add_argument("--max-rounds", type=int, default=config.MAX_ROUNDS)
     ap.add_argument("--min-rounds", type=int, default=config.MIN_ROUNDS)
     ap.add_argument("--epsilon", type=float, default=config.EPSILON_TOTAL,
@@ -110,7 +112,7 @@ def main(argv=None):
     args = ap.parse_args(argv)
     hospital_model = args.hospital_model or args.model
 
-    if args.agents == "claude":
+    if args.agents == "deepseek":
         try:
             llm.check_credentials()
             for m in sorted({args.model, hospital_model}):
@@ -218,7 +220,8 @@ def finish(run_dir: pathlib.Path, mirror):
     cost = sum((u or {}).get("estimated_cost_usd", 0) for u in usage.values())
     calls = sum((u or {}).get("api_calls", 0) for u in usage.values())
     if calls:
-        print(f"\nClaude API: {calls} calls, estimated cost ${cost:.2f} (see {run_dir / 'usage.json'})")
+        print(f"\nDeepSeek API: {calls} calls, estimated cost ${cost:.2f} at peak rates "
+              f"(see {run_dir / 'usage.json'})")
     print(f"\nsaved model: {config.MODELS_DIR / 'heart_model.json'}  (try: python predict.py --example)")
     print(f"run folder:  {run_dir}")
     if mirror is not None:

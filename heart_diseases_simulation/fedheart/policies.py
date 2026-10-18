@@ -1,8 +1,8 @@
-"""Scripted stand-ins for the Claude agents (`--agents rule`).
+"""Scripted stand-ins for the DeepSeek agents (`--agents rule`).
 
-They drive exactly the same tools as the Claude agents and see only the tool results, so
+They drive exactly the same tools as the DeepSeek agents and see only the tool results, so
 the whole multi-process pipeline can be tested in CI without an API key. Every event of
-such a run says made_by="rule". They are deliberately simple, fixed rules — the Claude
+such a run says made_by="rule". They are deliberately simple, fixed rules — the DeepSeek
 agents are what the demo is about.
 """
 
