@@ -1,0 +1,74 @@
+{
+ "id": "job_heart",
+ "group_id": "grp_heart",
+ "kind": "train",
+ "status": "succeeded",
+ "step": "published",
+ "round": 11,
+ "rounds": 11,
+ "parent_version_id": null,
+ "participants": [
+  {
+   "membership_id": "mem_cleveland",
+   "node_id": "node_cleveland",
+   "company_name": "Cleveland Clinic",
+   "state": "waiting",
+   "color": "#4d8bff"
+  },
+  {
+   "membership_id": "mem_hungarian",
+   "node_id": "node_hungarian",
+   "company_name": "Budapest Cardiology",
+   "state": "waiting",
+   "color": "#3fcf8e"
+  },
+  {
+   "membership_id": "mem_switzerland",
+   "node_id": "node_switzerland",
+   "company_name": "Zurich & Basel",
+   "state": "waiting",
+   "color": "#ff6b6b"
+  },
+  {
+   "membership_id": "mem_va",
+   "node_id": "node_va",
+   "company_name": "VA Long Beach",
+   "state": "waiting",
+   "color": "#b48cff"
+  }
+ ],
+ "metrics": {
+  "auc_series": [
+   0.5,
+   0.845027,
+   0.853059,
+   0.856249,
+   0.856071,
+   0.860619,
+   0.859733,
+   0.860796,
+   0.862095,
+   0.86121,
+   0.859202,
+   0.85991
+  ],
+  "loss_series": [
+   0.693147,
+   0.621078,
+   0.579331,
+   0.548072,
+   0.528268,
+   0.513184,
+   0.506449,
+   0.496663,
+   0.488561,
+   0.48272,
+   0.48229,
+   0.482891
+  ],
+  "eps_total": 3.9336
+ },
+ "started_at": "2026-10-18T06:52:18Z",
+ "finished_at": "2026-10-18T06:55:55Z",
+ "error": null
+}

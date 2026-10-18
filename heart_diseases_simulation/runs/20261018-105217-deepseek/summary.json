@@ -1,0 +1,1967 @@
+{
+ "finished": {
+  "checkpoint_round": 10,
+  "rounds_run": 11,
+  "test_pooled": {
+   "n": 185,
+   "auc": 0.868179,
+   "loss": 0.466606,
+   "accuracy": 0.789189,
+   "sensitivity": 0.843137,
+   "specificity": 0.722892,
+   "worst_site_auc": 0.810777
+  },
+  "test_per_hospital": {
+   "cleveland": {
+    "auc": 0.888528,
+    "accuracy": 0.770492,
+    "n": 61
+   },
+   "switzerland": {
+    "auc": 0.956522,
+    "accuracy": 0.88,
+    "n": 25
+   },
+   "hungarian": {
+    "auc": 0.810777,
+    "accuracy": 0.779661,
+    "n": 59
+   },
+   "va": {
+    "auc": 0.836667,
+    "accuracy": 0.775,
+    "n": 40
+   }
+  },
+  "model_sha256": "e31853800df049c594970bf37ac825dcd648c18d8fab71381d9bcb9faa783680",
+  "every_hospital_holds_same_model": true,
+  "failed": {},
+  "saved_to": "C:\\Users\\lukas\\OneDrive\\Desktop\\Hacktoberfest\\Hacktoberfest_2026\\heart_diseases_simulation\\runs\\20261018-105217-deepseek\\model.json"
+ },
+ "rounds": [
+  {
+   "round": 1,
+   "strategy": "fedprox",
+   "mu": 0.1,
+   "server_lr": 1.0,
+   "participants": [
+    "cleveland",
+    "hungarian",
+    "switzerland",
+    "va"
+   ],
+   "excluded": [],
+   "offline": [],
+   "declined": [],
+   "plans": {
+    "cleveland": {
+     "epochs": 3,
+     "lr": 0.3
+    },
+    "hungarian": {
+     "epochs": 2,
+     "lr": 0.2
+    },
+    "switzerland": {
+     "epochs": 2,
+     "lr": 0.1
+    },
+    "va": {
+     "epochs": 3,
+     "lr": 0.3
+    }
+   },
+   "train_loss": {
+    "hungarian": [
+     0.693147,
+     0.596644
+    ],
+    "va": [
+     0.693147,
+     0.574521
+    ],
+    "cleveland": [
+     0.693147,
+     0.601482
+    ],
+    "switzerland": [
+     0.693147,
+     0.634913
+    ]
+   },
+   "noise_sigma": {
+    "hungarian": 0.070167,
+    "va": 0.12604,
+    "cleveland": 0.083562,
+    "switzerland": 0.169169
+   },
+   "update_norm": 0.21752,
+   "applied": true,
+   "validation": {
+    "pooled": {
+     "n": 185,
+     "loss": 0.621078,
+     "auc": 0.845027,
+     "accuracy": 0.767568,
+     "balanced_accuracy": 0.771262,
+     "worst_site_auc": 0.413043
+    },
+    "per_hospital": {
+     "va": {
+      "loss": 0.624142,
+      "auc": 0.796667,
+      "n": 40,
+      "positives": 30
+     },
+     "hungarian": {
+      "loss": 0.580427,
+      "auc": 0.941103,
+      "n": 59,
+      "positives": 21
+     },
+     "switzerland": {
+      "loss": 0.694465,
+      "auc": 0.413043,
+      "n": 25,
+      "positives": 23
+     },
+     "cleveland": {
+      "loss": 0.62831,
+      "auc": 0.795455,
+      "n": 61,
+      "positives": 28
+     }
+    },
+    "offline": []
+   },
+   "privacy_epsilon_spent": {
+    "cleveland": 1.1253,
+    "hungarian": 1.1253,
+    "switzerland": 1.1253,
+    "va": 1.1253
+   },
+   "epsilon_budget": 8.0,
+   "rounds_used": 1,
+   "rounds_left_before_cap": 39,
+   "best_so_far": {
+    "best_loss_round": 1,
+    "best_loss": 0.621078,
+    "best_auc_round": 1,
+    "best_auc": 0.845027,
+    "rounds_since_best_loss": 0
+   }
+  },
+  {
+   "round": 2,
+   "strategy": "fedprox",
+   "mu": 0.1,
+   "server_lr": 1.0,
+   "participants": [
+    "cleveland",
+    "hungarian",
+    "switzerland",
+    "va"
+   ],
+   "excluded": [],
+   "offline": [],
+   "declined": [],
+   "plans": {
+    "cleveland": {
+     "epochs": 3,
+     "lr": 0.2
+    },
+    "hungarian": {
+     "epochs": 2,
+     "lr": 0.2
+    },
+    "switzerland": {
+     "epochs": 3,
+     "lr": 0.1
+    },
+    "va": {
+     "epochs": 3,
+     "lr": 0.3
+    }
+   },
+   "train_loss": {
+    "hungarian": [
+     0.597705,
+     0.544308
+    ],
+    "cleveland": [
+     0.612447,
+     0.550709
+    ],
+    "switzerland": [
+     0.629861,
+     0.537497
+    ],
+    "va": [
+     0.61998,
+     0.549918
+    ]
+   },
+   "noise_sigma": {
+    "hungarian": 0.070167,
+    "cleveland": 0.083562,
+    "switzerland": 0.207189,
+    "va": 0.12604
+   },
+   "update_norm": 0.15574,
+   "applied": true,
+   "validation": {
+    "pooled": {
+     "n": 185,
+     "loss": 0.579331,
+     "auc": 0.853059,
+     "accuracy": 0.767568,
+     "balanced_accuracy": 0.771262,
+     "worst_site_auc": 0.391304
+    },
+    "per_hospital": {
+     "cleveland": {
+      "loss": 0.588225,
+      "auc": 0.811688,
+      "n": 61,
+      "positives": 28
+     },
+     "hungarian": {
+      "loss": 0.519807,
+      "auc": 0.938596,
+      "n": 59,
+      "positives": 21
+     },
+     "va": {
+      "loss": 0.583766,
+      "auc": 0.796667,
+      "n": 40,
+      "positives": 30
+     },
+     "switzerland": {
+      "loss": 0.691009,
+      "auc": 0.391304,
+      "n": 25,
+      "positives": 23
+     }
+    },
+    "offline": []
+   },
+   "privacy_epsilon_spent": {
+    "cleveland": 1.6067,
+    "hungarian": 1.6067,
+    "switzerland": 1.6067,
+    "va": 1.6067
+   },
+   "epsilon_budget": 8.0,
+   "rounds_used": 2,
+   "rounds_left_before_cap": 38,
+   "best_so_far": {
+    "best_loss_round": 2,
+    "best_loss": 0.579331,
+    "best_auc_round": 2,
+    "best_auc": 0.853059,
+    "rounds_since_best_loss": 0
+   }
+  },
+  {
+   "round": 3,
+   "strategy": "fedprox",
+   "mu": 0.01,
+   "server_lr": 1.0,
+   "participants": [
+    "cleveland",
+    "hungarian",
+    "switzerland",
+    "va"
+   ],
+   "excluded": [],
+   "offline": [],
+   "declined": [],
+   "plans": {
+    "cleveland": {
+     "epochs": 3,
+     "lr": 0.2
+    },
+    "hungarian": {
+     "epochs": 2,
+     "lr": 0.2
+    },
+    "switzerland": {
+     "epochs": 3,
+     "lr": 0.1
+    },
+    "va": {
+     "epochs": 3,
+     "lr": 0.3
+    }
+   },
+   "train_loss": {
+    "hungarian": [
+     0.548874,
+     0.50844
+    ],
+    "cleveland": [
+     0.564631,
+     0.529951
+    ],
+    "switzerland": [
+     0.588497,
+     0.482473
+    ],
+    "va": [
+     0.582294,
+     0.525196
+    ]
+   },
+   "noise_sigma": {
+    "hungarian": 0.070167,
+    "cleveland": 0.083562,
+    "switzerland": 0.207189,
+    "va": 0.12604
+   },
+   "update_norm": 0.14644,
+   "applied": true,
+   "validation": {
+    "pooled": {
+     "n": 185,
+     "loss": 0.548072,
+     "auc": 0.856249,
+     "accuracy": 0.762162,
+     "balanced_accuracy": 0.764115,
+     "worst_site_auc": 0.413043
+    },
+    "per_hospital": {
+     "hungarian": {
+      "loss": 0.469919,
+      "auc": 0.937343,
+      "n": 59,
+      "positives": 21
+     },
+     "va": {
+      "loss": 0.549604,
+      "auc": 0.793333,
+      "n": 40,
+      "positives": 30
+     },
+     "switzerland": {
+      "loss": 0.683789,
+      "auc": 0.413043,
+      "n": 25,
+      "positives": 23
+     },
+     "cleveland": {
+      "loss": 0.567036,
+      "auc": 0.812771,
+      "n": 61,
+      "positives": 28
+     }
+    },
+    "offline": []
+   },
+   "privacy_epsilon_spent": {
+    "cleveland": 1.9823,
+    "hungarian": 1.9823,
+    "switzerland": 1.9823,
+    "va": 1.9823
+   },
+   "epsilon_budget": 8.0,
+   "rounds_used": 3,
+   "rounds_left_before_cap": 37,
+   "best_so_far": {
+    "best_loss_round": 3,
+    "best_loss": 0.548072,
+    "best_auc_round": 3,
+    "best_auc": 0.856249,
+    "rounds_since_best_loss": 0
+   }
+  },
+  {
+   "round": 4,
+   "strategy": "fedavg",
+   "mu": 0.0,
+   "server_lr": 1.0,
+   "participants": [
+    "cleveland",
+    "hungarian",
+    "switzerland",
+    "va"
+   ],
+   "excluded": [],
+   "offline": [],
+   "declined": [],
+   "plans": {
+    "cleveland": {
+     "epochs": 3,
+     "lr": 0.2
+    },
+    "hungarian": {
+     "epochs": 2,
+     "lr": 0.2
+    },
+    "switzerland": {
+     "epochs": 3,
+     "lr": 0.1
+    },
+    "va": {
+     "epochs": 3,
+     "lr": 0.3
+    }
+   },
+   "train_loss": {
+    "va": [
+     0.55064,
+     0.508714
+    ],
+    "cleveland": [
+     0.531793,
+     0.513889
+    ],
+    "hungarian": [
+     0.510316,
+     0.482452
+    ],
+    "switzerland": [
+     0.554038,
+     0.504419
+    ]
+   },
+   "noise_sigma": {
+    "va": 0.12604,
+    "cleveland": 0.083562,
+    "hungarian": 0.070167,
+    "switzerland": 0.207189
+   },
+   "update_norm": 0.106,
+   "applied": true,
+   "validation": {
+    "pooled": {
+     "n": 185,
+     "loss": 0.528268,
+     "auc": 0.856071,
+     "accuracy": 0.762162,
+     "balanced_accuracy": 0.764115,
+     "worst_site_auc": 0.413043
+    },
+    "per_hospital": {
+     "va": {
+      "loss": 0.528422,
+      "auc": 0.793333,
+      "n": 40,
+      "positives": 30
+     },
+     "hungarian": {
+      "loss": 0.43918,
+      "auc": 0.93609,
+      "n": 59,
+      "positives": 21
+     },
+     "cleveland": {
+      "loss": 0.55217,
+      "auc": 0.812771,
+      "n": 61,
+      "positives": 28
+     },
+     "switzerland": {
+      "loss": 0.679947,
+      "auc": 0.413043,
+      "n": 25,
+      "positives": 23
+     }
+    },
+    "offline": []
+   },
+   "privacy_epsilon_spent": {
+    "cleveland": 2.303,
+    "hungarian": 2.303,
+    "switzerland": 2.303,
+    "va": 2.303
+   },
+   "epsilon_budget": 8.0,
+   "rounds_used": 4,
+   "rounds_left_before_cap": 36,
+   "best_so_far": {
+    "best_loss_round": 4,
+    "best_loss": 0.528268,
+    "best_auc_round": 3,
+    "best_auc": 0.856249,
+    "rounds_since_best_loss": 0
+   }
+  },
+  {
+   "round": 5,
+   "strategy": "fedavg",
+   "mu": 0.0,
+   "server_lr": 1.0,
+   "participants": [
+    "cleveland",
+    "hungarian",
+    "switzerland",
+    "va"
+   ],
+   "excluded": [],
+   "offline": [],
+   "declined": [],
+   "plans": {
+    "cleveland": {
+     "epochs": 3,
+     "lr": 0.2
+    },
+    "hungarian": {
+     "epochs": 2,
+     "lr": 0.2
+    },
+    "switzerland": {
+     "epochs": 3,
+     "lr": 0.1
+    },
+    "va": {
+     "epochs": 3,
+     "lr": 0.3
+    }
+   },
+   "train_loss": {
+    "hungarian": [
+     0.487687,
+     0.469939
+    ],
+    "switzerland": [
+     0.530706,
+     0.424116
+    ],
+    "va": [
+     0.53312,
+     0.500694
+    ],
+    "cleveland": [
+     0.510146,
+     0.485307
+    ]
+   },
+   "noise_sigma": {
+    "hungarian": 0.070167,
+    "switzerland": 0.207189,
+    "va": 0.12604,
+    "cleveland": 0.083562
+   },
+   "update_norm": 0.1029,
+   "applied": true,
+   "validation": {
+    "pooled": {
+     "n": 185,
+     "loss": 0.513184,
+     "auc": 0.860619,
+     "accuracy": 0.772973,
+     "balanced_accuracy": 0.772797,
+     "worst_site_auc": 0.413043
+    },
+    "per_hospital": {
+     "va": {
+      "loss": 0.508077,
+      "auc": 0.816667,
+      "n": 40,
+      "positives": 30
+     },
+     "switzerland": {
+      "loss": 0.667878,
+      "auc": 0.413043,
+      "n": 25,
+      "positives": 23
+     },
+     "hungarian": {
+      "loss": 0.41908,
+      "auc": 0.93609,
+      "n": 59,
+      "positives": 21
+     },
+     "cleveland": {
+      "loss": 0.544153,
+      "auc": 0.819264,
+      "n": 61,
+      "positives": 28
+     }
+    },
+    "offline": []
+   },
+   "privacy_epsilon_spent": {
+    "cleveland": 2.5886,
+    "hungarian": 2.5886,
+    "switzerland": 2.5886,
+    "va": 2.5886
+   },
+   "epsilon_budget": 8.0,
+   "rounds_used": 5,
+   "rounds_left_before_cap": 35,
+   "best_so_far": {
+    "best_loss_round": 5,
+    "best_loss": 0.513184,
+    "best_auc_round": 5,
+    "best_auc": 0.860619,
+    "rounds_since_best_loss": 0
+   }
+  },
+  {
+   "round": 6,
+   "strategy": "fedavg",
+   "mu": 0.0,
+   "server_lr": 1.0,
+   "participants": [
+    "cleveland",
+    "hungarian",
+    "switzerland",
+    "va"
+   ],
+   "excluded": [],
+   "offline": [],
+   "declined": [],
+   "plans": {
+    "cleveland": {
+     "epochs": 3,
+     "lr": 0.2
+    },
+    "hungarian": {
+     "epochs": 2,
+     "lr": 0.2
+    },
+    "switzerland": {
+     "epochs": 3,
+     "lr": 0.1
+    },
+    "va": {
+     "epochs": 3,
+     "lr": 0.3
+    }
+   },
+   "train_loss": {
+    "switzerland": [
+     0.505804,
+     0.457299
+    ],
+    "hungarian": [
+     0.473782,
+     0.465567
+    ],
+    "cleveland": [
+     0.49842,
+     0.482078
+    ],
+    "va": [
+     0.520109,
+     0.488009
+    ]
+   },
+   "noise_sigma": {
+    "switzerland": 0.207189,
+    "hungarian": 0.070167,
+    "cleveland": 0.083562,
+    "va": 0.12604
+   },
+   "update_norm": 0.07641,
+   "applied": true,
+   "validation": {
+    "pooled": {
+     "n": 185,
+     "loss": 0.506449,
+     "auc": 0.859733,
+     "accuracy": 0.772973,
+     "balanced_accuracy": 0.772797,
+     "worst_site_auc": 0.413043
+    },
+    "per_hospital": {
+     "switzerland": {
+      "loss": 0.680838,
+      "auc": 0.413043,
+      "n": 25,
+      "positives": 23
+     },
+     "va": {
+      "loss": 0.499384,
+      "auc": 0.81,
+      "n": 40,
+      "positives": 30
+     },
+     "cleveland": {
+      "loss": 0.540477,
+      "auc": 0.813853,
+      "n": 61,
+      "positives": 28
+     },
+     "hungarian": {
+      "loss": 0.402165,
+      "auc": 0.93985,
+      "n": 59,
+      "positives": 21
+     }
+    },
+    "offline": []
+   },
+   "privacy_epsilon_spent": {
+    "cleveland": 2.8494,
+    "hungarian": 2.8494,
+    "switzerland": 2.8494,
+    "va": 2.8494
+   },
+   "epsilon_budget": 8.0,
+   "rounds_used": 6,
+   "rounds_left_before_cap": 34,
+   "best_so_far": {
+    "best_loss_round": 6,
+    "best_loss": 0.506449,
+    "best_auc_round": 5,
+    "best_auc": 0.860619,
+    "rounds_since_best_loss": 0
+   }
+  },
+  {
+   "round": 7,
+   "strategy": "fedprox",
+   "mu": 0.1,
+   "server_lr": 1.0,
+   "participants": [
+    "cleveland",
+    "hungarian",
+    "switzerland",
+    "va"
+   ],
+   "excluded": [],
+   "offline": [],
+   "declined": [],
+   "plans": {
+    "cleveland": {
+     "epochs": 3,
+     "lr": 0.2
+    },
+    "hungarian": {
+     "epochs": 2,
+     "lr": 0.2
+    },
+    "switzerland": {
+     "epochs": 2,
+     "lr": 0.1
+    },
+    "va": {
+     "epochs": 3,
+     "lr": 0.3
+    }
+   },
+   "train_loss": {
+    "switzerland": [
+     0.502547,
+     0.452304
+    ],
+    "hungarian": [
+     0.462797,
+     0.448809
+    ],
+    "cleveland": [
+     0.489911,
+     0.470081
+    ],
+    "va": [
+     0.511097,
+     0.505533
+    ]
+   },
+   "noise_sigma": {
+    "switzerland": 0.169169,
+    "hungarian": 0.070167,
+    "cleveland": 0.083562,
+    "va": 0.12604
+   },
+   "update_norm": 0.08745,
+   "applied": true,
+   "validation": {
+    "pooled": {
+     "n": 185,
+     "loss": 0.496663,
+     "auc": 0.860796,
+     "accuracy": 0.783784,
+     "balanced_accuracy": 0.783723,
+     "worst_site_auc": 0.413043
+    },
+    "per_hospital": {
+     "hungarian": {
+      "loss": 0.387964,
+      "auc": 0.937343,
+      "n": 59,
+      "positives": 21
+     },
+     "switzerland": {
+      "loss": 0.678932,
+      "auc": 0.413043,
+      "n": 25,
+      "positives": 23
+     },
+     "cleveland": {
+      "loss": 0.532466,
+      "auc": 0.813853,
+      "n": 61,
+      "positives": 28
+     },
+     "va": {
+      "loss": 0.488476,
+      "auc": 0.793333,
+      "n": 40,
+      "positives": 30
+     }
+    },
+    "offline": []
+   },
+   "privacy_epsilon_spent": {
+    "cleveland": 3.0914,
+    "hungarian": 3.0914,
+    "switzerland": 3.0914,
+    "va": 3.0914
+   },
+   "epsilon_budget": 8.0,
+   "rounds_used": 7,
+   "rounds_left_before_cap": 33,
+   "best_so_far": {
+    "best_loss_round": 7,
+    "best_loss": 0.496663,
+    "best_auc_round": 7,
+    "best_auc": 0.860796,
+    "rounds_since_best_loss": 0
+   }
+  },
+  {
+   "round": 8,
+   "strategy": "fedprox",
+   "mu": 0.1,
+   "server_lr": 1.0,
+   "participants": [
+    "cleveland",
+    "hungarian",
+    "switzerland",
+    "va"
+   ],
+   "excluded": [],
+   "offline": [],
+   "declined": [],
+   "plans": {
+    "cleveland": {
+     "epochs": 3,
+     "lr": 0.2
+    },
+    "hungarian": {
+     "epochs": 2,
+     "lr": 0.2
+    },
+    "switzerland": {
+     "epochs": 2,
+     "lr": 0.1
+    },
+    "va": {
+     "epochs": 3,
+     "lr": 0.3
+    }
+   },
+   "train_loss": {
+    "va": [
+     0.505535,
+     0.505146
+    ],
+    "hungarian": [
+     0.452859,
+     0.438545
+    ],
+    "switzerland": [
+     0.488172,
+     0.450129
+    ],
+    "cleveland": [
+     0.477834,
+     0.468124
+    ]
+   },
+   "noise_sigma": {
+    "va": 0.12604,
+    "hungarian": 0.070167,
+    "switzerland": 0.169169,
+    "cleveland": 0.083562
+   },
+   "update_norm": 0.08795,
+   "applied": true,
+   "validation": {
+    "pooled": {
+     "n": 185,
+     "loss": 0.488561,
+     "auc": 0.862095,
+     "accuracy": 0.778378,
+     "balanced_accuracy": 0.777699,
+     "worst_site_auc": 0.413043
+    },
+    "per_hospital": {
+     "switzerland": {
+      "loss": 0.65599,
+      "auc": 0.413043,
+      "n": 25,
+      "positives": 23
+     },
+     "va": {
+      "loss": 0.480463,
+      "auc": 0.796667,
+      "n": 40,
+      "positives": 30
+     },
+     "cleveland": {
+      "loss": 0.526726,
+      "auc": 0.821429,
+      "n": 61,
+      "positives": 28
+     },
+     "hungarian": {
+      "loss": 0.383649,
+      "auc": 0.937343,
+      "n": 59,
+      "positives": 21
+     }
+    },
+    "offline": []
+   },
+   "privacy_epsilon_spent": {
+    "cleveland": 3.3183,
+    "hungarian": 3.3183,
+    "switzerland": 3.3183,
+    "va": 3.3183
+   },
+   "epsilon_budget": 8.0,
+   "rounds_used": 8,
+   "rounds_left_before_cap": 32,
+   "best_so_far": {
+    "best_loss_round": 8,
+    "best_loss": 0.488561,
+    "best_auc_round": 8,
+    "best_auc": 0.862095,
+    "rounds_since_best_loss": 0
+   }
+  },
+  {
+   "round": 9,
+   "strategy": "fedprox",
+   "mu": 0.1,
+   "server_lr": 1.0,
+   "participants": [
+    "cleveland",
+    "hungarian",
+    "switzerland",
+    "va"
+   ],
+   "excluded": [],
+   "offline": [],
+   "declined": [],
+   "plans": {
+    "cleveland": {
+     "epochs": 3,
+     "lr": 0.2
+    },
+    "hungarian": {
+     "epochs": 2,
+     "lr": 0.2
+    },
+    "switzerland": {
+     "epochs": 2,
+     "lr": 0.1
+    },
+    "va": {
+     "epochs": 3,
+     "lr": 0.3
+    }
+   },
+   "train_loss": {
+    "cleveland": [
+     0.470772,
+     0.455611
+    ],
+    "hungarian": [
+     0.45019,
+     0.440363
+    ],
+    "va": [
+     0.505005,
+     0.495324
+    ],
+    "switzerland": [
+     0.463547,
+     0.426635
+    ]
+   },
+   "noise_sigma": {
+    "cleveland": 0.083562,
+    "hungarian": 0.070167,
+    "va": 0.12604,
+    "switzerland": 0.169169
+   },
+   "update_norm": 0.10128,
+   "applied": true,
+   "validation": {
+    "pooled": {
+     "n": 185,
+     "loss": 0.48272,
+     "auc": 0.86121,
+     "accuracy": 0.772973,
+     "balanced_accuracy": 0.771675,
+     "worst_site_auc": 0.413043
+    },
+    "per_hospital": {
+     "switzerland": {
+      "loss": 0.653287,
+      "auc": 0.413043,
+      "n": 25,
+      "positives": 23
+     },
+     "va": {
+      "loss": 0.473768,
+      "auc": 0.796667,
+      "n": 40,
+      "positives": 30
+     },
+     "cleveland": {
+      "loss": 0.526026,
+      "auc": 0.818182,
+      "n": 61,
+      "positives": 28
+     },
+     "hungarian": {
+      "loss": 0.371741,
+      "auc": 0.938596,
+      "n": 59,
+      "positives": 21
+     }
+    },
+    "offline": []
+   },
+   "privacy_epsilon_spent": {
+    "cleveland": 3.5331,
+    "hungarian": 3.5331,
+    "switzerland": 3.5331,
+    "va": 3.5331
+   },
+   "epsilon_budget": 8.0,
+   "rounds_used": 9,
+   "rounds_left_before_cap": 31,
+   "best_so_far": {
+    "best_loss_round": 9,
+    "best_loss": 0.48272,
+    "best_auc_round": 8,
+    "best_auc": 0.862095,
+    "rounds_since_best_loss": 0
+   }
+  },
+  {
+   "round": 10,
+   "strategy": "fedprox",
+   "mu": 0.1,
+   "server_lr": 1.0,
+   "participants": [
+    "cleveland",
+    "hungarian",
+    "switzerland",
+    "va"
+   ],
+   "excluded": [],
+   "offline": [],
+   "declined": [],
+   "plans": {
+    "cleveland": {
+     "epochs": 3,
+     "lr": 0.2
+    },
+    "hungarian": {
+     "epochs": 2,
+     "lr": 0.2
+    },
+    "switzerland": {
+     "epochs": 2,
+     "lr": 0.1
+    },
+    "va": {
+     "epochs": 3,
+     "lr": 0.3
+    }
+   },
+   "train_loss": {
+    "hungarian": [
+     0.441566,
+     0.435367
+    ],
+    "switzerland": [
+     0.453865,
+     0.444156
+    ],
+    "cleveland": [
+     0.463897,
+     0.462613
+    ],
+    "va": [
+     0.501874,
+     0.507617
+    ]
+   },
+   "noise_sigma": {
+    "hungarian": 0.070167,
+    "switzerland": 0.169169,
+    "cleveland": 0.083562,
+    "va": 0.12604
+   },
+   "update_norm": 0.05928,
+   "applied": true,
+   "validation": {
+    "pooled": {
+     "n": 185,
+     "loss": 0.48229,
+     "auc": 0.859202,
+     "accuracy": 0.767568,
+     "balanced_accuracy": 0.765651,
+     "worst_site_auc": 0.413043
+    },
+    "per_hospital": {
+     "va": {
+      "loss": 0.472664,
+      "auc": 0.79,
+      "n": 40,
+      "positives": 30
+     },
+     "cleveland": {
+      "loss": 0.525512,
+      "auc": 0.8171,
+      "n": 61,
+      "positives": 28
+     },
+     "switzerland": {
+      "loss": 0.648555,
+      "auc": 0.413043,
+      "n": 25,
+      "positives": 23
+     },
+     "hungarian": {
+      "loss": 0.373677,
+      "auc": 0.93609,
+      "n": 59,
+      "positives": 21
+     }
+    },
+    "offline": []
+   },
+   "privacy_epsilon_spent": {
+    "cleveland": 3.7377,
+    "hungarian": 3.7377,
+    "switzerland": 3.7377,
+    "va": 3.7377
+   },
+   "epsilon_budget": 8.0,
+   "rounds_used": 10,
+   "rounds_left_before_cap": 30,
+   "best_so_far": {
+    "best_loss_round": 10,
+    "best_loss": 0.48229,
+    "best_auc_round": 8,
+    "best_auc": 0.862095,
+    "rounds_since_best_loss": 0
+   }
+  },
+  {
+   "round": 11,
+   "strategy": "fedprox",
+   "mu": 0.1,
+   "server_lr": 1.0,
+   "participants": [
+    "cleveland",
+    "hungarian",
+    "switzerland",
+    "va"
+   ],
+   "excluded": [],
+   "offline": [],
+   "declined": [],
+   "plans": {
+    "cleveland": {
+     "epochs": 3,
+     "lr": 0.2
+    },
+    "hungarian": {
+     "epochs": 2,
+     "lr": 0.2
+    },
+    "switzerland": {
+     "epochs": 2,
+     "lr": 0.1
+    },
+    "va": {
+     "epochs": 3,
+     "lr": 0.3
+    }
+   },
+   "train_loss": {
+    "switzerland": [
+     0.445182,
+     0.421978
+    ],
+    "va": [
+     0.501577,
+     0.508561
+    ],
+    "hungarian": [
+     0.443131,
+     0.438379
+    ],
+    "cleveland": [
+     0.464214,
+     0.460603
+    ]
+   },
+   "noise_sigma": {
+    "switzerland": 0.169169,
+    "va": 0.12604,
+    "hungarian": 0.070167,
+    "cleveland": 0.083562
+   },
+   "update_norm": 0.04691,
+   "applied": true,
+   "validation": {
+    "pooled": {
+     "n": 185,
+     "loss": 0.482891,
+     "auc": 0.85991,
+     "accuracy": 0.772973,
+     "balanced_accuracy": 0.770553,
+     "worst_site_auc": 0.413043
+    },
+    "per_hospital": {
+     "switzerland": {
+      "loss": 0.646082,
+      "auc": 0.413043,
+      "n": 25,
+      "positives": 23
+     },
+     "cleveland": {
+      "loss": 0.526477,
+      "auc": 0.818182,
+      "n": 61,
+      "positives": 28
+     },
+     "va": {
+      "loss": 0.472777,
+      "auc": 0.79,
+      "n": 40,
+      "positives": 30
+     },
+     "hungarian": {
+      "loss": 0.375536,
+      "auc": 0.93609,
+      "n": 59,
+      "positives": 21
+     }
+    },
+    "offline": []
+   },
+   "privacy_epsilon_spent": {
+    "cleveland": 3.9336,
+    "hungarian": 3.9336,
+    "switzerland": 3.9336,
+    "va": 3.9336
+   },
+   "epsilon_budget": 8.0,
+   "rounds_used": 11,
+   "rounds_left_before_cap": 29,
+   "best_so_far": {
+    "best_loss_round": 10,
+    "best_loss": 0.48229,
+    "best_auc_round": 8,
+    "best_auc": 0.862095,
+    "rounds_since_best_loss": 1
+   }
+  }
+ ],
+ "contract": {
+  "features": [
+   {
+    "name": "age",
+    "encoding": "numeric",
+    "missing": "impute_mean"
+   },
+   {
+    "name": "sex",
+    "encoding": "binary",
+    "missing": "impute_mean"
+   },
+   {
+    "name": "cp",
+    "encoding": "categorical",
+    "missing": "impute_mean"
+   },
+   {
+    "name": "trestbps",
+    "encoding": "numeric",
+    "missing": "impute_mean"
+   },
+   {
+    "name": "fbs",
+    "encoding": "binary",
+    "missing": "impute_mean"
+   },
+   {
+    "name": "restecg",
+    "encoding": "categorical",
+    "missing": "impute_mean"
+   },
+   {
+    "name": "thalach",
+    "encoding": "numeric",
+    "missing": "impute_mean"
+   },
+   {
+    "name": "exang",
+    "encoding": "binary",
+    "missing": "impute_mean"
+   },
+   {
+    "name": "oldpeak",
+    "encoding": "numeric",
+    "missing": "impute_mean"
+   }
+  ],
+  "quality_rules": [
+   {
+    "column": "age",
+    "rule": "valid_range",
+    "min": 20.0,
+    "max": 120.0
+   },
+   {
+    "column": "trestbps",
+    "rule": "valid_range",
+    "min": 60.0,
+    "max": 250.0
+   },
+   {
+    "column": "thalach",
+    "rule": "valid_range",
+    "min": 60.0,
+    "max": 220.0
+   },
+   {
+    "column": "oldpeak",
+    "rule": "valid_range",
+    "min": 0.0,
+    "max": 10.0
+   }
+  ]
+ },
+ "cv": [
+  {
+   "model": {
+    "type": "logistic",
+    "l2": 0.0
+   },
+   "parameters": 15,
+   "weighted_cv_auc": 0.7713,
+   "weighted_cv_loss": 0.4696,
+   "per_hospital": {
+    "switzerland": {
+     "cv_auc": 0.375,
+     "cv_loss": 0.3708,
+     "train_rows": 73,
+     "train_negatives": 4
+    },
+    "va": {
+     "cv_auc": 0.676,
+     "cv_loss": 0.5835,
+     "train_rows": 120,
+     "train_negatives": 31
+    },
+    "cleveland": {
+     "cv_auc": 0.8775,
+     "cv_loss": 0.465,
+     "train_rows": 181,
+     "train_negatives": 98
+    },
+    "hungarian": {
+     "cv_auc": 0.8914,
+     "cv_loss": 0.4376,
+     "train_rows": 176,
+     "train_negatives": 112
+    }
+   }
+  },
+  {
+   "model": {
+    "type": "logistic",
+    "l2": 0.1
+   },
+   "parameters": 15,
+   "weighted_cv_auc": 0.8028,
+   "weighted_cv_loss": 0.4299,
+   "per_hospital": {
+    "switzerland": {
+     "cv_auc": 0.5357,
+     "cv_loss": 0.2218,
+     "train_rows": 73,
+     "train_negatives": 4
+    },
+    "va": {
+     "cv_auc": 0.7185,
+     "cv_loss": 0.5114,
+     "train_rows": 120,
+     "train_negatives": 31
+    },
+    "cleveland": {
+     "cv_auc": 0.8753,
+     "cv_loss": 0.464,
+     "train_rows": 181,
+     "train_negatives": 98
+    },
+    "hungarian": {
+     "cv_auc": 0.8965,
+     "cv_loss": 0.4255,
+     "train_rows": 176,
+     "train_negatives": 112
+    }
+   }
+  },
+  {
+   "model": {
+    "type": "logistic",
+    "l2": 1.0
+   },
+   "parameters": 15,
+   "weighted_cv_auc": 0.815,
+   "weighted_cv_loss": 0.513,
+   "per_hospital": {
+    "switzerland": {
+     "cv_auc": 0.6607,
+     "cv_loss": 0.2117,
+     "train_rows": 73,
+     "train_negatives": 4
+    },
+    "va": {
+     "cv_auc": 0.7312,
+     "cv_loss": 0.5472,
+     "train_rows": 120,
+     "train_negatives": 31
+    },
+    "cleveland": {
+     "cv_auc": 0.8691,
+     "cv_loss": 0.5798,
+     "train_rows": 181,
+     "train_negatives": 98
+    },
+    "hungarian": {
+     "cv_auc": 0.8804,
+     "cv_loss": 0.546,
+     "train_rows": 176,
+     "train_negatives": 112
+    }
+   }
+  },
+  {
+   "model": {
+    "type": "mlp",
+    "l2": 0.1,
+    "hidden": 4
+   },
+   "parameters": 65,
+   "weighted_cv_auc": 0.8224,
+   "weighted_cv_loss": 0.4365,
+   "per_hospital": {
+    "switzerland": {
+     "cv_auc": 0.6429,
+     "cv_loss": 0.2122,
+     "train_rows": 73,
+     "train_negatives": 4
+    },
+    "va": {
+     "cv_auc": 0.7343,
+     "cv_loss": 0.5158,
+     "train_rows": 120,
+     "train_negatives": 31
+    },
+    "cleveland": {
+     "cv_auc": 0.8827,
+     "cv_loss": 0.471,
+     "train_rows": 181,
+     "train_negatives": 98
+    },
+    "hungarian": {
+     "cv_auc": 0.8949,
+     "cv_loss": 0.4399,
+     "train_rows": 176,
+     "train_negatives": 112
+    }
+   }
+  },
+  {
+   "model": {
+    "type": "mlp",
+    "l2": 0.1,
+    "hidden": 8
+   },
+   "parameters": 129,
+   "weighted_cv_auc": 0.8244,
+   "weighted_cv_loss": 0.4321,
+   "per_hospital": {
+    "switzerland": {
+     "cv_auc": 0.6607,
+     "cv_loss": 0.2124,
+     "train_rows": 73,
+     "train_negatives": 4
+    },
+    "va": {
+     "cv_auc": 0.738,
+     "cv_loss": 0.5138,
+     "train_rows": 120,
+     "train_negatives": 31
+    },
+    "cleveland": {
+     "cv_auc": 0.8783,
+     "cv_loss": 0.4663,
+     "train_rows": 181,
+     "train_negatives": 98
+    },
+    "hungarian": {
+     "cv_auc": 0.8957,
+     "cv_loss": 0.4323,
+     "train_rows": 176,
+     "train_negatives": 112
+    }
+   }
+  }
+ ],
+ "model": {
+  "type": "logistic",
+  "l2": 0.1
+ },
+ "descriptions": {
+  "cleveland": {
+   "rows_train": 181,
+   "columns": [
+    {
+     "name": "age",
+     "usable": true,
+     "note": "years, range 29-77, no missing or zero values"
+    },
+    {
+     "name": "sex",
+     "usable": true,
+     "note": "0 female, 1 male; 53 females, 128 males"
+    },
+    {
+     "name": "cp",
+     "usable": true,
+     "note": "chest pain type 1-4, all four categories present"
+    },
+    {
+     "name": "trestbps",
+     "usable": true,
+     "note": "resting BP mmHg, range 94-200, no missing/zero"
+    },
+    {
+     "name": "chol",
+     "usable": true,
+     "note": "serum cholesterol mg/dl, range 126-417, no missing/zero"
+    },
+    {
+     "name": "fbs",
+     "usable": true,
+     "note": "fasting blood sugar >120 mg/dl, binary, 150 false / 31 true"
+    },
+    {
+     "name": "restecg",
+     "usable": true,
+     "note": "resting ECG 0/1/2, all categories present"
+    },
+    {
+     "name": "thalach",
+     "usable": true,
+     "note": "max heart rate bpm, range 95-202, no missing/zero"
+    },
+    {
+     "name": "exang",
+     "usable": true,
+     "note": "exercise-induced angina, binary"
+    },
+    {
+     "name": "oldpeak",
+     "usable": true,
+     "note": "ST depression mm, range 0-5.6; 62 zeros are valid (no depression)"
+    },
+    {
+     "name": "slope",
+     "usable": true,
+     "note": "ST segment slope 1-3, all categories present"
+    },
+    {
+     "name": "ca",
+     "usable": true,
+     "note": "vessels coloured 0-3; 1 row missing, 103 zeros are valid (0 vessels)"
+    },
+    {
+     "name": "thal",
+     "usable": true,
+     "note": "thallium result 3/6/7; 2 rows missing"
+    }
+   ],
+   "quality_rules": [],
+   "summary": "This hospital contributes 181 training rows with a label-positive rate of about 46%. Data are largely clean: no columns contain physiologically impossible zero values (age, trestbps, chol, thalach all have positive minima), so no zero_means_missing rules are needed. Only 'ca' (1 missing) and 'thal' (2 missing) have any missingness, which is already represented as '?' in the export. All categorical codes (cp, restecg, slope, ca, thal) fall within their documented value sets."
+  },
+  "hungarian": {
+   "rows_train": 176,
+   "columns": [
+    {
+     "name": "age",
+     "usable": true,
+     "note": "Age in years, 30-66, complete."
+    },
+    {
+     "name": "sex",
+     "usable": true,
+     "note": "0/1 (female/male), complete."
+    },
+    {
+     "name": "cp",
+     "usable": true,
+     "note": "Chest pain type 1-4, complete."
+    },
+    {
+     "name": "trestbps",
+     "usable": true,
+     "note": "Resting BP mmHg, 92-190, complete."
+    },
+    {
+     "name": "chol",
+     "usable": true,
+     "note": "Serum cholesterol mg/dl, 100-518; ~6% missing ('?')."
+    },
+    {
+     "name": "fbs",
+     "usable": true,
+     "note": "Fasting sugar >120, 0/1; ~4% missing."
+    },
+    {
+     "name": "restecg",
+     "usable": true,
+     "note": "Resting ECG 0/1/2, complete."
+    },
+    {
+     "name": "thalach",
+     "usable": true,
+     "note": "Max heart rate, 82-190, complete."
+    },
+    {
+     "name": "exang",
+     "usable": true,
+     "note": "Exercise angina 0/1, complete."
+    },
+    {
+     "name": "oldpeak",
+     "usable": true,
+     "note": "ST depression mm, 0-5, complete."
+    },
+    {
+     "name": "slope",
+     "usable": true,
+     "note": "Peak ST slope 1-3 but ~63% missing."
+    },
+    {
+     "name": "ca",
+     "usable": false,
+     "note": "Vessels by fluoroscopy; ~99% missing (only 2 rows with value 0). Effectively unusable."
+    },
+    {
+     "name": "thal",
+     "usable": true,
+     "note": "Thallium result 3/6/7, valid codes but ~87% missing (only 23 values)."
+    }
+   ],
+   "quality_rules": [
+    {
+     "column": "trestbps",
+     "rule": "valid_range",
+     "min": 60.0,
+     "max": 250.0
+    },
+    {
+     "column": "chol",
+     "rule": "valid_range",
+     "min": 100.0,
+     "max": 600.0
+    },
+    {
+     "column": "thalach",
+     "rule": "valid_range",
+     "min": 60.0,
+     "max": 220.0
+    },
+    {
+     "column": "oldpeak",
+     "rule": "valid_range",
+     "min": 0.0,
+     "max": 10.0
+    },
+    {
+     "column": "age",
+     "rule": "valid_range",
+     "min": 0.0,
+     "max": 120.0
+    }
+   ],
+   "summary": "Budapest has 176 training rows, 36% label-positive. Missing values are encoded as '?' already, so no zero-means-missing columns were found; all 0 values in sex/fbs/restecg/exang/oldpeak are genuine. The main site-specific quirks are heavy missingness: ca is ~99% missing (only 2 usable rows) and should be dropped, thal is ~87% missing, and slope ~63% missing; chol (~6%) and fbs (~4%) are partly missing. All continuous clinical ranges look physiologically plausible, with only a rare high cholesterol (518 mg/dl)."
+  },
+  "switzerland": {
+   "rows_train": 73,
+   "columns": [
+    {
+     "name": "age",
+     "usable": true,
+     "note": "Years, 32-74, complete."
+    },
+    {
+     "name": "sex",
+     "usable": true,
+     "note": "1=male,0=female; 4 zeros (female), rest male."
+    },
+    {
+     "name": "cp",
+     "usable": true,
+     "note": "Chest pain type 1-4, complete."
+    },
+    {
+     "name": "trestbps",
+     "usable": true,
+     "note": "Resting BP mmHg, 80-180; 1 missing."
+    },
+    {
+     "name": "chol",
+     "usable": false,
+     "note": "Serum cholesterol mg/dl; ALL 73 rows are 0 -> effectively 100% missing."
+    },
+    {
+     "name": "fbs",
+     "usable": false,
+     "note": "Fasting blood sugar>120; 60% missing."
+    },
+    {
+     "name": "restecg",
+     "usable": true,
+     "note": "Resting ECG 0/1/2; 1 missing, dominated by 0."
+    },
+    {
+     "name": "thalach",
+     "usable": true,
+     "note": "Max heart rate bpm, 60-179; 1 missing."
+    },
+    {
+     "name": "exang",
+     "usable": true,
+     "note": "Exercise angina 0/1; 1 missing."
+    },
+    {
+     "name": "oldpeak",
+     "usable": true,
+     "note": "ST depression mm; contains negative values (min -2.6) that are physiologically impossible -> must be treated as missing."
+    },
+    {
+     "name": "slope",
+     "usable": true,
+     "note": "ST slope 1/2/3; 11% missing."
+    },
+    {
+     "name": "ca",
+     "usable": false,
+     "note": "Fluoroscopy vessel count 0-3; 96% missing (only 3 non-missing)."
+    },
+    {
+     "name": "thal",
+     "usable": true,
+     "note": "Thallium result 3/6/7; 41% missing."
+    }
+   ],
+   "quality_rules": [
+    {
+     "column": "chol",
+     "rule": "zero_means_missing"
+    },
+    {
+     "column": "oldpeak",
+     "rule": "valid_range",
+     "min": 0.0,
+     "max": 10.0
+    },
+    {
+     "column": "ca",
+     "rule": "valid_range",
+     "min": 0.0,
+     "max": 3.0
+    }
+   ],
+   "summary": "Zurich/Basel has only 73 training rows, and the label is heavily skewed: 94.5% of patients have angiographic heart disease, so this site contributes almost no negative examples. Serum cholesterol (chol) is entirely recorded as 0 and therefore unusable; ca (fluoroscopy vessel count) is 96% missing and fbs is 60% missing. oldpeak contains negative ST-depression values that are not physiologically possible and must be treated as missing via a valid_range rule (min 0)."
+  },
+  "va": {
+   "rows_train": 120,
+   "columns": [
+    {
+     "name": "age",
+     "usable": true,
+     "note": "years, 35-77, no missing/zero issues."
+    },
+    {
+     "name": "sex",
+     "usable": true,
+     "note": "1=male, 0=female; 3 rows are 0 (female), fine."
+    },
+    {
+     "name": "cp",
+     "usable": true,
+     "note": "chest pain type 1-4, no missing."
+    },
+    {
+     "name": "trestbps",
+     "usable": true,
+     "note": "resting blood pressure mmHg, 96-190, but 27.5% missing."
+    },
+    {
+     "name": "chol",
+     "usable": true,
+     "note": "serum cholesterol mg/dl; 28 rows coded 0 which is physiologically impossible and must be treated as missing (plus 5 explicit missing)."
+    },
+    {
+     "name": "fbs",
+     "usable": true,
+     "note": "fasting blood sugar >120 mg/dl, 0/1; 0 is a valid value here, not missing."
+    },
+    {
+     "name": "restecg",
+     "usable": true,
+     "note": "resting ECG 0/1/2, no missing."
+    },
+    {
+     "name": "thalach",
+     "usable": true,
+     "note": "max heart rate bpm, 69-180, 25.8% missing."
+    },
+    {
+     "name": "exang",
+     "usable": true,
+     "note": "exercise-induced angina 0/1, 25.8% missing."
+    },
+    {
+     "name": "oldpeak",
+     "usable": true,
+     "note": "ST depression mm; 25.8% missing, one value -0.5 (should be >=0), range otherwise 0-4."
+    },
+    {
+     "name": "slope",
+     "usable": false,
+     "note": "52.5% missing; too sparse to contribute meaningfully at this site."
+    },
+    {
+     "name": "ca",
+     "usable": false,
+     "note": "99.2% missing (only 1 non-missing value); unusable."
+    },
+    {
+     "name": "thal",
+     "usable": false,
+     "note": "83.3% missing; effectively unusable at this site."
+    }
+   ],
+   "quality_rules": [
+    {
+     "column": "chol",
+     "rule": "zero_means_missing"
+    },
+    {
+     "column": "oldpeak",
+     "rule": "valid_range",
+     "min": 0.0,
+     "max": 6.0
+    }
+   ],
+   "summary": "VA Long Beach contributes 120 training rows with a high label-positive rate (74.2% angiographic disease). The most usable features are age, sex, cp, restecg, and fbs (complete); trestbps, thalach, exang, and oldpeak have ~26-28% missingness but remain usable; chol needs zero-to-missing correction (28 zero-coded values). ca (99.2% missing), thal (83.3% missing), and slope (52.5% missing) are too sparse to be useful here."
+  }
+ },
+ "traffic": {
+  "cleveland": {
+   "messages": 42,
+   "bytes_sent": 22091,
+   "bytes_received": 29499
+  },
+  "hungarian": {
+   "messages": 42,
+   "bytes_sent": 21937,
+   "bytes_received": 30358
+  },
+  "switzerland": {
+   "messages": 42,
+   "bytes_sent": 22102,
+   "bytes_received": 29396
+  },
+  "va": {
+   "messages": 42,
+   "bytes_sent": 22102,
+   "bytes_received": 28529
+  }
+ },
+ "usage": {
+  "coordinator": {
+   "model": "deepseek-v4-pro",
+   "api_calls": 16,
+   "input_tokens": 13273,
+   "output_tokens": 10804,
+   "reasoning_tokens": 7946,
+   "cache_read_tokens": 217600,
+   "served_by": {
+    "deepseek-v4-pro": 16
+   },
+   "estimated_cost_usd": 0.0699
+  },
+  "cleveland": {
+   "model": "deepseek-v4-pro",
+   "api_calls": 16,
+   "input_tokens": 8893,
+   "output_tokens": 3750,
+   "reasoning_tokens": 1200,
+   "cache_read_tokens": 100352,
+   "served_by": {
+    "deepseek-v4-pro": 16
+   },
+   "estimated_cost_usd": 0.031
+  },
+  "hungarian": {
+   "model": "deepseek-v4-pro",
+   "api_calls": 16,
+   "input_tokens": 9408,
+   "output_tokens": 4456,
+   "reasoning_tokens": 1673,
+   "cache_read_tokens": 111232,
+   "served_by": {
+    "deepseek-v4-pro": 16
+   },
+   "estimated_cost_usd": 0.035
+  },
+  "switzerland": {
+   "model": "deepseek-v4-pro",
+   "api_calls": 17,
+   "input_tokens": 9995,
+   "output_tokens": 4477,
+   "reasoning_tokens": 1570,
+   "cache_read_tokens": 121856,
+   "served_by": {
+    "deepseek-v4-pro": 17
+   },
+   "estimated_cost_usd": 0.0363
+  },
+  "va": {
+   "model": "deepseek-v4-pro",
+   "api_calls": 17,
+   "input_tokens": 9357,
+   "output_tokens": 4285,
+   "reasoning_tokens": 1055,
+   "cache_read_tokens": 115200,
+   "served_by": {
+    "deepseek-v4-pro": 17
+   },
+   "estimated_cost_usd": 0.0344
+  }
+ },
+ "runtime_s": 217.6
+}

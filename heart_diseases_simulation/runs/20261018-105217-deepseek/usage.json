@@ -1,0 +1,62 @@
+{
+ "coordinator": {
+  "model": "deepseek-v4-pro",
+  "api_calls": 16,
+  "input_tokens": 13273,
+  "output_tokens": 10804,
+  "reasoning_tokens": 7946,
+  "cache_read_tokens": 217600,
+  "served_by": {
+   "deepseek-v4-pro": 16
+  },
+  "estimated_cost_usd": 0.0699
+ },
+ "cleveland": {
+  "model": "deepseek-v4-pro",
+  "api_calls": 16,
+  "input_tokens": 8893,
+  "output_tokens": 3750,
+  "reasoning_tokens": 1200,
+  "cache_read_tokens": 100352,
+  "served_by": {
+   "deepseek-v4-pro": 16
+  },
+  "estimated_cost_usd": 0.031
+ },
+ "hungarian": {
+  "model": "deepseek-v4-pro",
+  "api_calls": 16,
+  "input_tokens": 9408,
+  "output_tokens": 4456,
+  "reasoning_tokens": 1673,
+  "cache_read_tokens": 111232,
+  "served_by": {
+   "deepseek-v4-pro": 16
+  },
+  "estimated_cost_usd": 0.035
+ },
+ "switzerland": {
+  "model": "deepseek-v4-pro",
+  "api_calls": 17,
+  "input_tokens": 9995,
+  "output_tokens": 4477,
+  "reasoning_tokens": 1570,
+  "cache_read_tokens": 121856,
+  "served_by": {
+   "deepseek-v4-pro": 17
+  },
+  "estimated_cost_usd": 0.0363
+ },
+ "va": {
+  "model": "deepseek-v4-pro",
+  "api_calls": 17,
+  "input_tokens": 9357,
+  "output_tokens": 4285,
+  "reasoning_tokens": 1055,
+  "cache_read_tokens": 115200,
+  "served_by": {
+   "deepseek-v4-pro": 17
+  },
+  "estimated_cost_usd": 0.0344
+ }
+}

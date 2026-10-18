@@ -1,0 +1,327 @@
+{
+ "format": "fedheart-model/1",
+ "created_at": "2026-10-18T06:55:55Z",
+ "run_id": "20261018-105217-deepseek",
+ "model": {
+  "type": "logistic",
+  "l2": 0.1
+ },
+ "params": [
+  0.054037392139434814,
+  0.30108028650283813,
+  0.28253525495529175,
+  0.02091139554977417,
+  -0.14572930335998535,
+  0.002731502056121826,
+  0.4018216133117676,
+  0.05537569522857666,
+  0.16630351543426514,
+  -0.03803354501724243,
+  0.08659547567367554,
+  0.0994563102722168,
+  -0.3372877836227417,
+  0.41859638690948486,
+  0.37463152408599854
+ ],
+ "sha256": "e31853800df049c594970bf37ac825dcd648c18d8fab71381d9bcb9faa783680",
+ "inputs": [
+  "age",
+  "sex",
+  "cp=1",
+  "cp=2",
+  "cp=3",
+  "cp=4",
+  "trestbps",
+  "fbs",
+  "restecg=0",
+  "restecg=1",
+  "restecg=2",
+  "thalach",
+  "exang",
+  "oldpeak"
+ ],
+ "contract": {
+  "features": [
+   {
+    "name": "age",
+    "encoding": "numeric",
+    "missing": "impute_mean"
+   },
+   {
+    "name": "sex",
+    "encoding": "binary",
+    "missing": "impute_mean"
+   },
+   {
+    "name": "cp",
+    "encoding": "categorical",
+    "missing": "impute_mean"
+   },
+   {
+    "name": "trestbps",
+    "encoding": "numeric",
+    "missing": "impute_mean"
+   },
+   {
+    "name": "fbs",
+    "encoding": "binary",
+    "missing": "impute_mean"
+   },
+   {
+    "name": "restecg",
+    "encoding": "categorical",
+    "missing": "impute_mean"
+   },
+   {
+    "name": "thalach",
+    "encoding": "numeric",
+    "missing": "impute_mean"
+   },
+   {
+    "name": "exang",
+    "encoding": "binary",
+    "missing": "impute_mean"
+   },
+   {
+    "name": "oldpeak",
+    "encoding": "numeric",
+    "missing": "impute_mean"
+   }
+  ],
+  "quality_rules": [
+   {
+    "column": "age",
+    "rule": "valid_range",
+    "min": 20.0,
+    "max": 120.0
+   },
+   {
+    "column": "trestbps",
+    "rule": "valid_range",
+    "min": 60.0,
+    "max": 250.0
+   },
+   {
+    "column": "thalach",
+    "rule": "valid_range",
+    "min": 60.0,
+    "max": 220.0
+   },
+   {
+    "column": "oldpeak",
+    "rule": "valid_range",
+    "min": 0.0,
+    "max": 10.0
+   }
+  ]
+ },
+ "normalization": {
+  "age": {
+   "mean": 53.658181818181816,
+   "std": 9.669609203518007
+  },
+  "sex": {
+   "mean": 0.8127272727272727,
+   "std": 0.39013030245363145
+  },
+  "cp": {
+   "mean": 3.2454545454545456,
+   "std": 0.9262472047447807
+  },
+  "trestbps": {
+   "mean": 132.09108527131784,
+   "std": 18.92645491689897
+  },
+  "fbs": {
+   "mean": 0.17575757575757575,
+   "std": 0.38061378104503224
+  },
+  "restecg": {
+   "mean": 0.5919854280510018,
+   "std": 0.7991397194650246
+  },
+  "thalach": {
+   "mean": 137.36872586872587,
+   "std": 26.040752638710092
+  },
+  "exang": {
+   "mean": 0.3861003861003861,
+   "std": 0.48685406227484523
+  },
+  "oldpeak": {
+   "mean": 0.9166007905373932,
+   "std": 1.0710164295703684
+  }
+ },
+ "label": {
+  "name": "num",
+  "meaning": "angiographic heart disease (num > 0 = diameter narrowing > 50%)",
+  "positive": "num > 0"
+ },
+ "training": {
+  "checkpoint_round": 10,
+  "rounds_run": 11,
+  "participants": [
+   "cleveland",
+   "hungarian",
+   "switzerland",
+   "va"
+  ],
+  "strategies": [
+   "fedprox",
+   "fedprox",
+   "fedprox",
+   "fedavg",
+   "fedavg",
+   "fedavg",
+   "fedprox",
+   "fedprox",
+   "fedprox",
+   "fedprox",
+   "fedprox"
+  ],
+  "privacy": {
+   "epsilon_budget": 8.0,
+   "delta": 1e-05,
+   "clip": 1.0,
+   "epsilon_spent": {
+    "cleveland": 3.933576,
+    "hungarian": 3.933576,
+    "switzerland": 3.933576,
+    "va": 3.933576
+   },
+   "max_rounds": 40
+  },
+  "stop_reasoning": "Training has reached a plateau: best pooled validation loss was 0.48229 at round 10, with the worst-off site (Switzerland) at 0.6486, and round 11 did not improve (loss 0.48289, AUC 0.85991 vs best AUC 0.86210 at round 8). I am finishing from the best_loss checkpoint because it has the best proper-scoring-rule loss and the best Swiss loss among the top checkpoints, while using only 3.93 of the 8.0 epsilon budget.",
+  "decided_by": "llm"
+ },
+ "test_metrics": {
+  "pooled": {
+   "n": 185,
+   "loss": 0.466606,
+   "auc": 0.868179,
+   "accuracy": 0.789189,
+   "sensitivity": 0.843137,
+   "specificity": 0.722892,
+   "balanced_accuracy": 0.783014,
+   "worst_site_auc": 0.810777,
+   "mean_site_auc": 0.873123
+  },
+  "per_hospital": {
+   "cleveland": {
+    "n": 61,
+    "positives": 28,
+    "loss": 0.447933,
+    "auc": 0.888528,
+    "accuracy": 0.770492,
+    "confusion": {
+     "tp": 23,
+     "fp": 9,
+     "tn": 24,
+     "fn": 5
+    }
+   },
+   "switzerland": {
+    "n": 25,
+    "positives": 23,
+    "loss": 0.435133,
+    "auc": 0.956522,
+    "accuracy": 0.88,
+    "confusion": {
+     "tp": 20,
+     "fp": 0,
+     "tn": 2,
+     "fn": 3
+    }
+   },
+   "hungarian": {
+    "n": 59,
+    "positives": 21,
+    "loss": 0.508619,
+    "auc": 0.810777,
+    "accuracy": 0.779661,
+    "confusion": {
+     "tp": 14,
+     "fp": 6,
+     "tn": 32,
+     "fn": 7
+    }
+   },
+   "va": {
+    "n": 40,
+    "positives": 30,
+    "loss": 0.452783,
+    "auc": 0.836667,
+    "accuracy": 0.775,
+    "confusion": {
+     "tp": 29,
+     "fp": 8,
+     "tn": 2,
+     "fn": 1
+    }
+   }
+  }
+ },
+ "validation_history": [
+  {
+   "round": 0,
+   "loss": 0.693147,
+   "auc": 0.5
+  },
+  {
+   "round": 1,
+   "loss": 0.621078,
+   "auc": 0.845027
+  },
+  {
+   "round": 2,
+   "loss": 0.579331,
+   "auc": 0.853059
+  },
+  {
+   "round": 3,
+   "loss": 0.548072,
+   "auc": 0.856249
+  },
+  {
+   "round": 4,
+   "loss": 0.528268,
+   "auc": 0.856071
+  },
+  {
+   "round": 5,
+   "loss": 0.513184,
+   "auc": 0.860619
+  },
+  {
+   "round": 6,
+   "loss": 0.506449,
+   "auc": 0.859733
+  },
+  {
+   "round": 7,
+   "loss": 0.496663,
+   "auc": 0.860796
+  },
+  {
+   "round": 8,
+   "loss": 0.488561,
+   "auc": 0.862095
+  },
+  {
+   "round": 9,
+   "loss": 0.48272,
+   "auc": 0.86121
+  },
+  {
+   "round": 10,
+   "loss": 0.48229,
+   "auc": 0.859202
+  },
+  {
+   "round": 11,
+   "loss": 0.482891,
+   "auc": 0.85991
+  }
+ ]
+}

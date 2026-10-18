@@ -1,0 +1,97 @@
+{
+ "note": "experimenter benchmark on the pooled test set; solo and centralized use raw data from every hospital and exist only for comparison",
+ "model": {
+  "type": "logistic",
+  "l2": 0.1
+ },
+ "rows": {
+  "cleveland": {
+   "train": 181,
+   "val": 61,
+   "test": 61
+  },
+  "hungarian": {
+   "train": 176,
+   "val": 59,
+   "test": 59
+  },
+  "switzerland": {
+   "train": 73,
+   "val": 25,
+   "test": 25
+  },
+  "va": {
+   "train": 120,
+   "val": 40,
+   "test": 40
+  }
+ },
+ "federated": {
+  "pooled_auc": 0.868179,
+  "pooled_loss": 0.466606,
+  "pooled_accuracy": 0.789189,
+  "auc_by_site": {
+   "cleveland": 0.888528,
+   "hungarian": 0.810777,
+   "switzerland": 0.956522,
+   "va": 0.836667
+  }
+ },
+ "centralized": {
+  "pooled_auc": 0.871958,
+  "pooled_loss": 0.459343,
+  "pooled_accuracy": 0.794595,
+  "auc_by_site": {
+   "cleveland": 0.890693,
+   "hungarian": 0.827068,
+   "switzerland": 0.956522,
+   "va": 0.826667
+  }
+ },
+ "solo": {
+  "cleveland": {
+   "pooled_auc": 0.869596,
+   "pooled_loss": 0.463342,
+   "pooled_accuracy": 0.789189,
+   "auc_by_site": {
+    "cleveland": 0.900433,
+    "hungarian": 0.813283,
+    "switzerland": 0.956522,
+    "va": 0.806667
+   }
+  },
+  "hungarian": {
+   "pooled_auc": 0.866997,
+   "pooled_loss": 0.480719,
+   "pooled_accuracy": 0.794595,
+   "auc_by_site": {
+    "cleveland": 0.886364,
+    "hungarian": 0.837093,
+    "switzerland": 0.956522,
+    "va": 0.773333
+   }
+  },
+  "switzerland": {
+   "pooled_auc": 0.734644,
+   "pooled_loss": 1.205324,
+   "pooled_accuracy": 0.551351,
+   "auc_by_site": {
+    "cleveland": 0.784632,
+    "hungarian": 0.651629,
+    "switzerland": 0.956522,
+    "va": 0.75
+   }
+  },
+  "va": {
+   "pooled_auc": 0.813253,
+   "pooled_loss": 0.565977,
+   "pooled_accuracy": 0.724324,
+   "auc_by_site": {
+    "cleveland": 0.83658,
+    "hungarian": 0.808271,
+    "switzerland": 0.847826,
+    "va": 0.673333
+   }
+  }
+ }
+}
