@@ -1,5 +1,5 @@
 """End-to-end: five real OS processes talking HTTP, with the scripted agents and with the
-Claude agent loop against a fake Claude API (no key, no cost).
+DeepSeek agent loop against a fake DeepSeek API (no key, no cost).
 
 Runs and models go to a temporary folder (FEDHEART_RUNS_DIR / FEDHEART_MODELS_DIR), so the
 tests never overwrite a real run or models/heart_model.json.
@@ -23,7 +23,7 @@ os.environ["FEDHEART_RUNS_DIR"] = str(pathlib.Path(TMP) / "runs")
 os.environ["FEDHEART_MODELS_DIR"] = str(pathlib.Path(TMP) / "models")
 
 import run_simulation  # noqa: E402
-from fake_claude import FakeClaude  # noqa: E402
+from fake_deepseek import FakeDeepSeek  # noqa: E402
 from fedheart import config  # noqa: E402
 
 # test_core may have imported config before the variables above were set
@@ -67,36 +67,39 @@ class EndToEnd(unittest.TestCase):
         r2 = next(r for r in summary["rounds"] if r["round"] == 2)
         self.assertIn("switzerland", r2["offline"])  # a simulated outage is handled, not fatal
 
-    def test_claude_agent_loop_against_fake_api(self):
-        with FakeClaude() as fake:
-            os.environ["ANTHROPIC_BASE_URL"] = f"http://127.0.0.1:{fake.port}"
-            os.environ["ANTHROPIC_API_KEY"] = "sk-ant-test-not-a-real-key"
+    def test_deepseek_agent_loop_against_fake_api(self):
+        with FakeDeepSeek() as fake:
+            os.environ["DEEPSEEK_BASE_URL"] = f"http://127.0.0.1:{fake.port}"
+            os.environ["DEEPSEEK_API_KEY"] = "sk-test-not-a-real-key"
             try:
-                run_simulation.main(["--agents", "claude", "--no-mirror", "--max-rounds", "8", "--base-port",
+                run_simulation.main(["--agents", "deepseek", "--no-mirror", "--max-rounds", "8", "--base-port",
                                      "8311", "--noise-seed", "1"])
             finally:
-                os.environ.pop("ANTHROPIC_BASE_URL")
-                os.environ.pop("ANTHROPIC_API_KEY")
+                os.environ.pop("DEEPSEEK_BASE_URL")
+                os.environ.pop("DEEPSEEK_API_KEY")
             self.assertEqual(fake.errors, [], "an agent's tool call was rejected")
-            reqs = [r for r in fake.requests if r["path"].startswith("/v1/messages")]
+            reqs = [r for r in fake.requests if r["path"] == "/chat/completions"]
             self.assertGreater(len(reqs), 20)
+            self.assertEqual({r["body"]["model"] for r in reqs}, {config.DEFAULT_MODEL})
+            efforts = {r["body"]["reasoning_effort"] for r in reqs}
+            self.assertEqual(efforts, {"high", "low"})  # coordinator high, hospitals low
             body = reqs[0]["body"]
-            self.assertEqual(body["model"], config.DEFAULT_MODEL)
-            self.assertEqual(body["thinking"], {"type": "adaptive", "display": "summarized"})
-            self.assertIn("effort", body["output_config"])
-            self.assertEqual(body["fallbacks"], "default")
-            self.assertIn("server-side-fallback-2026-07-01", reqs[0]["headers"].get("anthropic-beta", ""))
-            self.assertNotIn("tool_choice", body)  # forced tool use is a 400 on this model
-            # append-only history: every request extends the previous one of the same agent
+            self.assertNotIn("tool_choice", body)  # a forced tool choice is a 400 in thinking mode
+            self.assertEqual(body["tools"][0]["type"], "function")
+            # append-only history (reasoning_content kept): every request extends the previous
+            # one of the same agent, which is also what DeepSeek's context cache needs
             by_agent = {}
             for r in reqs:
-                key = r["body"]["system"][:80]
+                key = r["body"]["messages"][0]["content"][:80]
                 prev = by_agent.get(key)
                 if prev is not None:
                     self.assertEqual(r["body"]["messages"][:len(prev)], prev)
                 by_agent[key] = r["body"]["messages"]
             self.assertEqual(len(by_agent), 5)  # four hospital agents + the coordinator
-        self.check_run(latest_run("claude"), "llm")
+        items, summary = self.check_run(latest_run("deepseek"), "llm")
+        usage = summary["usage"]["coordinator"]
+        self.assertGreater(usage["cache_read_tokens"], 0)
+        self.assertGreater(usage["estimated_cost_usd"], 0)
 
 
 if __name__ == "__main__":

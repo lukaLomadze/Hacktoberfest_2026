@@ -2,5 +2,5 @@ __pycache__/
 *.pyc
 *.tmp
 .env
-# offline rehearsals; commit the real Claude run you want to show (runs/<id>-claude/)
+# offline rehearsals; commit the real DeepSeek run you want to show (runs/<id>-deepseek/)
 runs/*-rule/

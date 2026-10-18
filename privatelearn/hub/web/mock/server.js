@@ -86,8 +86,9 @@ export async function demoRuns() {
   await refreshReal();
   const runs = [{ job_id: "job_1", label: "Scripted demo", detail: "fixed scenario, 3 hospitals", status: "succeeded" }];
   for (const [id, b] of real) {
-    const llm = b.source && b.source.agents === "claude";
-    runs.push({ job_id: id, label: llm ? "Real agent run" : "Offline rehearsal (no LLM)",
+    // any agent mode but the scripted "rule" stand-in is a real LLM run ("deepseek"; older runs "claude")
+    const llm = b.source && b.source.agents && b.source.agents !== "rule";
+    runs.push({ job_id: id, label: llm ? "Real agent run" : "Offline rehearsal",
                 detail: `${b.job.participants.length} hospitals · ${llm ? `${b.source.coordinator_model} agents` : "scripted agents"}`,
                 status: b.job.status });
   }

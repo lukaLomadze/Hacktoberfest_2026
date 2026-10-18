@@ -1,9 +1,9 @@
-"""The coordinator: its own OS process, no data, one Claude agent that runs the job.
+"""The coordinator: its own OS process, no data, one DeepSeek agent that runs the job.
 
     python -m fedheart.coordinator --run-dir runs/<id> --hospitals cleveland=http://127.0.0.1:8101,...
 
 The process first does the mechanical part (wait for the four hospitals, relay their
-Diffie-Hellman public keys). Then its agent — one Claude conversation for the whole job —
+Diffie-Hellman public keys). Then its agent — one DeepSeek conversation for the whole job —
 decides everything else through tools:
 
     collect_data_descriptions  every hospital agent describes its data (in parallel)
@@ -616,9 +616,9 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description="Run the coordinator process")
     ap.add_argument("--run-dir", required=True)
     ap.add_argument("--hospitals", required=True, help="site=url,site=url,...")
-    ap.add_argument("--agents", choices=["claude", "rule"], default="claude")
+    ap.add_argument("--agents", choices=["deepseek", "rule"], default="deepseek")
     ap.add_argument("--model", default=config.DEFAULT_MODEL)
-    ap.add_argument("--effort", default="high")
+    ap.add_argument("--effort", default="high", choices=config.EFFORTS)
     ap.add_argument("--max-rounds", type=int, default=config.MAX_ROUNDS)
     ap.add_argument("--min-rounds", type=int, default=config.MIN_ROUNDS)
     ap.add_argument("--epsilon", type=float, default=config.EPSILON_TOTAL)
@@ -639,7 +639,7 @@ def main(argv=None):
            "metrics": {"auc_series": [], "loss_series": [], "eps_total": 0}, "started_at": None,
            "finished_at": None, "error": None}
     group = {"id": events.GROUP_ID, "status": "training",
-             "name": "Heart disease (real agent run)" if args.agents == "claude" else "Heart disease (offline rehearsal)",
+             "name": "Heart disease (real agent run)" if args.agents == "deepseek" else "Heart disease (offline rehearsal)",
              "description": "Four UCI cohorts as four hospitals; every decision made by the agents live",
              "task_spec": {"question": "Does this patient have angiographic heart disease?",
                            "task_type": "binary_classification",
@@ -656,10 +656,11 @@ def main(argv=None):
              "pricing": None, "member_count": len(sites), "current_version": None, "created_at": events.now_iso(),
              "updated_at": events.now_iso()}
     source = {"run_id": run_dir.name, "agents": args.agents,
-              "coordinator_model": args.model if args.agents == "claude" else "scripted"}
+              "provider": "deepseek" if args.agents == "deepseek" else "rule",
+              "coordinator_model": args.model if args.agents == "deepseek" else "scripted"}
     log = events.EventLog(run_dir, job, group, pathlib.Path(args.mirror) if args.mirror else None, source)
     fed = Federation(run_dir, urls, args, log)
-    fed.made_by = "llm" if args.agents == "claude" else "rule"
+    fed.made_by = "llm" if args.agents == "deepseek" else "rule"
 
     try:
         fed.connect()
@@ -669,11 +670,11 @@ def main(argv=None):
         system = SYSTEM.format(sites=", ".join(f"{s} ({config.SITE_BY_ID[s]['name']})" for s in sites),
                                min_rounds=args.min_rounds, max_rounds=args.max_rounds, epsilon=args.epsilon,
                                delta=args.delta)
-        if args.agents == "claude":
-            agent = llm.ClaudeAgent("coordinator", system, tb, args.model, args.effort, transcript)
+        if args.agents == "deepseek":
+            agent = llm.DeepSeekAgent("coordinator", system, tb, args.model, args.effort, transcript)
         else:
             agent = llm.ScriptedAgent("coordinator", tb, policies.coordinator_policy, transcript)
-        print(f"[coordinator] agent {'' if args.agents == 'claude' else 'scripted '}{args.model if args.agents == 'claude' else ''} "
+        print(f"[coordinator] agent {'' if args.agents == 'deepseek' else 'scripted '}{args.model if args.agents == 'deepseek' else ''} "
               "is running the job", flush=True)
         agent.run(KICKOFF.format(status=fed.status_text()), done=lambda: fed.finished is not None,
                   max_turns=4 * args.max_rounds + 40, context={"fed": fed})

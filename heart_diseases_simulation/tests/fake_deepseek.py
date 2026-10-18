@@ -1,9 +1,11 @@
-"""A stand-in for the Claude Messages API, for testing the agent loop without a key.
+"""A stand-in for DeepSeek's chat-completions API, for testing the agent loop without a key.
 
-It answers POST /v1/messages like the real API (thinking block + tool_use, usage), choosing
-the tool call from the request's tools and conversation, and records every request so the
-tests can check what the SDK actually sent (model, thinking, effort, fallbacks, tools,
-the append-only history). Point the SDK at it with ANTHROPIC_BASE_URL.
+It answers POST /chat/completions like the real API in thinking mode (reasoning_content +
+tool_calls, usage with cache hit/miss), choosing the tool call from the request's tools and
+conversation, and records every request so the tests can check what the agents actually
+sent (model, reasoning_effort, tools, the append-only history). Like the real API it
+answers 400 when an earlier assistant message comes back without its reasoning_content.
+Point the agents at it with DEEPSEEK_BASE_URL.
 """
 
 from __future__ import annotations
@@ -21,31 +23,35 @@ CONTRACT = {
                       {"column": "trestbps", "rule": "zero_means_missing"}],
     "reasoning": "fake: the ten columns most hospitals record",
 }
+MODELS = ("deepseek-v4-pro", "deepseek-flash")
+
+
+def _tool_names(m):
+    return [c["function"]["name"] for c in m.get("tool_calls") or []]
 
 
 def _last_user_text(messages):
     for m in reversed(messages):
-        if m["role"] == "user" and isinstance(m["content"], str):
+        if m["role"] == "user":
             return m["content"]
     return ""
 
 
-def _tool_calls_since_last_text(messages):
+def _tool_calls_since_last_user(messages):
     names = []
     for m in reversed(messages):
-        if m["role"] == "user" and isinstance(m["content"], str):
+        if m["role"] == "user":
             break
         if m["role"] == "assistant":
-            names += [b["name"] for b in m["content"] if b.get("type") == "tool_use"]
+            names += _tool_names(m)
     return names
 
 
 def decide(body, rounds_before_finish=4):
-    tools = {t["name"] for t in body.get("tools", [])}
+    tools = {t["function"]["name"] for t in body.get("tools", [])}
     msgs = body["messages"]
     if "run_round" in tools:  # the coordinator
-        done = [b["name"] for m in msgs if m["role"] == "assistant" for b in m["content"]
-                if b.get("type") == "tool_use"]
+        done = [n for m in msgs if m["role"] == "assistant" for n in _tool_names(m)]
         seq = (["collect_data_descriptions", "propose_contract", "evaluate_candidate_models", "select_model"]
                + ["run_round"] * rounds_before_finish + ["finish_training"])
         name = seq[min(len(done), len(seq) - 1)]
@@ -58,7 +64,7 @@ def decide(body, rounds_before_finish=4):
                 "finish_training": {"checkpoint": "best_loss", "reasoning": "fake: validation loss plateaued"}}[name]
         return name, args
     text = _last_user_text(msgs)
-    called = _tool_calls_since_last_text(msgs)
+    called = _tool_calls_since_last_user(msgs)
     if text.startswith("STEP: describe"):
         if "inspect_local_data" not in called:
             return "inspect_local_data", {"view": "overview"}
@@ -74,10 +80,10 @@ def decide(body, rounds_before_finish=4):
     return None, None
 
 
-class FakeClaude:
+class FakeDeepSeek:
     def __init__(self, port=0):
         self.requests = []
-        self.errors = []  # tool results the agents got back with is_error
+        self.errors = []  # tool results the agents got back as errors
         self.lock = threading.Lock()
         owner = self
 
@@ -93,39 +99,45 @@ class FakeClaude:
                 self.end_headers()
                 self.wfile.write(data)
 
+            def _error(self, code, message):
+                self._send(code, {"error": {"message": message, "type": "invalid_request_error"}})
+
             def do_GET(self):
-                if self.path.startswith("/v1/models/"):
-                    mid = self.path.split("/")[3].split("?")[0]
-                    self._send(200, {"type": "model", "id": mid, "display_name": f"Fake {mid}",
-                                     "created_at": "2026-01-01T00:00:00Z"})
+                if self.path.split("?")[0] == "/models":
+                    self._send(200, {"object": "list", "data": [{"id": m, "object": "model", "owned_by": "deepseek"}
+                                                                 for m in MODELS]})
                 else:
-                    self._send(404, {"type": "error", "error": {"type": "not_found_error", "message": self.path}})
+                    self._error(404, self.path)
 
             def do_POST(self):
+                if self.path != "/chat/completions":
+                    return self._error(404, self.path)
+                if not self.headers.get("Authorization", "").startswith("Bearer "):
+                    return self._error(401, "missing bearer token")
                 body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
                 with owner.lock:
                     owner.requests.append({"path": self.path, "headers": dict(self.headers), "body": body})
                     for m in body["messages"]:
-                        if m["role"] == "user" and isinstance(m["content"], list):
-                            for b in m["content"]:
-                                if b.get("type") == "tool_result" and b.get("is_error"):
-                                    if b not in owner.errors:
-                                        owner.errors.append(b)
+                        if m["role"] == "tool" and '"error"' in m["content"][:12] and m not in owner.errors:
+                            owner.errors.append(m)
+                    n = len(owner.requests)
+                for m in body["messages"]:
+                    if m["role"] == "assistant" and not m.get("reasoning_content"):
+                        return self._error(400, "The reasoning_content in the thinking mode must be passed back "
+                                                "to the API.")
                 name, args = decide(body)
-                n = len(owner.requests)
-                content = [{"type": "thinking", "thinking": f"fake thinking {n}", "signature": f"sig{n}"}]
+                msg = {"role": "assistant", "content": "Acting." if name else "Nothing to do.",
+                       "reasoning_content": f"fake reasoning {n}"}
                 if name:
-                    content += [{"type": "text", "text": "Acting."},
-                                {"type": "tool_use", "id": f"toolu_{n:05d}", "name": name, "input": args}]
-                    stop = "tool_use"
-                else:
-                    content += [{"type": "text", "text": "Nothing to do."}]
-                    stop = "end_turn"
-                self._send(200, {"id": f"msg_{n:05d}", "type": "message", "role": "assistant",
-                                 "model": body["model"], "content": content, "stop_reason": stop,
-                                 "stop_sequence": None,
-                                 "usage": {"input_tokens": 100, "output_tokens": 20,
-                                           "cache_read_input_tokens": 50, "cache_creation_input_tokens": 10}})
+                    msg["tool_calls"] = [{"id": f"call_{n:05d}", "type": "function",
+                                          "function": {"name": name, "arguments": json.dumps(args)}}]
+                self._send(200, {"id": f"chatcmpl-{n:05d}", "object": "chat.completion", "created": 0,
+                                 "model": body["model"],
+                                 "choices": [{"index": 0, "message": msg,
+                                              "finish_reason": "tool_calls" if name else "stop"}],
+                                 "usage": {"prompt_tokens": 150, "completion_tokens": 20, "total_tokens": 170,
+                                           "prompt_cache_hit_tokens": 50, "prompt_cache_miss_tokens": 100,
+                                           "completion_tokens_details": {"reasoning_tokens": 12}}})
 
         self.server = ThreadingHTTPServer(("127.0.0.1", port), H)
         self.port = self.server.server_address[1]
@@ -139,9 +151,9 @@ class FakeClaude:
         self.server.shutdown()
 
 
-if __name__ == "__main__":  # run standalone: python tests/fake_claude.py 8999
+if __name__ == "__main__":  # run standalone: python tests/fake_deepseek.py 8999
     import sys
 
-    with FakeClaude(int(sys.argv[1]) if len(sys.argv) > 1 else 8999) as f:
-        print(f"fake Claude API on http://127.0.0.1:{f.port}")
+    with FakeDeepSeek(int(sys.argv[1]) if len(sys.argv) > 1 else 8999) as f:
+        print(f"fake DeepSeek API on http://127.0.0.1:{f.port}")
         threading.Event().wait()
