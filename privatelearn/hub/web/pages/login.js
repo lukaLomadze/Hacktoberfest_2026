@@ -1,7 +1,7 @@
 // #/login — demo sign-in (PLATFORM-API §5.1): an email, no password.
 
 import { api } from "../api.js";
-import { errorBox, fieldErrors, h, setSession } from "../app.js";
+import { errorBox, fieldErrors, h, setSession, takeReturnTo } from "../app.js";
 import { homeFor } from "../router.js";
 
 async function demoAccounts() {
@@ -29,7 +29,7 @@ export async function render({ el, navigate }) {
     try {
       const res = await api.post("/auth/login", { email: address.trim() });
       setSession(res);
-      navigate(homeFor(res.user.role));
+      navigate(takeReturnTo() || homeFor(res.user.role)); // back to the page they opened, if any
     } catch (err) {
       if (!fieldErrors(form, err)) status.replaceChildren(errorBox(err));
     } finally {

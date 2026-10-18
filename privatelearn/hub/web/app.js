@@ -172,11 +172,22 @@ function placeholder(route) {
                                target: "_blank", rel: "noopener" }, `#${issue}`)] : null, "."));
 }
 
+// the page a signed-out visitor opened (a shared link, a reload): shown again after sign-in
+let returnTo = null;
+export function takeReturnTo() {
+  const p = returnTo;
+  returnTo = null;
+  return p;
+}
+
 function resolve(route, path) {
   const user = session.user;
   if (!route) return path === "/" ? homeFor(user && user.role) : null; // unknown path → not-found page
   if (route.access === "guest") return user ? homeFor(user.role) : null;
-  if (!user) return "/login";
+  if (!user) {
+    returnTo = path;
+    return "/login";
+  }
   if (route.access !== "any" && route.access !== user.role) return homeFor(user.role);
   return null;
 }
