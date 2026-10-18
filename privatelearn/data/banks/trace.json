@@ -16,14 +16,14 @@
     ],
     "weights": 9,
     "rounds": 20,
-    "auc_solo": 0.6956,
+    "auc_solo": 0.7069,
     "auc_solo_by_hospital": {
-      "h0": 0.6856,
-      "h1": 0.6956,
-      "h2": 0.6829
+      "h0": 0.6629,
+      "h1": 0.7069,
+      "h2": 0.6392
     },
     "auc_federated": 0.7013,
-    "auc_centralized": 0.7003,
+    "auc_centralized": 0.705,
     "auc_federated_no_privacy": 0.7055,
     "eps_per_round": 1.5,
     "dp_delta": 1e-05,
@@ -34,27 +34,31 @@
     "lr": 0.1,
     "seed": 42,
     "model_hashes": {
-      "h0": "dd6372dbdd1908d93bd3b392aa2f0cbbbbf05ba80b6ff734ff05eeba268962e6",
-      "h1": "dd6372dbdd1908d93bd3b392aa2f0cbbbbf05ba80b6ff734ff05eeba268962e6",
-      "h2": "dd6372dbdd1908d93bd3b392aa2f0cbbbbf05ba80b6ff734ff05eeba268962e6"
+      "h0": "35c2f562385e5f288a4142fa9afc08396355efc1992e5dce07ec059086519ec2",
+      "h1": "35c2f562385e5f288a4142fa9afc08396355efc1992e5dce07ec059086519ec2",
+      "h2": "35c2f562385e5f288a4142fa9afc08396355efc1992e5dce07ec059086519ec2"
     },
     "decision_maker": {
-      "provider": "rule",
-      "model": "deterministic",
-      "llm_calls": 0,
-      "fallbacks": 0,
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "llm_calls": 162,
+      "fallbacks": 2,
+      "recent_errors": [
+        "JSONDecodeError: Unterminated string starting at: line 1 column 1401 (char 1400)",
+        "JSONDecodeError: Unterminated string starting at: line 1 column 1401 (char 1400)"
+      ],
       "schema": {
         "h0": {
-          "made_by": "rule",
-          "reasoning": "manifest-provided local schema"
+          "made_by": "llm",
+          "reasoning": "All local columns map directly to shared canonical features with values already in standard units (TWD amounts, years, categorical codes), so factors are 1.0 and default_flag is the target. [grounded 4 mapping(s) in the manifest]"
         },
         "h1": {
-          "made_by": "rule",
-          "reasoning": "manifest-provided local schema"
+          "made_by": "llm",
+          "reasoning": "All local columns map directly to shared features; age_months is converted from months to years (factor 1/12), monetary columns are already in USD, and categorical codes are renamed without conversion. [grounded 8 mapping(s) in the manifest]"
         },
         "h2": {
-          "made_by": "rule",
-          "reasoning": "manifest-provided local schema"
+          "made_by": "llm",
+          "reasoning": "All local columns map directly to shared features; the *_k columns are in thousands so multiply by 1000 to reach the standard currency unit, while age and coded categorical fields are already in standard units. [grounded 7 mapping(s) in the manifest]"
         }
       },
       "policy": "the LLM only sees column names, local column statistics (min/p05/median/p95/max) and aggregate losses, never a patient row; gradients, aggregation, masking and DP are deterministic code"
@@ -235,9 +239,9 @@
       "eps_total": 1.5,
       "auc_before": 0.5,
       "auc_after": 0.6782,
-      "decision": "loss std 0.000 ≤ τ=0.1, hospitals agree → FedAvg",
-      "reasoning": "loss std 0.000 ≤ τ=0.1, hospitals agree → FedAvg",
-      "decided_by": "rule",
+      "decision": "All three hospitals report identical probe loss (0.693), indicating full agreement, so standard FedAvg is appropriate.",
+      "reasoning": "All three hospitals report identical probe loss (0.693), indicating full agreement, so standard FedAvg is appropriate.",
+      "decided_by": "llm",
       "probe_losses": {
         "h0": 0.6931,
         "h1": 0.6931,
@@ -305,9 +309,9 @@
       "eps_total": 3.0,
       "auc_before": 0.6782,
       "auc_after": 0.6603,
-      "decision": "Bank C offline; loss std 0.001 ≤ τ=0.1, hospitals agree → FedAvg",
-      "reasoning": "loss std 0.001 ≤ τ=0.1, hospitals agree → FedAvg",
-      "decided_by": "rule",
+      "decision": "Bank C offline; Bank A and Bank B have nearly identical probe losses (0.663 vs 0.662), so they agree and plain FedAvg is appropriate.",
+      "reasoning": "Bank A and Bank B have nearly identical probe losses (0.663 vs 0.662), so they agree and plain FedAvg is appropriate.",
+      "decided_by": "llm",
       "probe_losses": {
         "h0": 0.6631,
         "h1": 0.6616
@@ -351,7 +355,7 @@
         "round": 2,
         "w": [
           -0.1756638294,
-          0.0462115057,
+          0.0462115058,
           -0.0077897905,
           -0.0402997105,
           0.0309387679,
@@ -376,9 +380,9 @@
       "eps_total": 4.5,
       "auc_before": 0.6603,
       "auc_after": 0.6473,
-      "decision": "Bank C loss 2.028 is >2σ above median 0.627 → trimmed-mean, excluded",
-      "reasoning": "Bank C loss 2.028 is >2σ above median 0.627 → trimmed-mean, excluded",
-      "decided_by": "rule",
+      "decision": "Bank C's probe loss (2.028) is a clear outlier versus the tightly agreeing Bank A and Bank B (~0.62), so excluding it via trimmed_mean prevents it from corrupting the aggregate.",
+      "reasoning": "Bank C's probe loss (2.028) is a clear outlier versus the tightly agreeing Bank A and Bank B (~0.62), so excluding it via trimmed_mean prevents it from corrupting the aggregate.",
+      "decided_by": "llm",
       "probe_losses": {
         "h0": 0.6209,
         "h1": 0.6272,
@@ -409,7 +413,7 @@
         },
         {
           "hospital": "h2",
-          "loss": 2.0275145654,
+          "loss": 2.0275145652,
           "n": 400,
           "sent": true,
           "rejected": true,
@@ -424,7 +428,7 @@
         "round": 3,
         "w": [
           -0.2729679734,
-          0.091446697,
+          0.0914466971,
           -0.0156254037,
           -0.0637945016,
           0.0457030159,
@@ -449,9 +453,9 @@
       "eps_total": 6.0,
       "auc_before": 0.6473,
       "auc_after": 0.6644,
-      "decision": "loss std 0.029 ≤ τ=0.1, hospitals agree → FedAvg",
-      "reasoning": "loss std 0.029 ≤ τ=0.1, hospitals agree → FedAvg",
-      "decided_by": "rule",
+      "decision": "All three hospitals' probe losses are close (0.583–0.651) with no single outlier, so plain FedAvg is appropriate.",
+      "reasoning": "All three hospitals' probe losses are close (0.583–0.651) with no single outlier, so plain FedAvg is appropriate.",
+      "decided_by": "llm",
       "probe_losses": {
         "h0": 0.5834,
         "h1": 0.5956,
@@ -471,7 +475,7 @@
         },
         {
           "hospital": "h1",
-          "loss": 0.5688444087,
+          "loss": 0.5688444086,
           "n": 400,
           "sent": true,
           "masked": true,
@@ -480,7 +484,7 @@
         },
         {
           "hospital": "h2",
-          "loss": 0.6002493201,
+          "loss": 0.6002493202,
           "n": 400,
           "sent": true,
           "masked": true,
@@ -492,8 +496,8 @@
         "v": "1.0",
         "round": 4,
         "w": [
-          -0.361707481,
-          0.0876965872,
+          -0.3617074809,
+          0.0876965875,
           -0.026722149,
           -0.0733862218,
           0.0517423907,
@@ -507,8 +511,8 @@
         "auc": 0.6643864957,
         "losses": [
           0.5520666584,
-          0.5688444087,
-          0.6002493201
+          0.5688444086,
+          0.6002493202
         ],
         "converged": false
       }
@@ -519,9 +523,9 @@
       "eps_total": 7.5,
       "auc_before": 0.6644,
       "auc_after": 0.6751,
-      "decision": "loss std 0.028 ≤ τ=0.1, hospitals agree → FedAvg",
-      "reasoning": "loss std 0.028 ≤ τ=0.1, hospitals agree → FedAvg",
-      "decided_by": "rule",
+      "decision": "The three probe losses (0.565, 0.571, 0.626) are close and broadly agree, so plain FedAvg is appropriate without excluding any hospital.",
+      "reasoning": "The three probe losses (0.565, 0.571, 0.626) are close and broadly agree, so plain FedAvg is appropriate without excluding any hospital.",
+      "decided_by": "llm",
       "probe_losses": {
         "h0": 0.5647,
         "h1": 0.5713,
@@ -563,11 +567,11 @@
         "round": 5,
         "w": [
           -0.4426399782,
-          0.0859715535,
+          0.0859715538,
           -0.0356974108,
           -0.082828433,
           0.0619748564,
-          -0.0524788097,
+          -0.0524788096,
           0.1963696052,
           0.0162089253,
           0.0040715741
@@ -589,9 +593,9 @@
       "eps_total": 9.0,
       "auc_before": 0.6751,
       "auc_after": 0.6803,
-      "decision": "loss std 0.026 ≤ τ=0.1, hospitals agree → FedAvg",
-      "reasoning": "loss std 0.026 ≤ τ=0.1, hospitals agree → FedAvg",
-      "decided_by": "rule",
+      "decision": "All three probe losses are close (0.549-0.605), indicating the hospitals agree, so plain FedAvg is appropriate.",
+      "reasoning": "All three probe losses are close (0.549-0.605), indicating the hospitals agree, so plain FedAvg is appropriate.",
+      "decided_by": "llm",
       "probe_losses": {
         "h0": 0.5489,
         "h1": 0.5509,
@@ -611,7 +615,7 @@
         },
         {
           "hospital": "h1",
-          "loss": 0.5318651913,
+          "loss": 0.5318651912,
           "n": 400,
           "sent": true,
           "masked": true,
@@ -633,9 +637,9 @@
         "round": 6,
         "w": [
           -0.5175518382,
-          0.0845702722,
+          0.0845702725,
           -0.0431951795,
-          -0.0942430052,
+          -0.0942430051,
           0.0702858537,
           -0.0509052397,
           0.2254824225,
@@ -647,7 +651,7 @@
         "auc": 0.6803266889,
         "losses": [
           0.5267592965,
-          0.5318651913,
+          0.5318651912,
           0.5658711824
         ],
         "converged": false
@@ -659,9 +663,9 @@
       "eps_total": 10.5,
       "auc_before": 0.6803,
       "auc_after": 0.6859,
-      "decision": "loss std 0.025 ≤ τ=0.1, hospitals agree → FedAvg",
-      "reasoning": "loss std 0.025 ≤ τ=0.1, hospitals agree → FedAvg",
-      "decided_by": "rule",
+      "decision": "All three probe losses are close (0.534-0.589), indicating the hospitals agree, so plain FedAvg is appropriate.",
+      "reasoning": "All three probe losses are close (0.534-0.589), indicating the hospitals agree, so plain FedAvg is appropriate.",
+      "decided_by": "llm",
       "probe_losses": {
         "h0": 0.5356,
         "h1": 0.5343,
@@ -703,7 +707,7 @@
         "round": 7,
         "w": [
           -0.5861325471,
-          0.0825344876,
+          0.082534488,
           -0.0513649243,
           -0.100738466,
           0.0732116214,
@@ -729,9 +733,9 @@
       "eps_total": 12.0,
       "auc_before": 0.6859,
       "auc_after": 0.6894,
-      "decision": "loss std 0.024 ≤ τ=0.1, hospitals agree → FedAvg",
-      "reasoning": "loss std 0.024 ≤ τ=0.1, hospitals agree → FedAvg",
-      "decided_by": "rule",
+      "decision": "The probe losses are tightly clustered (0.52-0.574) with no single outlier, so all hospitals agree and plain FedAvg is appropriate.",
+      "reasoning": "The probe losses are tightly clustered (0.52-0.574) with no single outlier, so all hospitals agree and plain FedAvg is appropriate.",
+      "decided_by": "llm",
       "probe_losses": {
         "h0": 0.5248,
         "h1": 0.5203,
@@ -760,7 +764,7 @@
         },
         {
           "hospital": "h2",
-          "loss": 0.5430697105,
+          "loss": 0.5430697106,
           "n": 400,
           "sent": true,
           "masked": true,
@@ -773,7 +777,7 @@
         "round": 8,
         "w": [
           -0.6463453078,
-          0.0800913477,
+          0.0800913481,
           -0.0572740138,
           -0.110044693,
           0.0683528117,
@@ -788,7 +792,7 @@
         "losses": [
           0.5088227863,
           0.5067547756,
-          0.5430697105
+          0.5430697106
         ],
         "converged": false
       }
@@ -799,9 +803,9 @@
       "eps_total": 13.5,
       "auc_before": 0.6894,
       "auc_after": 0.6925,
-      "decision": "loss std 0.023 ≤ τ=0.1, hospitals agree → FedAvg",
-      "reasoning": "loss std 0.023 ≤ τ=0.1, hospitals agree → FedAvg",
-      "decided_by": "rule",
+      "decision": "The three probe losses (0.516, 0.509, 0.561) are close and consistent with no clear outlier, so plain FedAvg is appropriate.",
+      "reasoning": "The three probe losses (0.516, 0.509, 0.561) are close and consistent with no clear outlier, so plain FedAvg is appropriate.",
+      "decided_by": "llm",
       "probe_losses": {
         "h0": 0.516,
         "h1": 0.5093,
@@ -830,7 +834,7 @@
         },
         {
           "hospital": "h2",
-          "loss": 0.5346691895,
+          "loss": 0.5346691896,
           "n": 400,
           "sent": true,
           "masked": true,
@@ -843,11 +847,11 @@
         "round": 9,
         "w": [
           -0.7046967716,
-          0.0751689279,
+          0.0751689283,
           -0.0650011708,
           -0.1153952445,
           0.0723522018,
-          -0.0389613763,
+          -0.0389613762,
           0.3113136489,
           0.0058502693,
           -0.002778096
@@ -858,7 +862,7 @@
         "losses": [
           0.5022644522,
           0.4976709864,
-          0.5346691895
+          0.5346691896
         ],
         "converged": false
       }
@@ -869,9 +873,9 @@
       "eps_total": 15.0,
       "auc_before": 0.6925,
       "auc_after": 0.6942,
-      "decision": "loss std 0.022 ≤ τ=0.1, hospitals agree → FedAvg",
-      "reasoning": "loss std 0.022 ≤ τ=0.1, hospitals agree → FedAvg",
-      "decided_by": "rule",
+      "decision": "The probe losses (0.508, 0.499, 0.55) are tightly clustered with no single outlier and no broad disagreement, so plain FedAvg is appropriate.",
+      "reasoning": "The probe losses (0.508, 0.499, 0.55) are tightly clustered with no single outlier and no broad disagreement, so plain FedAvg is appropriate.",
+      "decided_by": "llm",
       "probe_losses": {
         "h0": 0.5082,
         "h1": 0.4994,
@@ -913,11 +917,11 @@
         "round": 10,
         "w": [
           -0.7608700039,
-          0.0729659883,
+          0.0729659887,
           -0.0708751808,
           -0.11776182,
-          0.073710939,
-          -0.038997426,
+          0.0737109389,
+          -0.0389974259,
           0.3322661684,
           -0.001433269,
           0.0007758114
@@ -939,9 +943,9 @@
       "eps_total": 16.5,
       "auc_before": 0.6942,
       "auc_after": 0.6954,
-      "decision": "loss std 0.022 ≤ τ=0.1, hospitals agree → FedAvg",
-      "reasoning": "loss std 0.022 ≤ τ=0.1, hospitals agree → FedAvg",
-      "decided_by": "rule",
+      "decision": "The three probe losses (0.502, 0.491, 0.541) are close and consistent with no clear outlier or broad disagreement, so plain FedAvg is appropriate.",
+      "reasoning": "The three probe losses (0.502, 0.491, 0.541) are close and consistent with no clear outlier or broad disagreement, so plain FedAvg is appropriate.",
+      "decided_by": "llm",
       "probe_losses": {
         "h0": 0.5016,
         "h1": 0.4912,
@@ -983,8 +987,8 @@
         "round": 11,
         "w": [
           -0.8167325806,
-          0.0678201144,
-          -0.0752011865,
+          0.0678201148,
+          -0.0752011866,
           -0.1252706402,
           0.0762340382,
           -0.0415294949,
@@ -1009,9 +1013,9 @@
       "eps_total": 18.0,
       "auc_before": 0.6954,
       "auc_after": 0.6974,
-      "decision": "loss std 0.021 ≤ τ=0.1, hospitals agree → FedAvg",
-      "reasoning": "loss std 0.021 ≤ τ=0.1, hospitals agree → FedAvg",
-      "decided_by": "rule",
+      "decision": "The probe losses are tightly clustered (0.484–0.533) with no single outlier, so all hospitals agree and plain FedAvg is appropriate.",
+      "reasoning": "The probe losses are tightly clustered (0.484–0.533) with no single outlier, so all hospitals agree and plain FedAvg is appropriate.",
+      "decided_by": "llm",
       "probe_losses": {
         "h0": 0.495,
         "h1": 0.4836,
@@ -1040,7 +1044,7 @@
         },
         {
           "hospital": "h2",
-          "loss": 0.5154448916,
+          "loss": 0.5154448917,
           "n": 400,
           "sent": true,
           "masked": true,
@@ -1053,11 +1057,11 @@
         "round": 12,
         "w": [
           -0.8714993782,
-          0.0636201789,
+          0.0636201793,
           -0.0796385889,
           -0.1230854116,
           0.0789804019,
-          -0.0368455837,
+          -0.0368455836,
           0.3789264493,
           -0.0204863679,
           -0.0042673949
@@ -1068,7 +1072,7 @@
         "losses": [
           0.486266008,
           0.4764040137,
-          0.5154448916
+          0.5154448917
         ],
         "converged": false
       }
@@ -1079,9 +1083,9 @@
       "eps_total": 19.5,
       "auc_before": 0.6974,
       "auc_after": 0.6984,
-      "decision": "loss std 0.020 ≤ τ=0.1, hospitals agree → FedAvg",
-      "reasoning": "loss std 0.020 ≤ τ=0.1, hospitals agree → FedAvg",
-      "decided_by": "rule",
+      "decision": "The probe losses (0.49, 0.477, 0.525) are tightly clustered with no single outlier and no broad disagreement, so plain FedAvg is appropriate.",
+      "reasoning": "The probe losses (0.49, 0.477, 0.525) are tightly clustered with no single outlier and no broad disagreement, so plain FedAvg is appropriate.",
+      "decided_by": "llm",
       "probe_losses": {
         "h0": 0.4898,
         "h1": 0.477,
@@ -1122,8 +1126,8 @@
         "v": "1.0",
         "round": 13,
         "w": [
-          -0.9252105331,
-          0.0562384999,
+          -0.925210533,
+          0.0562385003,
           -0.0848786937,
           -0.1291286999,
           0.0767939542,
@@ -1149,9 +1153,9 @@
       "eps_total": 21.0,
       "auc_before": 0.6984,
       "auc_after": 0.6989,
-      "decision": "loss std 0.020 ≤ τ=0.1, hospitals agree → FedAvg",
-      "reasoning": "loss std 0.020 ≤ τ=0.1, hospitals agree → FedAvg",
-      "decided_by": "rule",
+      "decision": "The three probe losses (0.485, 0.471, 0.518) are tightly clustered with no single outlier and no broad disagreement, so plain FedAvg is appropriate.",
+      "reasoning": "The three probe losses (0.485, 0.471, 0.518) are tightly clustered with no single outlier and no broad disagreement, so plain FedAvg is appropriate.",
+      "decided_by": "llm",
       "probe_losses": {
         "h0": 0.4851,
         "h1": 0.4711,
@@ -1180,7 +1184,7 @@
         },
         {
           "hospital": "h2",
-          "loss": 0.5056810084,
+          "loss": 0.5056810085,
           "n": 400,
           "sent": true,
           "masked": true,
@@ -1193,11 +1197,11 @@
         "round": 14,
         "w": [
           -0.9740366158,
-          0.0531681301,
+          0.0531681306,
           -0.0874850627,
           -0.1298027121,
           0.0754441337,
-          -0.0288308665,
+          -0.0288308664,
           0.4207926485,
           -0.0291054873,
           -0.0015460206
@@ -1208,7 +1212,7 @@
         "losses": [
           0.4784786653,
           0.466018098,
-          0.5056810084
+          0.5056810085
         ],
         "converged": false
       }
@@ -1219,9 +1223,9 @@
       "eps_total": 22.5,
       "auc_before": 0.6989,
       "auc_after": 0.6996,
-      "decision": "loss std 0.019 ≤ τ=0.1, hospitals agree → FedAvg",
-      "reasoning": "loss std 0.019 ≤ τ=0.1, hospitals agree → FedAvg",
-      "decided_by": "rule",
+      "decision": "The three probe losses (0.481, 0.466, 0.513) are close together with no single outlier, so plain FedAvg is appropriate.",
+      "reasoning": "The three probe losses (0.481, 0.466, 0.513) are close together with no single outlier, so plain FedAvg is appropriate.",
+      "decided_by": "llm",
       "probe_losses": {
         "h0": 0.4813,
         "h1": 0.4665,
@@ -1263,11 +1267,11 @@
         "round": 15,
         "w": [
           -1.0227741309,
-          0.0476181468,
-          -0.0865993051,
+          0.0476181472,
+          -0.0865993052,
           -0.1250760773,
           0.0724163957,
-          -0.0286623172,
+          -0.0286623171,
           0.4399095807,
           -0.036380492,
           -0.0048394139
@@ -1289,9 +1293,9 @@
       "eps_total": 24.0,
       "auc_before": 0.6996,
       "auc_after": 0.6998,
-      "decision": "loss std 0.019 ≤ τ=0.1, hospitals agree → FedAvg",
-      "reasoning": "loss std 0.019 ≤ τ=0.1, hospitals agree → FedAvg",
-      "decided_by": "rule",
+      "decision": "The three probe losses (0.478, 0.462, 0.508) are close and mutually consistent with no single outlier, so plain FedAvg is appropriate.",
+      "reasoning": "The three probe losses (0.478, 0.462, 0.508) are close and mutually consistent with no single outlier, so plain FedAvg is appropriate.",
+      "decided_by": "llm",
       "probe_losses": {
         "h0": 0.478,
         "h1": 0.4623,
@@ -1333,11 +1337,11 @@
         "round": 16,
         "w": [
           -1.0664810982,
-          0.0428934965,
+          0.042893497,
           -0.0888129189,
           -0.1300058751,
           0.0713664508,
-          -0.023874625,
+          -0.0238746249,
           0.4567267243,
           -0.0420857952,
           -0.0055375704
@@ -1359,9 +1363,9 @@
       "eps_total": 25.5,
       "auc_before": 0.6998,
       "auc_after": 0.7003,
-      "decision": "loss std 0.019 ≤ τ=0.1, hospitals agree → FedAvg",
-      "reasoning": "loss std 0.019 ≤ τ=0.1, hospitals agree → FedAvg",
-      "decided_by": "rule",
+      "decision": "The three probe losses (0.475, 0.459, 0.504) are tightly clustered with no single outlier, so plain FedAvg is appropriate.",
+      "reasoning": "The three probe losses (0.475, 0.459, 0.504) are tightly clustered with no single outlier, so plain FedAvg is appropriate.",
+      "decided_by": "llm",
       "probe_losses": {
         "h0": 0.475,
         "h1": 0.459,
@@ -1403,12 +1407,12 @@
         "round": 17,
         "w": [
           -1.1060606136,
-          0.0400928565,
+          0.040092857,
           -0.0935158573,
           -0.1333222397,
           0.0694569674,
-          -0.0241725748,
-          0.4732311221,
+          -0.0241725747,
+          0.473231122,
           -0.0437814136,
           -0.0081983881
         ],
@@ -1429,9 +1433,9 @@
       "eps_total": 27.0,
       "auc_before": 0.7003,
       "auc_after": 0.7005,
-      "decision": "loss std 0.019 ≤ τ=0.1, hospitals agree → FedAvg",
-      "reasoning": "loss std 0.019 ≤ τ=0.1, hospitals agree → FedAvg",
-      "decided_by": "rule",
+      "decision": "The probe losses are tightly clustered (0.456–0.501) with no single outlier and no broad disagreement, so plain FedAvg is appropriate.",
+      "reasoning": "The probe losses are tightly clustered (0.456–0.501) with no single outlier and no broad disagreement, so plain FedAvg is appropriate.",
+      "decided_by": "llm",
       "probe_losses": {
         "h0": 0.4724,
         "h1": 0.4561,
@@ -1473,14 +1477,14 @@
         "round": 18,
         "w": [
           -1.1445449016,
-          0.0343999364,
+          0.0343999369,
           -0.0972697502,
           -0.135201798,
           0.0646903432,
           -0.0213409927,
           0.4912937713,
           -0.048391863,
-          -0.004002424
+          -0.0040024241
         ],
         "strategy": "fedavg",
         "eps_total": 27.0,
@@ -1499,9 +1503,9 @@
       "eps_total": 28.5,
       "auc_before": 0.7005,
       "auc_after": 0.7011,
-      "decision": "loss std 0.019 ≤ τ=0.1, hospitals agree → FedAvg",
-      "reasoning": "loss std 0.019 ≤ τ=0.1, hospitals agree → FedAvg",
-      "decided_by": "rule",
+      "decision": "The probe losses (0.47, 0.454, 0.498) are tightly clustered with no single outlier and no broad disagreement, so plain FedAvg is appropriate.",
+      "reasoning": "The probe losses (0.47, 0.454, 0.498) are tightly clustered with no single outlier and no broad disagreement, so plain FedAvg is appropriate.",
+      "decided_by": "llm",
       "probe_losses": {
         "h0": 0.4702,
         "h1": 0.4536,
@@ -1543,13 +1547,13 @@
         "round": 19,
         "w": [
           -1.1838537414,
-          0.0271045973,
+          0.0271045978,
           -0.0996545254,
           -0.1392361067,
-          0.067385759,
-          -0.0199264555,
+          0.0673857589,
+          -0.0199264554,
           0.5074290887,
-          -0.0580560291,
+          -0.0580560292,
           -0.0145777376
         ],
         "strategy": "fedavg",
@@ -1569,9 +1573,9 @@
       "eps_total": 30.0,
       "auc_before": 0.7011,
       "auc_after": 0.7013,
-      "decision": "loss std 0.018 ≤ τ=0.1, hospitals agree → FedAvg",
-      "reasoning": "loss std 0.018 ≤ τ=0.1, hospitals agree → FedAvg",
-      "decided_by": "rule",
+      "decision": "The three probe losses (0.468, 0.452, 0.496) are tightly clustered with no single outlier and no broad disagreement, so plain FedAvg is appropriate.",
+      "reasoning": "The three probe losses (0.468, 0.452, 0.496) are tightly clustered with no single outlier and no broad disagreement, so plain FedAvg is appropriate.",
+      "decided_by": "llm",
       "probe_losses": {
         "h0": 0.4677,
         "h1": 0.4515,
@@ -1613,12 +1617,12 @@
         "round": 20,
         "w": [
           -1.2188634584,
-          0.0269751778,
+          0.0269751783,
           -0.1033321545,
           -0.1444990051,
-          0.0674941054,
-          -0.0197396694,
-          0.5213474868,
+          0.0674941053,
+          -0.0197396693,
+          0.5213474867,
           -0.0657636458,
           -0.0168925349
         ],
@@ -1713,7 +1717,7 @@
       {
         "round": 1,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — Round 1 with no prior loss and plain fedavg, so the validated default of 4 epochs at lr 0.1 is the safest choice to establish a baseline."
       },
       {
         "round": 1,
@@ -1733,7 +1737,7 @@
       {
         "round": 2,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — Loss is still high at round 2 under FedAvg, so the validated default of 4 epochs at lr 0.1 is appropriate to keep training progressing without unnecessary deviation."
       },
       {
         "round": 2,
@@ -1753,7 +1757,7 @@
       {
         "round": 3,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — Loss is still high at round 3 with trimmed_mean aggregation, so the validated default of 4 epochs at lr 0.1 is appropriate to keep making steady progress without destabilizing the trimmed mean."
       },
       {
         "round": 3,
@@ -1773,7 +1777,7 @@
       {
         "round": 4,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — Loss is decreasing steadily under fedavg, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 4,
@@ -1793,7 +1797,7 @@
       {
         "round": 5,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — FedAvg at round 5 with a moderate loss of 0.57 shows steady progress, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 5,
@@ -1813,7 +1817,7 @@
       {
         "round": 6,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — Loss is decreasing steadily under fedavg with no instability, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 6,
@@ -1833,7 +1837,7 @@
       {
         "round": 7,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — FedAvg round 7 with moderate loss 0.54 shows steady progress, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 7,
@@ -1853,7 +1857,7 @@
       {
         "round": 8,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — Loss is decreasing steadily under fedavg, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 8,
@@ -1873,7 +1877,7 @@
       {
         "round": 9,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — FedAvg round 9 with moderate loss 0.52 shows steady progress, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 9,
@@ -1893,7 +1897,7 @@
       {
         "round": 10,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — FedAvg at round 10 with a moderate loss of 0.51 is progressing normally, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 10,
@@ -1913,7 +1917,7 @@
       {
         "round": 11,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — Loss is still decreasing steadily at round 11 under FedAvg, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 11,
@@ -1933,7 +1937,7 @@
       {
         "round": 12,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — FedAvg at round 12 with a moderate loss of 0.50 shows steady progress, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 12,
@@ -1953,7 +1957,7 @@
       {
         "round": 13,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — Loss is still decreasing steadily at round 13 under FedAvg, so the validated default of 4 epochs at lr 0.1 remains appropriate without deviation."
       },
       {
         "round": 13,
@@ -1973,7 +1977,7 @@
       {
         "round": 14,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — Loss is decreasing steadily under fedavg, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 14,
@@ -1993,7 +1997,7 @@
       {
         "round": 15,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — FedAvg at round 15 with moderate loss 0.48 is progressing steadily, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 15,
@@ -2013,7 +2017,7 @@
       {
         "round": 16,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — Loss is still decreasing steadily at round 16 under fedavg, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 16,
@@ -2033,7 +2037,7 @@
       {
         "round": 17,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — Loss is decreasing steadily under fedavg with no instability, so the validated default of 4 epochs at lr 0.1 is appropriate and mu is irrelevant for fedavg."
       },
       {
         "round": 17,
@@ -2053,7 +2057,7 @@
       {
         "round": 18,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — Loss is moderate and stable under fedavg, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 18,
@@ -2073,7 +2077,7 @@
       {
         "round": 19,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — FedAvg round 19 with moderate loss 0.47 shows steady progress, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 19,
@@ -2093,7 +2097,7 @@
       {
         "round": 20,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — FedAvg at round 20 with a moderate loss of 0.47 shows stable convergence, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 20,
@@ -2125,7 +2129,7 @@
       {
         "round": 1,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — Round 1 with no prior loss and plain FedAvg, so the validated default of 4 epochs at lr 0.1 is the safest starting point."
       },
       {
         "round": 1,
@@ -2145,7 +2149,7 @@
       {
         "round": 2,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — Loss is still high at round 2 under FedAvg, so the validated default of 4 epochs at lr 0.1 is appropriate to keep training progressing without unnecessary deviation."
       },
       {
         "round": 2,
@@ -2165,7 +2169,7 @@
       {
         "round": 3,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — Loss is still high at round 3 under trimmed_mean, so stick with the validated 4-epoch lr 0.1 default to keep making steady progress without unnecessary deviation."
       },
       {
         "round": 3,
@@ -2185,7 +2189,7 @@
       {
         "round": 4,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — Loss is still decreasing at a healthy pace under FedAvg, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 4,
@@ -2205,7 +2209,7 @@
       {
         "round": 5,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — FedAvg at round 5 with a moderate loss of 0.57 shows steady progress, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 5,
@@ -2225,7 +2229,7 @@
       {
         "round": 6,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — Loss is decreasing steadily under fedavg with no instability, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 6,
@@ -2245,7 +2249,7 @@
       {
         "round": 7,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — FedAvg round 7 with moderate loss 0.54 shows steady progress, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 7,
@@ -2265,7 +2269,7 @@
       {
         "round": 8,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — Loss is still moderately high at round 8 under FedAvg, so the validated default of 4 epochs at lr 0.1 is appropriate to keep steady progress without destabilizing aggregation."
       },
       {
         "round": 8,
@@ -2285,7 +2289,7 @@
       {
         "round": 9,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — Loss is still decreasing steadily at round 9 under FedAvg, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 9,
@@ -2305,7 +2309,7 @@
       {
         "round": 10,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — FedAvg at round 10 with a moderate loss of 0.51 shows steady progress, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 10,
@@ -2325,7 +2329,7 @@
       {
         "round": 11,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — Loss is decreasing steadily under fedavg with no instability, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 11,
@@ -2345,7 +2349,7 @@
       {
         "round": 12,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — Loss is moderate and stable under fedavg, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 12,
@@ -2365,7 +2369,7 @@
       {
         "round": 13,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — FedAvg round 13 with moderate loss 0.49 shows steady progress, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 13,
@@ -2385,7 +2389,7 @@
       {
         "round": 14,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — Loss is steadily decreasing under fedavg with the validated default, so keep 4 epochs at lr 0.1 and mu 0 since fedprox is not in use."
       },
       {
         "round": 14,
@@ -2405,7 +2409,7 @@
       {
         "round": 15,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — FedAvg at round 15 with a moderate loss of 0.48 is converging steadily, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 15,
@@ -2425,7 +2429,7 @@
       {
         "round": 16,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — Loss is still decreasing steadily at round 16 under fedavg, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 16,
@@ -2445,7 +2449,7 @@
       {
         "round": 17,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — Loss is moderate and stable under fedavg, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 17,
@@ -2465,7 +2469,7 @@
       {
         "round": 18,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — Loss is moderate and stable under fedavg, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 18,
@@ -2485,7 +2489,7 @@
       {
         "round": 19,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — Loss is decreasing steadily under fedavg with no instability, so the validated default of 4 epochs at lr 0.1 is appropriate and mu is irrelevant for fedavg."
       },
       {
         "round": 19,
@@ -2505,7 +2509,7 @@
       {
         "round": 20,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — FedAvg at round 20 with a moderate loss of 0.47 is converging steadily, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 20,
@@ -2537,7 +2541,7 @@
       {
         "round": 1,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — Round 1 with no prior loss and plain fedavg, so use the validated default of 4 epochs at lr 0.1 with no proximal term."
       },
       {
         "round": 1,
@@ -2577,7 +2581,7 @@
       {
         "round": 4,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — Loss is decreasing steadily under FedAvg at round 4, so the validated default of 4 epochs at lr 0.1 is appropriate with no need for deviation."
       },
       {
         "round": 4,
@@ -2597,7 +2601,7 @@
       {
         "round": 5,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — FedAvg round 5 with moderate loss 0.57 shows steady progress, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 5,
@@ -2617,7 +2621,7 @@
       {
         "round": 6,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — Loss is decreasing steadily under fedavg with no instability, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 6,
@@ -2637,7 +2641,7 @@
       {
         "round": 7,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — Loss is decreasing steadily under FedAvg, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 7,
@@ -2657,7 +2661,7 @@
       {
         "round": 8,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — Loss is still decreasing steadily at round 8 under FedAvg, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 8,
@@ -2677,7 +2681,7 @@
       {
         "round": 9,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — FedAvg round 9 with moderate loss 0.52 shows steady progress, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 9,
@@ -2697,7 +2701,7 @@
       {
         "round": 10,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — FedAvg at round 10 with moderate loss 0.51 is progressing normally, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 10,
@@ -2717,7 +2721,7 @@
       {
         "round": 11,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — Loss is moderate and stable under fedavg, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 11,
@@ -2737,7 +2741,7 @@
       {
         "round": 12,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — FedAvg round 12 with moderate loss 0.498 shows steady progress, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 12,
@@ -2757,7 +2761,7 @@
       {
         "round": 13,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — FedAvg round 13 with moderate loss 0.49 shows steady progress, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 13,
@@ -2777,7 +2781,7 @@
       {
         "round": 14,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — FedAvg round 14 with moderate loss 0.49 shows steady progress, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 14,
@@ -2797,7 +2801,7 @@
       {
         "round": 15,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — FedAvg at round 15 with a moderate loss of 0.48 shows steady progress, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 15,
@@ -2817,7 +2821,7 @@
       {
         "round": 16,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — FedAvg round 16 with moderate loss 0.48 shows steady progress, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 16,
@@ -2837,7 +2841,7 @@
       {
         "round": 17,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — Loss is decreasing steadily under fedavg with no sign of divergence, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 17,
@@ -2857,7 +2861,7 @@
       {
         "round": 18,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — Loss is moderate and stable under fedavg, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 18,
@@ -2877,7 +2881,7 @@
       {
         "round": 19,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — FedAvg at round 19 with a moderate loss of 0.47 shows steady progress, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 19,
@@ -2897,7 +2901,7 @@
       {
         "round": 20,
         "agent": "planner",
-        "action": "4 ep @ lr 0.1 — 4 epochs @ lr 0.1"
+        "action": "4 ep @ lr 0.1 — FedAvg at round 20 with a moderate loss of 0.47 is converging steadily, so the validated default of 4 epochs at lr 0.1 is appropriate without deviation."
       },
       {
         "round": 20,

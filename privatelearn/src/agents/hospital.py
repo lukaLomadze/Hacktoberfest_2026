@@ -138,15 +138,22 @@ class SchemaAgent:
                 ground = by_source[src[0]]
                 gf = ground["factor"]
                 if gf is not None:
-                    lf = c.get("factor")
-                    if lf is None or abs(float(lf) - gf) > 1e-6:
-                        c = {**c, "factor": gf, "semantic": ground["semantic"],
-                             "unit": ground["unit"] or c.get("unit")}
+                    changed = False
+                    if c.get("semantic") != ground["semantic"]:
+                        c = {**c, "semantic": ground["semantic"]}
+                        changed = True
+                    if c.get("factor") is None or abs(float(c.get("factor")) - gf) > 1e-6:
+                        c = {**c, "factor": gf}
+                        changed = True
+                    if ground["unit"] and c.get("unit") != ground["unit"]:
+                        c = {**c, "unit": ground["unit"]}
+                        changed = True
+                    if changed:
                         corrected += 1
             cols.append(c)
         if corrected:
             d = {**d, "columns": cols,
-                 "reasoning": f"{d.get('reasoning', '')} [grounded {corrected} factor(s) in the manifest]".strip()}
+                 "reasoning": f"{d.get('reasoning', '')} [grounded {corrected} mapping(s) in the manifest]".strip()}
         return d
 
     def _infer(self):
