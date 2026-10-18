@@ -1,15 +1,14 @@
 // #/groups/new and #/groups/{id}/edit — the admin writes a group's TaskSpec (PLATFORM-API
 // §4.3, §5.3). "Draft with agent" asks the architect agent (POST /groups/draft-spec) to
-// fill the whole spec from a plain question; the admin edits it, saves a draft, publishes.
+// fill the whole spec from a plain question; the admin edits the question, basics and task,
+// saves a draft, publishes. Inputs, model, training and privacy are not edited here: they
+// keep the agent's draft (or the defaults below), and the agents settle them during the job.
 // The spec is editable only while the group is a draft.
 
 import { api } from "../api.js";
-import { errorBox, h, meta } from "../app.js";
+import { errorBox, h } from "../app.js";
 
 const TASK_TYPES = ["binary_classification", "multiclass_classification", "regression", "image_classification", "text_generation"];
-const MODEL_TYPES = ["logistic", "mlp", "cnn", "vit", "llm_lora"];
-const INPUT_TYPES = ["number", "integer", "category", "image", "text"];
-const AGGREGATIONS = ["adaptive", "fedavg", "fedprox", "trimmed_mean"];
 
 const blankSpec = () => ({
   question: "", task_type: "binary_classification",
@@ -29,12 +28,10 @@ export async function render({ el, params, navigate }) {
   let status = "draft";
   let notes = "";
   let draft = null;
-  let available = ["logistic"];
 
   el.replaceChildren(h("p.loading", "Loading…"));
   try {
-    const [m, g] = await Promise.all([meta().catch(() => null), id ? api.get(`/groups/${encodeURIComponent(id)}`) : null]);
-    if (m && m.available_model_types) available = m.available_model_types;
+    const g = id ? await api.get(`/groups/${encodeURIComponent(id)}`) : null;
     if (g) { name = g.name; description = g.description || ""; spec = g.task_spec || blankSpec(); status = g.status; }
   } catch (err) { el.replaceChildren(errorBox(err)); return; }
 
@@ -70,21 +67,6 @@ export async function render({ el, params, navigate }) {
       } catch (e) { err.replaceChildren(errorBox(e)); draftBtn.disabled = false; draftBtn.textContent = "Draft with agent"; }
     } }, "Draft with agent");
 
-    const inputsTable = spec.input_schema.length === 0 ? h("p.faint", "No inputs yet.") :
-      h("div.table-wrap", h("table.table",
-        h("thead", h("tr", ["name", "type", "unit", "description", "req.", ""].map((x) => h("th", x)))),
-        h("tbody", spec.input_schema.map((f, i) => h("tr",
-          h("td", bind("input.mono", () => f.name, (v) => { f.name = v; }, { name: `task_spec.input_schema[${i}].name`, style: "width:140px" })),
-          h("td", select(INPUT_TYPES, () => f.type, (v) => { f.type = v; }),
-            f.type === "category" ? bind("input.mono", () => (f.categories || []).join(","),
-              (v) => { f.categories = v.split(",").map((x) => x.trim()); }, { placeholder: "a,b,c", style: "width:140px;margin-top:8px" }) : null),
-          h("td", bind("input", () => f.unit, (v) => { f.unit = v; }, { style: "width:90px" })),
-          h("td", bind("input", () => f.description, (v) => { f.description = v; }, { style: "width:180px" })),
-          h("td", bind("input", () => f.required, (v) => { f.required = v; }, { type: "checkbox", style: "width:auto;min-width:0" })),
-          h("td", h("button.btn.ghost.small", { type: "button", disabled: ro, "aria-label": "Remove input",
-                                               onclick: () => { spec.input_schema.splice(i, 1); draw(); } }, "✕")))))));
-
-    const dp = spec.privacy.dp;
     show(
       h("h1", id ? `Edit ${name || id}` : "New group"),
       ro ? h("p", { style: "color:var(--coord)" }, "Published groups can't change their spec.") : null,
@@ -111,28 +93,7 @@ export async function render({ el, params, navigate }) {
             return i;
           })()),
           field("Positive class", select((spec.label.classes || []).filter(Boolean), () => spec.label.positive,
-            (v) => { spec.label.positive = v; })))),
-        panel("Inputs", inputsTable,
-          h("div", h("button.btn.ghost", { type: "button", disabled: ro, onclick: () => {
-            spec.input_schema.push({ name: "", type: "number", unit: "", description: "", required: true }); draw();
-          } }, "+ Add input"))),
-        panel("Model & training", h("div.fields",
-          field("Model type", select(MODEL_TYPES, () => spec.model.type, (v) => { spec.model.type = v; }, {},
-            (t) => !available.includes(t), (t) => (available.includes(t) ? t : `${t} (coming soon)`))),
-          field("Epochs", bind("input.mono", () => spec.model.hyperparams.epochs, (v) => { spec.model.hyperparams.epochs = v; }, { type: "number" })),
-          field("Learning rate", bind("input.mono", () => spec.model.hyperparams.lr, (v) => { spec.model.hyperparams.lr = v; }, { type: "number", step: "0.01" })),
-          field("Rounds", bind("input.mono", () => spec.training.rounds, (v) => { spec.training.rounds = v; }, { type: "number" })),
-          field("Min participants", bind("input.mono", () => spec.training.min_participants, (v) => { spec.training.min_participants = v; }, { type: "number" })),
-          field("Aggregation", select(AGGREGATIONS, () => spec.training.aggregation, (v) => { spec.training.aggregation = v; })))),
-        panel("Privacy",
-          h("label.row", { style: "gap:8px" }, bind("input", () => spec.privacy.secure_aggregation,
-            (v) => { spec.privacy.secure_aggregation = v; }, { type: "checkbox", style: "width:auto" }), "Secure aggregation"),
-          h("label.row", { style: "gap:8px" }, bind("input", () => dp.enabled, (v) => { dp.enabled = v; },
-            { type: "checkbox", style: "width:auto" }), "Differential privacy"),
-          h("div", { style: "max-width:240px" }, field("ε per round",
-            bind("input.mono", () => dp.epsilon_per_round, (v) => { dp.epsilon_per_round = v; },
-              { type: "number", step: "0.1", disabled: !dp.enabled }),
-            "lower = more private, less accurate")))),
+            (v) => { spec.label.positive = v; }))))),
       h("div.footer-bar",
         actionButton("Save draft", "btn.ghost", false),
         actionButton("Publish", "btn.primary", true)));

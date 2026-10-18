@@ -638,7 +638,8 @@ def main(argv=None):
                              "color": config.SITE_BY_ID[s]["color"]} for s in sites],
            "metrics": {"auc_series": [], "loss_series": [], "eps_total": 0}, "started_at": None,
            "finished_at": None, "error": None}
-    group = {"id": events.GROUP_ID, "name": "Heart disease (real agent run)", "status": "training",
+    group = {"id": events.GROUP_ID, "status": "training",
+             "name": "Heart disease (real agent run)" if args.agents == "claude" else "Heart disease (offline rehearsal)",
              "description": "Four UCI cohorts as four hospitals; every decision made by the agents live",
              "task_spec": {"question": "Does this patient have angiographic heart disease?",
                            "task_type": "binary_classification",

@@ -1,7 +1,8 @@
 // #/jobs/{id} — the live process view (PLATFORM-API §5.5, §6). It is driven only by §6
 // events: GET /jobs/{id}/events to catch up, then the SSE stream while the job runs. A
-// finished job can be replayed from its event history (?replay=1 starts the replay at once),
-// which is also how the view works on the mock event list.
+// finished job can be replayed from its event history with a player bar (play/pause, step one
+// event, jump a round, stop, skip to the end, speed 0.25–8×, a position slider; keys: Space,
+// →, Shift+→). ?replay=1 starts the replay at once; this is also how the mock event list plays.
 
 import { api } from "../api.js";
 import { errorBox, h, meta, session, statusPill } from "../app.js";
@@ -15,6 +16,7 @@ import { createStepper } from "../live/stepper.js";
 const LIVE = new Set(["queued", "running"]);
 // replay pacing per event type, in ms at 1×: packets are quick, agent messages are read
 const PACE = { packet: 160, "agent.message": 420, "round.decision": 700, "round.completed": 700, default: 220 };
+const SPEEDS = [0.25, 0.5, 1, 2, 4, 8];
 
 const STYLE_ID = "page-job-style";
 const STYLE = `
@@ -23,7 +25,11 @@ const STYLE = `
 .page[data-page="job"] .job-facts { display: flex; gap: 16px; flex-wrap: wrap; color: var(--text-dim); }
 .page[data-page="job"] .job-facts b { color: var(--text); font-family: var(--font-data); font-weight: 600; }
 .page[data-page="job"] .zero { color: var(--ok); font-family: var(--font-data); font-weight: 600; }
-.page[data-page="job"] .job-controls { display: flex; align-items: center; gap: 8px; margin-left: auto; flex-wrap: wrap; }
+.page[data-page="job"] .replay-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px 12px; }
+.page[data-page="job"] .replay-bar .btn { min-width: 0; }
+.page[data-page="job"] .replay-bar select { width: auto; min-width: 0; }
+.page[data-page="job"] .replay-bar input[type="range"] { flex: 1 1 160px; min-width: 120px; accent-color: var(--coord); }
+.page[data-page="job"] .replay-pos { font: 12px var(--font-data); color: var(--text-dim); white-space: nowrap; }
 .page[data-page="job"] .live-dot { font: 12px var(--font-data); color: var(--text-dim); border: 1px dashed var(--border-strong); border-radius: 999px; padding: 0 8px; }
 .page[data-page="job"] .published { border-color: var(--ok); color: var(--text); display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 .page[data-page="job"] .published b { color: var(--ok); font-family: var(--font-data); }
@@ -134,8 +140,18 @@ export async function render({ el, params, query }) {
   const roundSlot = h("b", "0");
   const epsSlot = h("b", "0.0");
   const liveSlot = h("span.live-dot", { hidden: true });
-  const replayBtn = h("button.btn.ghost", { type: "button" }, "Replay");
-  const endBtn = h("button.btn.ghost", { type: "button", hidden: true }, "Skip to end");
+  const btn = (label, title) => h("button.btn.ghost.small", { type: "button", title }, label);
+  const playBtn = h("button.btn.primary.small", { type: "button", title: "Play / pause (Space)" }, "▶ Play");
+  const stepBtn = btn("Step ›", "Show the next event (→)");
+  const roundBtn = btn("Next round »", "Play up to the end of the next round (Shift+→)");
+  const stopBtn = btn("■ Stop", "Stop and go back to the start");
+  const endBtn = btn("Skip to end ⇥", "Show the finished job");
+  const speedSel = h("select", { "aria-label": "Replay speed", title: "Replay speed" },
+    SPEEDS.map((v) => h("option", { value: String(v), selected: v === 1 }, `${v}×`)));
+  const scrub = h("input", { type: "range", min: "0", max: "0", value: "0", step: "1", "aria-label": "Replay position" });
+  const posSlot = h("span.replay-pos");
+  const replayBar = h("div.panel.replay-bar", { hidden: true, role: "toolbar", "aria-label": "Replay controls" },
+    playBtn, stepBtn, roundBtn, stopBtn, endBtn, h("span.faint", "speed"), speedSel, scrub, posSlot);
   const publishedSlot = h("div.panel.published", { hidden: true, role: "status" });
   const runsSlot = h("nav.run-switch", { hidden: true, "aria-label": "Which run to show" });
   const errorSlot = h("div");
@@ -144,15 +160,14 @@ export async function render({ el, params, query }) {
   el.replaceChildren(
     runsSlot,
     h("div.job-head",
-      h("h1", title), statusSlot, liveSlot,
-      h("div.job-controls", replayBtn, endBtn)),
+      h("h1", title), statusSlot, liveSlot),
     h("div.job-facts",
       h("span", "round ", roundSlot, ` / ${job.rounds ?? "agent decides"}`),
       h("span", "ε spent ", epsSlot),
       h("span", "participants ", h("b", String((job.participants || []).length))),
       h("span", h("span.zero", "0"), " data rows left any company"),
       h("span.faint.mono", job.id)),
-    stepper.el, errorSlot, publishedSlot,
+    replayBar, stepper.el, errorSlot, publishedSlot,
     h("div.job-grid",
       h("div.job-main",
         h("section.panel.stage", h("div.stage-box", canvas.el),
@@ -229,7 +244,9 @@ export async function render({ el, params, query }) {
       apply(e, true);
       if (!LIVE.has(state.status)) {
         liveSlot.textContent = "finished";
-        replayBtn.hidden = false;
+        cursor = events.length;
+        replayBar.hidden = false;
+        sync();
         // the server ends the stream after the last event; EventSource would reconnect every
         // few seconds for as long as the page is open unless it is closed here
         if (stopStream) stopStream();
@@ -239,53 +256,104 @@ export async function render({ el, params, query }) {
   }
 
   // ---------------------------------------------------------------- replay (finished jobs, mocks)
+  // cursor = how many events the picture shows; it starts at the end (the finished job)
   let timer = null;
-  let cursor = 0;
-  let replaying = false;
+  let cursor = events.length;
+  let playing = false;
+  let speed = 1;
+  const atEnd = () => cursor >= events.length;
 
-  function stopReplay() {
+  function sync() {
+    playBtn.textContent = playing ? "⏸ Pause" : atEnd() ? "↻ Replay" : cursor === 0 ? "▶ Play" : "▶ Resume";
+    scrub.max = String(events.length);
+    scrub.value = String(cursor);
+    posSlot.textContent = `event ${cursor} / ${events.length} · round ${state.round}`;
+  }
+  function restart() { // an empty picture, before the first event
+    state = initialState(job);
+    cursor = 0;
+    draw();
+  }
+  function pause() {
     if (timer) clearTimeout(timer);
     timer = null;
-    replaying = false;
-    replayBtn.textContent = cursor && cursor < events.length ? "Resume" : "Replay";
-    endBtn.hidden = !(cursor && cursor < events.length);
+    playing = false;
+    sync();
   }
-  function step() {
-    if (cursor >= events.length) {
-      cursor = 0;
-      stopReplay();
-      return;
-    }
+  function tick() {
+    timer = null;
+    if (atEnd()) { pause(); return; }
     const e = events[cursor++];
     apply(e, true);
-    timer = setTimeout(step, PACE[e.type] ?? PACE.default);
+    sync();
+    if (atEnd()) { pause(); return; }
+    timer = setTimeout(tick, (PACE[e.type] ?? PACE.default) / speed);
   }
-  replayBtn.addEventListener("click", () => {
-    if (replaying) { stopReplay(); return; }
-    if (cursor === 0) { // start over from an empty picture
-      state = initialState(job);
-      draw();
+  function play() {
+    if (atEnd()) restart();
+    playing = true;
+    sync();
+    tick();
+  }
+  function stepOnce() {
+    pause();
+    if (atEnd()) restart();
+    apply(events[cursor++], true);
+    sync();
+  }
+  function nextRound() { // up to and including the next round.completed (or the job's end)
+    pause();
+    if (atEnd()) restart();
+    while (!atEnd()) {
+      const e = events[cursor++];
+      applyEvent(state, e);
+      if (e.type === "round.completed" || (e.type === "job.status" && !LIVE.has(e.status))) break;
     }
-    replaying = true;
-    replayBtn.textContent = "Pause";
-    endBtn.hidden = false;
-    step();
-  });
-  endBtn.addEventListener("click", () => {
-    if (timer) clearTimeout(timer);
-    while (cursor < events.length) applyEvent(state, events[cursor++]);
     draw();
+    sync();
+  }
+  function seek(k) {
+    pause();
+    state = initialState(job);
     cursor = 0;
-    stopReplay();
-  });
+    while (cursor < Math.min(k, events.length)) applyEvent(state, events[cursor++]);
+    draw();
+    sync();
+  }
 
-  replayBtn.hidden = LIVE.has(state.status) || !events.length;
+  playBtn.addEventListener("click", () => (playing ? pause() : play()));
+  stepBtn.addEventListener("click", stepOnce);
+  roundBtn.addEventListener("click", nextRound);
+  stopBtn.addEventListener("click", () => { pause(); restart(); sync(); });
+  endBtn.addEventListener("click", () => seek(events.length));
+  scrub.addEventListener("input", () => seek(Number(scrub.value)));
+  speedSel.addEventListener("change", () => {
+    speed = Number(speedSel.value) || 1;
+    if (playing && timer) { clearTimeout(timer); timer = setTimeout(tick, 60); } // apply the new speed now
+  });
+  const onKey = (ev) => {
+    const t = ev.target && ev.target.closest ? ev.target : null;
+    if (replayBar.hidden || ev.ctrlKey || ev.metaKey || ev.altKey) return;
+    if (t && t.closest("input, select, textarea, [contenteditable]")) return; // typing, or the slider's own keys
+    if (ev.key === " ") {
+      if (t && t.closest("button, a")) return; // Space already presses a focused button
+      ev.preventDefault();
+      if (playing) pause(); else play();
+    }
+    else if (ev.key === "ArrowRight" && ev.shiftKey) { ev.preventDefault(); nextRound(); }
+    else if (ev.key === "ArrowRight") { ev.preventDefault(); stepOnce(); }
+  };
+  document.addEventListener("keydown", onKey);
+
+  replayBar.hidden = LIVE.has(state.status) || !events.length;
+  sync();
   goLive();
-  if (query.replay === "1" && !replayBtn.hidden) replayBtn.click();
+  if (query.replay === "1" && !replayBar.hidden) { restart(); play(); }
 
   return () => {
     if (stopStream) stopStream();
     if (timer) clearTimeout(timer);
+    document.removeEventListener("keydown", onKey);
     canvas.destroy();
     chart.destroy();
   };
