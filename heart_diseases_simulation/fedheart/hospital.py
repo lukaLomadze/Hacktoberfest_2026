@@ -1,10 +1,10 @@
-"""One hospital: its own OS process, its own data file, its own Claude agent.
+"""One hospital: its own OS process, its own data file, its own DeepSeek agent.
 
     python -m fedheart.hospital --site cleveland --port 8101 --run-dir runs/<id>
 
 The process loads ONLY its site's file and keeps the rows in memory. It answers the
 coordinator over HTTP with aggregates (statistics, metrics, histograms) and masked,
-noised model updates. Its agent — a Claude conversation that lasts the whole job — makes
+noised model updates. Its agent — a DeepSeek conversation that lasts the whole job — makes
 the hospital's decisions through four tools:
 
     inspect_local_data       summary statistics of the local training split (never rows)
@@ -164,8 +164,8 @@ class Hospital:
                 "reasoning": {"type": "string"}},
                ["participate", "epochs", "lr", "reasoning"], self._tool_plan)
         transcript = self.run_dir / "transcripts" / f"{self.site['id']}.jsonl"
-        if self.agents_mode == "claude":
-            self.agent = llm.ClaudeAgent(f"hospital:{self.site['id']}", system, tb, self.llm_model, self.effort,
+        if self.agents_mode == "deepseek":
+            self.agent = llm.DeepSeekAgent(f"hospital:{self.site['id']}", system, tb, self.llm_model, self.effort,
                                          transcript)
         else:
             self.agent = llm.ScriptedAgent(f"hospital:{self.site['id']}", tb, policies.hospital_policy, transcript)
@@ -241,8 +241,8 @@ class Hospital:
     def hello(self, _):
         return {"site": self.site["id"], "node_id": self.node_id, "name": self.site["name"],
                 "place": self.site["place"], "rows": self.n_total, "dh_public": format(self.dh_public, "x"),
-                "agent": {"provider": "anthropic" if self.agents_mode == "claude" else "rule",
-                          "model": self.llm_model if self.agents_mode == "claude" else "scripted"}}
+                "agent": {"provider": "deepseek" if self.agents_mode == "deepseek" else "rule",
+                          "model": self.llm_model if self.agents_mode == "deepseek" else "scripted"}}
 
     def roster_(self, p):
         self.job = {"job_id": str(p["job_id"]), "privacy": p["privacy"]}
@@ -449,9 +449,9 @@ def main(argv=None):
     ap.add_argument("--site", required=True, choices=[s["id"] for s in config.SITES])
     ap.add_argument("--port", type=int, required=True)
     ap.add_argument("--run-dir", required=True)
-    ap.add_argument("--agents", choices=["claude", "rule"], default="claude")
+    ap.add_argument("--agents", choices=["deepseek", "rule"], default="deepseek")
     ap.add_argument("--model", default=config.DEFAULT_MODEL)
-    ap.add_argument("--effort", default="low")
+    ap.add_argument("--effort", default="low", choices=config.EFFORTS)
     ap.add_argument("--seed", type=int, default=config.SEED)
     ap.add_argument("--outage", default="", help="comma-separated rounds in which this hospital is offline")
     ap.add_argument("--noise-seed", type=int, default=None, help="tests only: reproducible DP noise")
@@ -476,7 +476,7 @@ def main(argv=None):
     handlers["/shutdown"] = lambda _: (stop.set(), {"ok": True})[1]
     server = serve(args.port, handlers)
     print(f"[{args.site}] listening on 127.0.0.1:{args.port} · {h.n_total} local rows · agent "
-          f"{args.model if args.agents == 'claude' else 'scripted'}", flush=True)
+          f"{args.model if args.agents == 'deepseek' else 'scripted'}", flush=True)
     t = threading.Thread(target=server.serve_forever, daemon=True)
     t.start()
     stop.wait()

@@ -1,2 +1,1 @@
 numpy>=1.24
-anthropic>=1.15  # the Claude agents; not needed for --agents rule or the tests
