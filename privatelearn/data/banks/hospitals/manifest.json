@@ -7547,5 +7547,5 @@
     }
   },
   "honesty": "Real default-of-credit-card-clients records (1200 of 30000) split into three SIMULATED banks; the player replays this recorded run, not live networking. Masking, DP noise, the agents' decisions and every number are real outputs of the code. DP accounting is a stated-ε demonstration, not an audited accountant.",
-  "rounds": 8
+  "rounds": 20
 }

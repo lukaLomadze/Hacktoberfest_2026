@@ -100,8 +100,8 @@ SPEC = {
         },
     ],
     "node_labels": {"h0": "Bank A", "h1": "Bank B", "h2": "Bank C"},
-    # 8 rounds so the weaker per-feature signal of this dataset converges (Pima needs only 4).
-    "rounds": 8,
+    # 20 rounds so the weaker per-feature signal of this dataset converges (Pima needs only 4).
+    "rounds": 20,
     # round 2: Bank C is offline; round 3: Bank C's export silently switches credit_limit
     # from thousands-of-TWD back to raw TWD (×1000) → its probe loss is an outlier.
     "faults": {"h2": {2: "offline", 3: {"unit_swap": {"feature": "credit_limit", "factor": 1000.0}}}},
